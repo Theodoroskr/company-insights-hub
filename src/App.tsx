@@ -3,25 +3,81 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import Index from "./pages/Index.tsx";
-import NotFound from "./pages/NotFound.tsx";
+import { HelmetProvider } from "react-helmet-async";
+
+// Route Guards
+import { ProtectedRoute, AdminRoute } from "./components/auth/RouteGuards";
+
+// Public pages
+import HomePage from "./pages/HomePage";
+import SearchResultsPage from "./pages/SearchResultsPage";
+import CompanyProfilePage from "./pages/CompanyProfilePage";
+import CompanyBrowseByLetterPage from "./pages/CompanyBrowseByLetterPage";
+import CheckoutPage from "./pages/CheckoutPage";
+import CheckoutSuccessPage from "./pages/CheckoutSuccessPage";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import NotFound from "./pages/NotFound";
+
+// Account pages
+import AccountDashboard from "./pages/account/AccountDashboard";
+import AccountOrdersPage from "./pages/account/AccountOrdersPage";
+import AccountOrderDetailPage from "./pages/account/AccountOrderDetailPage";
+import AccountDownloadsPage from "./pages/account/AccountDownloadsPage";
+import AccountMonitoringPage from "./pages/account/AccountMonitoringPage";
+import AccountProfilePage from "./pages/account/AccountProfilePage";
+
+// Admin pages
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminOrdersPage from "./pages/admin/AdminOrdersPage";
+import AdminFulfillmentPage from "./pages/admin/AdminFulfillmentPage";
+import AdminProductsPage from "./pages/admin/AdminProductsPage";
+import AdminCustomersPage from "./pages/admin/AdminCustomersPage";
+import AdminSettingsPage from "./pages/admin/AdminSettingsPage";
 
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <HelmetProvider>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            {/* ── Public ── */}
+            <Route path="/" element={<HomePage />} />
+            <Route path="/search" element={<SearchResultsPage />} />
+            <Route path="/company/:slug" element={<CompanyProfilePage />} />
+            <Route path="/companies/:letter" element={<CompanyBrowseByLetterPage />} />
+            <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+
+            {/* ── Protected: Account ── */}
+            <Route path="/account" element={<ProtectedRoute><AccountDashboard /></ProtectedRoute>} />
+            <Route path="/account/orders" element={<ProtectedRoute><AccountOrdersPage /></ProtectedRoute>} />
+            <Route path="/account/orders/:id" element={<ProtectedRoute><AccountOrderDetailPage /></ProtectedRoute>} />
+            <Route path="/account/downloads" element={<ProtectedRoute><AccountDownloadsPage /></ProtectedRoute>} />
+            <Route path="/account/monitoring" element={<ProtectedRoute><AccountMonitoringPage /></ProtectedRoute>} />
+            <Route path="/account/profile" element={<ProtectedRoute><AccountProfilePage /></ProtectedRoute>} />
+
+            {/* ── Admin only ── */}
+            <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+            <Route path="/admin/orders" element={<AdminRoute><AdminOrdersPage /></AdminRoute>} />
+            <Route path="/admin/fulfillment" element={<AdminRoute><AdminFulfillmentPage /></AdminRoute>} />
+            <Route path="/admin/products" element={<AdminRoute><AdminProductsPage /></AdminRoute>} />
+            <Route path="/admin/customers" element={<AdminRoute><AdminCustomersPage /></AdminRoute>} />
+            <Route path="/admin/settings" element={<AdminRoute><AdminSettingsPage /></AdminRoute>} />
+
+            {/* ── Catch-all ── */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </HelmetProvider>
 );
 
 export default App;
