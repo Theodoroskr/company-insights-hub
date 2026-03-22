@@ -1,6 +1,6 @@
 import React, { useEffect, useState, ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../../lib/supabase';
 import type { Session } from '@supabase/supabase-js';
 
 // ── ProtectedRoute ─────────────────────────────────────────
