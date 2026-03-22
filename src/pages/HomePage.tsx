@@ -80,7 +80,7 @@ export default function HomePage() {
       .eq('is_active', true)
       .order('display_order', { ascending: true })
       .then(({ data }) => {
-        setProducts((data as Product[]) ?? []);
+        setProducts((data as unknown as Product[]) ?? []);
         setProductsLoading(false);
       });
   }, [tenant]);

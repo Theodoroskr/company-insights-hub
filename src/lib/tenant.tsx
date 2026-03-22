@@ -5,7 +5,7 @@ import React, {
   useState,
   ReactNode,
 } from 'react';
-import { supabase } from './supabase';
+import { supabase } from '@/integrations/supabase/client';
 import type { Tenant } from '../types/database';
 
 interface TenantContextValue {
