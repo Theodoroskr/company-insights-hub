@@ -67,7 +67,7 @@ export default function Navbar() {
       .eq('tenant_id', tenant.id)
       .eq('is_active', true)
       .order('display_order', { ascending: true })
-      .then(({ data }) => setProducts((data as Product[]) ?? []));
+      .then(({ data }) => setProducts((data as unknown as Product[]) ?? []));
   }, [tenant]);
 
   // Close dropdowns on outside click
