@@ -1,0 +1,1399 @@
+{
+  "info": {
+    "_postman_id": "c00eaeef-84d4-479a-b442-2d898fffc4b1",
+    "name": "API4ALL V3-web developer",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "34127328"
+  },
+  "item": [
+    {
+      "name": "API",
+      "item": [
+        {
+          "name": "Authentication",
+          "item": [
+            {
+              "name": "Create Token",
+              "request": {
+                "auth": {
+                  "type": "basic",
+                  "basic": [
+                    {
+                      "key": "password",
+                      "value": "I7OMw$uAFW/\"7Sv<",
+                      "type": "string"
+                    },
+                    {
+                      "key": "username",
+                      "value": "theodoros",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Basic {Base64 encoding of username:password}",
+                    "type": "text",
+                    "disabled": true
+                  }
+                ],
+                "url": {
+                  "raw": "https://v3.api4all.io/a4a/3.0/api/token/F25Y0RU2M5",
+                  "protocol": "https",
+                  "host": [
+                    "v3",
+                    "api4all",
+                    "io"
+                  ],
+                  "path": [
+                    "a4a",
+                    "3.0",
+                    "api",
+                    "token",
+                    "F25Y0RU2M5"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Refresh Token",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"refresh_token\": \"\",\r\n    \"client_id\": \"\",\r\n    \"client_secret\": \"\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://v3.api4all.io/a4a/3.0/api/refresh/",
+                  "protocol": "https",
+                  "host": [
+                    "v3",
+                    "api4all",
+                    "io"
+                  ],
+                  "path": [
+                    "a4a",
+                    "3.0",
+                    "api",
+                    "refresh",
+                    ""
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Reports",
+          "item": [
+            {
+              "name": "Get KYB Report",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Expires",
+                    "value": "0",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Cache-Control",
+                    "value": "no-cache, no-store, must-revalidate",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://v3.api4all.io/a4a/3.0/api/report/kyb/code/CY00001234406861",
+                  "protocol": "https",
+                  "host": [
+                    "v3",
+                    "api4all",
+                    "io"
+                  ],
+                  "path": [
+                    "a4a",
+                    "3.0",
+                    "api",
+                    "report",
+                    "kyb",
+                    "code",
+                    "CY00001234406861"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Structure Report",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://v3.api4all.io/a4a/3.0/api/report/structure/code/CY00001234406861",
+                  "protocol": "https",
+                  "host": [
+                    "v3",
+                    "api4all",
+                    "io"
+                  ],
+                  "path": [
+                    "a4a",
+                    "3.0",
+                    "api",
+                    "report",
+                    "structure",
+                    "code",
+                    "CY00001234406861"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Credit Report",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://v3.api4all.io/a4a/3.0/api/report/credit/code/CY00001234406861",
+                  "protocol": "https",
+                  "host": [
+                    "v3",
+                    "api4all",
+                    "io"
+                  ],
+                  "path": [
+                    "a4a",
+                    "3.0",
+                    "api",
+                    "report",
+                    "credit",
+                    "code",
+                    "CY00001234406861"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Scoring Report",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://v3.api4all.io/a4a/3.0/api/report/scoring/code/017378055000",
+                  "protocol": "https",
+                  "host": [
+                    "v3",
+                    "api4all",
+                    "io"
+                  ],
+                  "path": [
+                    "a4a",
+                    "3.0",
+                    "api",
+                    "report",
+                    "scoring",
+                    "code",
+                    "017378055000"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get FCCB Report",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://v3.api4all.io/a4a/3.0/api/report/fccb/code/017378055000",
+                  "protocol": "https",
+                  "host": [
+                    "v3",
+                    "api4all",
+                    "io"
+                  ],
+                  "path": [
+                    "a4a",
+                    "3.0",
+                    "api",
+                    "report",
+                    "fccb",
+                    "code",
+                    "017378055000"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Bankruptcy Report",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://v3.api4all.io/a4a/3.0/api/report/bankruptcy/code/017378055000",
+                  "protocol": "https",
+                  "host": [
+                    "v3",
+                    "api4all",
+                    "io"
+                  ],
+                  "path": [
+                    "a4a",
+                    "3.0",
+                    "api",
+                    "report",
+                    "bankruptcy",
+                    "code",
+                    "017378055000"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Search",
+          "item": [
+            {
+              "name": "Run Search (using Name)",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Expires",
+                    "value": "0",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Cache-Control",
+                    "value": "no-cache, no-store, must-revalidate",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://v3.api4all.io/a4a/3.0/api/search/cy/name/Infocredit Group",
+                  "protocol": "https",
+                  "host": [
+                    "v3",
+                    "api4all",
+                    "io"
+                  ],
+                  "path": [
+                    "a4a",
+                    "3.0",
+                    "api",
+                    "search",
+                    "cy",
+                    "name",
+                    "Infocredit Group"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Run Search (using VAT)",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "13c17d2a-2b26-482d-9c6e-1e5e4f156c48",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Expires",
+                    "value": "0",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Cache-Control",
+                    "value": "no-cache, no-store, must-revalidate",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://v3.api4all.io/a4a/3.0/api/search/cy/vat_no/",
+                  "protocol": "https",
+                  "host": [
+                    "v3",
+                    "api4all",
+                    "io"
+                  ],
+                  "path": [
+                    "a4a",
+                    "3.0",
+                    "api",
+                    "search",
+                    "cy",
+                    "vat_no",
+                    ""
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Run Search (using Registration)",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "2f905e9d-1831-4fb9-9a48-8ce442390dd4",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Expires",
+                    "value": "0",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Cache-Control",
+                    "value": "no-cache, no-store, must-revalidate",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://v3.api4all.io/a4a/3.0/api/search/cy/reg_no/C4404",
+                  "protocol": "https",
+                  "host": [
+                    "v3",
+                    "api4all",
+                    "io"
+                  ],
+                  "path": [
+                    "a4a",
+                    "3.0",
+                    "api",
+                    "search",
+                    "cy",
+                    "reg_no",
+                    "C4404"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Find Order (using Product)",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Expires",
+                    "value": "0",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Cache-Control",
+                    "value": "no-cache, no-store, must-revalidate",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://v3.api4all.io/a4a/3.0/api/order/product/2100",
+                  "protocol": "https",
+                  "host": [
+                    "v3",
+                    "api4all",
+                    "io"
+                  ],
+                  "path": [
+                    "a4a",
+                    "3.0",
+                    "api",
+                    "order",
+                    "product",
+                    "2100"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Find Order (using Period)",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Expires",
+                    "value": "0",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Cache-Control",
+                    "value": "no-cache, no-store, must-revalidate",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://v3.api4all.io/a4a/3.0/api/order/period/20250715-20250706",
+                  "protocol": "https",
+                  "host": [
+                    "v3",
+                    "api4all",
+                    "io"
+                  ],
+                  "path": [
+                    "a4a",
+                    "3.0",
+                    "api",
+                    "order",
+                    "period",
+                    "20250715-20250706"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Report Availability (by Code)",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Expires",
+                    "value": "0",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Cache-Control",
+                    "value": "no-cache, no-store, must-revalidate",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://v3.api4all.io/a4a/3.0/api/reports/dates/",
+                  "protocol": "https",
+                  "host": [
+                    "v3",
+                    "api4all",
+                    "io"
+                  ],
+                  "path": [
+                    "a4a",
+                    "3.0",
+                    "api",
+                    "reports",
+                    "dates",
+                    ""
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Test - Information",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Expires",
+                    "value": "0",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Cache-Control",
+                    "value": "no-cache, no-store, must-revalidate",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://v3.api4all.io/a4a/3.0/api/information/cy/name/123",
+                  "protocol": "https",
+                  "host": [
+                    "v3",
+                    "api4all",
+                    "io"
+                  ],
+                  "path": [
+                    "a4a",
+                    "3.0",
+                    "api",
+                    "information",
+                    "cy",
+                    "name",
+                    "123"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Test - Order",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Expires",
+                    "value": "0",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Cache-Control",
+                    "value": "no-cache, no-store, must-revalidate",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://v3.api4all.io/a4a/3.0/api/order/cy/name/123",
+                  "protocol": "https",
+                  "host": [
+                    "v3",
+                    "api4all",
+                    "io"
+                  ],
+                  "path": [
+                    "a4a",
+                    "3.0",
+                    "api",
+                    "order",
+                    "cy",
+                    "name",
+                    "123"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Test - Orders",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Expires",
+                    "value": "0",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Cache-Control",
+                    "value": "no-cache, no-store, must-revalidate",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://v3.api4all.io/a4a/3.0/api/orders/cy/name/123",
+                  "protocol": "https",
+                  "host": [
+                    "v3",
+                    "api4all",
+                    "io"
+                  ],
+                  "path": [
+                    "a4a",
+                    "3.0",
+                    "api",
+                    "orders",
+                    "cy",
+                    "name",
+                    "123"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Orders",
+          "item": [
+            {
+              "name": "Get Order (by ID)",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Expires",
+                    "value": "0",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Cache-Control",
+                    "value": "no-cache, no-store, must-revalidate",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://v3.api4all.io/a4a/3.0/api/orders/id/6",
+                  "protocol": "https",
+                  "host": [
+                    "v3",
+                    "api4all",
+                    "io"
+                  ],
+                  "path": [
+                    "a4a",
+                    "3.0",
+                    "api",
+                    "orders",
+                    "id",
+                    "6"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Order (by Code)",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Expires",
+                    "value": "0",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Cache-Control",
+                    "value": "no-cache, no-store, must-revalidate",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://v3.api4all.io/a4a/3.0/api/orders/code/123",
+                  "protocol": "https",
+                  "host": [
+                    "v3",
+                    "api4all",
+                    "io"
+                  ],
+                  "path": [
+                    "a4a",
+                    "3.0",
+                    "api",
+                    "orders",
+                    "code",
+                    "123"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Order (by Status)",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Expires",
+                    "value": "0",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Cache-Control",
+                    "value": "no-cache, no-store, must-revalidate",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://v3.api4all.io/a4a/3.0/api/orders/status/received",
+                  "protocol": "https",
+                  "host": [
+                    "v3",
+                    "api4all",
+                    "io"
+                  ],
+                  "path": [
+                    "a4a",
+                    "3.0",
+                    "api",
+                    "orders",
+                    "status",
+                    "received"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Order (by Period)",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Expires",
+                    "value": "0",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Cache-Control",
+                    "value": "no-cache, no-store, must-revalidate",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://v3.api4all.io/a4a/3.0/api/orders/period/20250720-20250720",
+                  "protocol": "https",
+                  "host": [
+                    "v3",
+                    "api4all",
+                    "io"
+                  ],
+                  "path": [
+                    "a4a",
+                    "3.0",
+                    "api",
+                    "orders",
+                    "period",
+                    "20250720-20250720"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Order (by Product)",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Expires",
+                    "value": "0",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Cache-Control",
+                    "value": "no-cache, no-store, must-revalidate",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://v3.api4all.io/a4a/3.0/api/orders/product/2100",
+                  "protocol": "https",
+                  "host": [
+                    "v3",
+                    "api4all",
+                    "io"
+                  ],
+                  "path": [
+                    "a4a",
+                    "3.0",
+                    "api",
+                    "orders",
+                    "product",
+                    "2100"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Item (by ID)",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Expires",
+                    "value": "0",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Cache-Control",
+                    "value": "no-cache, no-store, must-revalidate",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://v3.api4all.io/a4a/3.0/api/orders/item/185082544000",
+                  "protocol": "https",
+                  "host": [
+                    "v3",
+                    "api4all",
+                    "io"
+                  ],
+                  "path": [
+                    "a4a",
+                    "3.0",
+                    "api",
+                    "orders",
+                    "item",
+                    "185082544000"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Cancel Order",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Expires",
+                    "value": "0",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Cache-Control",
+                    "value": "no-cache, no-store, must-revalidate",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"orders\": [\r\n        {\r\n            \"id\": 123,\r\n            \"reference\": \"123\",\r\n            \"comments\": \"\"\r\n        }\r\n    ]\r\n}\r\n",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://v3.api4all.io/a4a/3.0/api/orders/cancel/",
+                  "protocol": "https",
+                  "host": [
+                    "v3",
+                    "api4all",
+                    "io"
+                  ],
+                  "path": [
+                    "a4a",
+                    "3.0",
+                    "api",
+                    "orders",
+                    "cancel",
+                    ""
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Order",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Expires",
+                    "value": "0",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Cache-Control",
+                    "value": "no-cache, no-store, must-revalidate",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"reference\": \"123\",\r\n    \"items\": [\r\n        {\r\n            \"code\": \"CY00001234406861\",\r\n            \"reference\": \"123\",\r\n            \"language\": \"EN\",\r\n            \"product\": \"2100\",\r\n            \"format\": \"JSON\",        \r\n            \"speed\": \"Normal\",\r\n            \"freshinvestigation\": 0,\r\n            \"comments\": \"\"\r\n        }\r\n    ]\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://v3.api4all.io/a4a/3.0/api/orders/create/",
+                  "protocol": "https",
+                  "host": [
+                    "v3",
+                    "api4all",
+                    "io"
+                  ],
+                  "path": [
+                    "a4a",
+                    "3.0",
+                    "api",
+                    "orders",
+                    "create",
+                    ""
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
