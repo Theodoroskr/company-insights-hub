@@ -220,8 +220,9 @@ export default function CompanyProfilePage() {
       ]);
 
       if (productsRes.data) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setProducts(
-          (productsRes.data as Product[]).map((p) => ({
+          (productsRes.data as unknown as Product[]).map((p) => ({
             ...p,
             available_speeds: Array.isArray(p.available_speeds) ? p.available_speeds : [],
           }))
