@@ -229,6 +229,44 @@ export type Database = {
         }
         Relationships: []
       }
+      fulfillment_tasks: {
+        Row: {
+          attempts: number
+          created_at: string | null
+          id: string
+          last_attempt_at: string | null
+          order_item_id: string | null
+          status: string
+          type: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string | null
+          id?: string
+          last_attempt_at?: string | null
+          order_item_id?: string | null
+          status?: string
+          type: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string | null
+          id?: string
+          last_attempt_at?: string | null
+          order_item_id?: string | null
+          status?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fulfillment_tasks_order_item_id_fkey"
+            columns: ["order_item_id"]
+            isOneToOne: false
+            referencedRelation: "order_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       generated_reports: {
         Row: {
           api4all_raw_json: Json | null
