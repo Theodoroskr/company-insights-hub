@@ -166,7 +166,7 @@ export default function Navbar() {
                         {typeProducts.map((p) => (
                           <Link
                             key={p.id}
-                            to={`/products/${p.slug}`}
+                            to={`/report?type=${p.slug}`}
                             onClick={() => setProductsOpen(false)}
                             className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
                             style={{ color: 'var(--text-body)' }}
@@ -381,7 +381,7 @@ export default function Navbar() {
             <div className="flex-1 overflow-y-auto py-4 px-5 space-y-2">
               {[
                 { to: '/', label: 'Home' },
-                { to: '/search', label: 'Search Companies' },
+                { to: '/company/search', label: 'Search Companies' },
                 { to: '/about', label: 'About' },
                 { to: '/contact', label: 'Contact' },
               ].map(({ to, label }) => (
@@ -404,7 +404,7 @@ export default function Navbar() {
                   {products.map((p) => (
                     <Link
                       key={p.id}
-                      to={`/products/${p.slug}`}
+                      to={`/report?type=${p.slug}`}
                       onClick={() => setMobileOpen(false)}
                       className="flex items-center gap-2 py-2 text-sm"
                       style={{ color: 'var(--text-body)' }}
