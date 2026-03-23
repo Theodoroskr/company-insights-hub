@@ -209,6 +209,33 @@ export default function Navbar() {
 
             {/* ── Auth / User ── */}
             <div className="hidden md:flex items-center gap-3">
+              {/* Cart icon */}
+              <Link
+                to="/cart"
+                className="relative p-2 rounded transition-colors"
+                style={{ color: 'var(--text-body)' }}
+                onMouseOver={(e) => (e.currentTarget.style.color = 'var(--brand-accent)')}
+                onMouseOut={(e) => (e.currentTarget.style.color = 'var(--text-body)')}
+                aria-label="Cart"
+              >
+                <ShoppingCart className="w-5 h-5" />
+                {totalItems > 0 && (
+                  <span
+                    className="absolute -top-0.5 -right-0.5 w-4.5 h-4.5 rounded-full text-white flex items-center justify-center font-bold"
+                    style={{
+                      backgroundColor: 'var(--brand-accent)',
+                      fontSize: '10px',
+                      minWidth: '18px',
+                      height: '18px',
+                      lineHeight: '18px',
+                      textAlign: 'center',
+                      padding: '0 4px',
+                    }}
+                  >
+                    {totalItems}
+                  </span>
+                )}
+              </Link>
               {!session ? (
                 <>
                   <Link
