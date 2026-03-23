@@ -152,36 +152,88 @@ export default function Navbar() {
 
                 {productsOpen && (
                   <div
-                    className="absolute left-0 top-full mt-2 w-72 bg-white rounded-lg shadow-xl border z-50 py-2"
+                    className="absolute left-0 top-full mt-2 w-80 bg-white rounded-lg shadow-xl border z-50 py-2"
                     style={{ borderColor: 'var(--bg-border)' }}
                   >
-                    {Object.entries(grouped).map(([type, typeProducts]) => (
-                      <div key={type}>
-                        <p
-                          className="px-4 py-1.5 text-xs font-semibold uppercase tracking-wider"
-                          style={{ color: 'var(--text-muted)' }}
-                        >
-                          {PRODUCT_TYPE_LABELS[type] ?? type}
-                        </p>
-                        {typeProducts.map((p) => (
-                          <Link
-                            key={p.id}
-                            to={`/report?type=${p.slug}`}
-                            onClick={() => setProductsOpen(false)}
-                            className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
-                            style={{ color: 'var(--text-body)' }}
-                          >
-                            <span>{PRODUCT_TYPE_ICONS[p.type] ?? '📋'}</span>
-                            <span>{p.name}</span>
-                          </Link>
-                        ))}
-                      </div>
-                    ))}
+                    {/* Reports group */}
+                    {(grouped['structure'] || grouped['credit'] || grouped['kyb'] || grouped['monitoring'] || grouped['extract'])
+                      ? (
+                        <div>
+                          <p className="px-4 py-1.5 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
+                            Reports
+                          </p>
+                          {Object.entries(grouped)
+                            .filter(([type]) => type !== 'certificate' && type !== 'cert')
+                            .flatMap(([, ps]) => ps)
+                            .map((p) => (
+                              <Link
+                                key={p.id}
+                                to={`/report?type=${p.slug}`}
+                                onClick={() => setProductsOpen(false)}
+                                className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                                style={{ color: 'var(--text-body)' }}
+                              >
+                                <span>📋</span>
+                                <span>{p.name}</span>
+                              </Link>
+                            ))}
+                        </div>
+                      ) : null}
+
+                    {/* Certificates group */}
+                    {(grouped['certificate'] || grouped['cert'])
+                      ? (
+                        <div>
+                          <div className="mx-4 my-1 border-t" style={{ borderColor: 'var(--bg-border)' }} />
+                          <p className="px-4 py-1.5 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
+                            Certificates
+                          </p>
+                          {[...(grouped['certificate'] ?? []), ...(grouped['cert'] ?? [])].map((p) => (
+                            <Link
+                              key={p.id}
+                              to={`/report?type=${p.slug}`}
+                              onClick={() => setProductsOpen(false)}
+                              className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                              style={{ color: 'var(--text-body)' }}
+                            >
+                              <span>📄</span>
+                              <span>{p.name}</span>
+                            </Link>
+                          ))}
+                        </div>
+                      ) : null}
+
                     {products.length === 0 && (
                       <p className="px-4 py-3 text-sm" style={{ color: 'var(--text-muted)' }}>
                         No products available
                       </p>
                     )}
+
+                    {/* Register a Company section */}
+                    <div>
+                      <div className="mx-4 my-1 border-t" style={{ borderColor: 'var(--bg-border)' }} />
+                      <p className="px-4 py-1.5 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
+                        Register a Company
+                      </p>
+                      <Link
+                        to="/company-set-up"
+                        onClick={() => setProductsOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                        style={{ color: 'var(--text-body)' }}
+                      >
+                        <span>🏢</span>
+                        <span>Company Set Up</span>
+                      </Link>
+                      <Link
+                        to="/business-name-approval"
+                        onClick={() => setProductsOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                        style={{ color: 'var(--text-body)' }}
+                      >
+                        <span>✅</span>
+                        <span>Business Name Approval</span>
+                      </Link>
+                    </div>
                   </div>
                 )}
               </div>
