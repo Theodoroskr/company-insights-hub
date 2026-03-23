@@ -66,6 +66,7 @@ const App = () => (
               <Route path="/search" element={<Navigate to="/company/search" replace />} />
               <Route path="/report" element={<ProductLandingPage />} />
               <Route path="/company-set-up" element={<CompanySetUpPage />} />
+              <Route path="/business-name-approval" element={<BusinessNameApprovalPage />} />
               <Route path="/company/:slug" element={<CompanyProfilePage />} />
               <Route path="/companies/:letter" element={<CompanyBrowseByLetterPage />} />
 
