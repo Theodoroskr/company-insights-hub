@@ -5,7 +5,7 @@ import PageLayout from '../components/layout/PageLayout';
 import StatusBadge from '../components/ui/StatusBadge';
 import GatedContent from '../components/ui/GatedContent';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
-import { RiskTrafficLight } from '../components/ui/RiskTrafficLight';
+import RiskTrafficLight from '../components/ui/RiskTrafficLight';
 import { useTenant } from '../lib/tenant.tsx';
 import { useCountries } from '../lib/countries';
 import { supabase } from '@/integrations/supabase/client';

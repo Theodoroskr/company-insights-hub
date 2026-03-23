@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import PageLayout from '../components/layout/PageLayout';
 import StatusBadge from '../components/ui/StatusBadge';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
-import { SearchWidget } from '../components/search/SearchWidget';
+import SearchWidget from '../components/search/SearchWidget';
 import { useTenant } from '../lib/tenant.tsx';
 import { useCountries } from '../lib/countries';
 import { supabase } from '@/integrations/supabase/client';
