@@ -117,19 +117,15 @@ export default function Navbar() {
             {/* ── Desktop nav ── */}
             <div className="hidden md:flex items-center gap-6">
 
-              {/* Products dropdown */}
+              {/* Products dropdown — tabbed */}
               <div ref={productsRef} className="relative">
                 <button
                   type="button"
                   onClick={() => setProductsOpen((v) => !v)}
                   className="flex items-center gap-1 text-sm font-medium transition-colors"
-                  style={{ color: 'var(--text-body)' }}
-                  onMouseOver={(e) =>
-                    (e.currentTarget.style.color = 'var(--brand-accent)')
-                  }
-                  onMouseOut={(e) =>
-                    (e.currentTarget.style.color = productsOpen ? 'var(--brand-accent)' : 'var(--text-body)')
-                  }
+                  style={{ color: productsOpen ? 'var(--brand-accent)' : 'var(--text-body)' }}
+                  onMouseOver={(e) => (e.currentTarget.style.color = 'var(--brand-accent)')}
+                  onMouseOut={(e) => (e.currentTarget.style.color = productsOpen ? 'var(--brand-accent)' : 'var(--text-body)')}
                 >
                   Products
                   <ChevronDown className={`w-4 h-4 transition-transform ${productsOpen ? 'rotate-180' : ''}`} />
@@ -137,16 +133,41 @@ export default function Navbar() {
 
                 {productsOpen && (
                   <div
-                    className="absolute left-0 top-full mt-2 w-80 bg-white rounded-lg shadow-xl border z-50 py-2"
-                    style={{ borderColor: 'var(--bg-border)' }}
+                    className="absolute left-0 top-full mt-2 bg-white rounded-lg shadow-xl border z-50 overflow-hidden"
+                    style={{ borderColor: 'var(--bg-border)', width: '420px' }}
                   >
-                    {/* Reports group */}
-                    {(grouped['structure'] || grouped['credit'] || grouped['kyb'] || grouped['monitoring'] || grouped['extract'])
-                      ? (
-                        <div>
-                          <p className="px-4 py-1.5 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
-                            Reports
-                          </p>
+                    {/* ── Tab headers ── */}
+                    <div className="flex border-b" style={{ borderColor: 'var(--bg-border)' }}>
+                      {(
+                        [
+                          { key: 'reports',      label: '📋 Reports' },
+                          { key: 'certificates', label: '📄 Certificates' },
+                          { key: 'register',     label: '🏢 Register' },
+                        ] as { key: DropdownTab; label: string }[]
+                      ).map(({ key, label }) => (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => setActiveTab(key)}
+                          className="flex-1 py-2.5 text-xs font-semibold transition-colors"
+                          style={{
+                            color: activeTab === key ? 'var(--brand-accent)' : 'var(--text-muted)',
+                            borderBottom: activeTab === key ? '2px solid var(--brand-accent)' : '2px solid transparent',
+                            marginBottom: '-1px',
+                            background: 'none',
+                          }}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* ── Tab content ── */}
+                    <div className="py-2 max-h-72 overflow-y-auto">
+
+                      {/* Reports tab */}
+                      {activeTab === 'reports' && (
+                        <>
                           {Object.entries(grouped)
                             .filter(([type]) => type !== 'certificate' && type !== 'cert')
                             .flatMap(([, ps]) => ps)
@@ -155,69 +176,77 @@ export default function Navbar() {
                                 key={p.id}
                                 to={`/report?type=${p.slug}`}
                                 onClick={() => setProductsOpen(false)}
-                                className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                                className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors"
                                 style={{ color: 'var(--text-body)' }}
+                                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
+                                onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                               >
-                                <span>📋</span>
+                                <span className="text-base">📋</span>
                                 <span>{p.name}</span>
                               </Link>
                             ))}
-                        </div>
-                      ) : null}
+                          {products.filter(p => p.type !== 'certificate' && p.type !== 'cert').length === 0 && (
+                            <p className="px-4 py-3 text-sm" style={{ color: 'var(--text-muted)' }}>No reports available</p>
+                          )}
+                        </>
+                      )}
 
-                    {/* Certificates group */}
-                    {(grouped['certificate'] || grouped['cert'])
-                      ? (
-                        <div>
-                          <div className="mx-4 my-1 border-t" style={{ borderColor: 'var(--bg-border)' }} />
-                          <p className="px-4 py-1.5 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
-                            Certificates
-                          </p>
+                      {/* Certificates tab */}
+                      {activeTab === 'certificates' && (
+                        <>
                           {[...(grouped['certificate'] ?? []), ...(grouped['cert'] ?? [])].map((p) => (
                             <Link
                               key={p.id}
                               to={`/report?type=${p.slug}`}
                               onClick={() => setProductsOpen(false)}
-                              className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                              className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors"
                               style={{ color: 'var(--text-body)' }}
+                              onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
+                              onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                             >
-                              <span>📄</span>
+                              <span className="text-base">📄</span>
                               <span>{p.name}</span>
                             </Link>
                           ))}
-                        </div>
-                      ) : null}
+                          {(grouped['certificate'] ?? []).length === 0 && (grouped['cert'] ?? []).length === 0 && (
+                            <p className="px-4 py-3 text-sm" style={{ color: 'var(--text-muted)' }}>No certificates available</p>
+                          )}
+                        </>
+                      )}
 
-                    {products.length === 0 && (
-                      <p className="px-4 py-3 text-sm" style={{ color: 'var(--text-muted)' }}>
-                        No products available
-                      </p>
-                    )}
-
-                    {/* Register a Company section */}
-                    <div>
-                      <div className="mx-4 my-1 border-t" style={{ borderColor: 'var(--bg-border)' }} />
-                      <p className="px-4 py-1.5 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
-                        Register a Company
-                      </p>
-                      <Link
-                        to="/company-set-up"
-                        onClick={() => setProductsOpen(false)}
-                        className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
-                        style={{ color: 'var(--text-body)' }}
-                      >
-                        <span>🏢</span>
-                        <span>Company Set Up</span>
-                      </Link>
-                      <Link
-                        to="/business-name-approval"
-                        onClick={() => setProductsOpen(false)}
-                        className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
-                        style={{ color: 'var(--text-body)' }}
-                      >
-                        <span>✅</span>
-                        <span>Business Name Approval</span>
-                      </Link>
+                      {/* Register tab */}
+                      {activeTab === 'register' && (
+                        <>
+                          <Link
+                            to="/company-set-up"
+                            onClick={() => setProductsOpen(false)}
+                            className="flex items-center gap-3 px-4 py-3 text-sm transition-colors"
+                            style={{ color: 'var(--text-body)' }}
+                            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
+                            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                          >
+                            <span className="text-base">🏢</span>
+                            <div>
+                              <p className="font-semibold" style={{ color: 'var(--text-heading)' }}>Company Set Up</p>
+                              <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Register a new company in Cyprus</p>
+                            </div>
+                          </Link>
+                          <Link
+                            to="/business-name-approval"
+                            onClick={() => setProductsOpen(false)}
+                            className="flex items-center gap-3 px-4 py-3 text-sm transition-colors"
+                            style={{ color: 'var(--text-body)' }}
+                            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
+                            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                          >
+                            <span className="text-base">✅</span>
+                            <div>
+                              <p className="font-semibold" style={{ color: 'var(--text-heading)' }}>Business Name Approval</p>
+                              <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Check and reserve your trade or company name</p>
+                            </div>
+                          </Link>
+                        </>
+                      )}
                     </div>
                   </div>
                 )}
