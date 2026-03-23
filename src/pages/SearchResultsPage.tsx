@@ -296,6 +296,13 @@ export default function SearchResultsPage() {
                     Showing results from{' '}
                     {countryParam ? countryName : 'all countries'} company registry
                   </p>
+                  {dataSource && (
+                    <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                      {dataSource === 'api4all'
+                        ? '🟢 Live data from official registry'
+                        : `⏱ Cached data · ${firstCachedAt ? new Date(firstCachedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : ''}`}
+                    </p>
+                  )}
                 </>
               )}
             </div>
