@@ -32,6 +32,7 @@ import AccountOrderDetailPage from "./pages/account/AccountOrderDetailPage";
 import AccountDownloadsPage from "./pages/account/AccountDownloadsPage";
 import AccountMonitoringPage from "./pages/account/AccountMonitoringPage";
 import AccountProfilePage from "./pages/account/AccountProfilePage";
+import AccountInvoicesPage from "./pages/account/AccountInvoicesPage";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
