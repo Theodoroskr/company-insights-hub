@@ -105,19 +105,23 @@ export default function CheckoutPaymentPage() {
       const vatAmount = (details?.effectiveVat as number) ?? 0;
       const total = subtotal + vatAmount;
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const insertPayload: any = {
+        tenant_id: tenant?.id ?? null,
+        user_id: session?.user?.id ?? null,
+        order_ref: orderRef,
+        status: 'paid',
+        subtotal,
+        vat_amount: vatAmount,
+        total,
+        currency: 'EUR',
+        guest_email: session ? null : customerEmail,
+        guest_details: session ? null : details,
+      };
+
       const { data: orderData, error: orderErr } = await supabase
         .from('orders')
-        .insert({
-          tenant_id: tenant?.id ?? null,
-          user_id: session?.user?.id ?? null,
-          order_ref: orderRef,
-          status: 'paid',
-          subtotal,
-          vat_amount: vatAmount,
-          total,
-          currency: 'EUR',
-          guest_email: session ? null : customerEmail,
-          guest_details: session ? null : details,
+        .insert(insertPayload
         })
         .select()
         .single();
