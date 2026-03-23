@@ -260,7 +260,7 @@ export default function CompanyProfilePage() {
             We couldn't find a company matching that profile URL.
           </p>
           <Link
-            to="/search"
+            to="/company/search"
             className="px-6 py-3 rounded text-sm font-semibold text-white"
             style={{ backgroundColor: 'var(--brand-accent)', borderRadius: '6px' }}
           >
