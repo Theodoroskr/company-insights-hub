@@ -96,12 +96,13 @@ function PersonRow({ name, role }: { name: string; role: string }) {
 
 function ProductOrderRow({
   product,
-  companyIcgCode,
+  company,
 }: {
   product: Product;
-  companyIcgCode: string;
+  company: { id: string; icg_code: string; name: string; reg_no: string | null; slug: string | null; country_code: string };
 }) {
   const navigate = useNavigate();
+  const { addItem } = useCart();
   const speeds: ProductSpeed[] = Array.isArray(product.available_speeds)
     ? (product.available_speeds as ProductSpeed[])
     : [];
@@ -109,6 +110,12 @@ function ProductOrderRow({
 
   const currentSpeed = speeds.find((s) => s.code === selectedSpeed);
   const price = product.base_price + (currentSpeed?.price_delta ?? 0);
+
+  const handleAddToCart = () => {
+    addItem(product, company, selectedSpeed);
+    toast({ title: '🛒 Added to cart', description: `${product.name} for ${company.name}` });
+    navigate('/cart');
+  };
 
   return (
     <div className="py-4 border-b last:border-0" style={{ borderColor: 'var(--bg-border)' }}>
@@ -151,11 +158,7 @@ function ProductOrderRow({
           style={{ backgroundColor: 'var(--brand-accent)', borderRadius: '6px' }}
           onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--brand-accent-hover)')}
           onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'var(--brand-accent)')}
-          onClick={() =>
-            navigate(
-              `/checkout?product=${product.id}&company=${companyIcgCode}&speed=${selectedSpeed}`
-            )
-          }
+          onClick={handleAddToCart}
         >
           Order Now
         </button>
