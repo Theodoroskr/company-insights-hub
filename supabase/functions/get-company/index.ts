@@ -38,10 +38,11 @@ async function getApiToken(sb: ReturnType<typeof getSupabase>): Promise<string> 
 
   if (tokenRow?.access_token) return tokenRow.access_token;
 
-  const res = await fetch(`${API_BASE}/token`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password, project_code: projectCode }),
+  // GET /token/{project_code} with Basic Auth
+  const credentials = btoa(`${username}:${password}`);
+  const res = await fetch(`${API_BASE}/token/${encodeURIComponent(projectCode)}`, {
+    method: 'GET',
+    headers: { Authorization: `Basic ${credentials}` },
   });
 
   if (!res.ok) throw new Error(`API4All auth failed (${res.status})`);
