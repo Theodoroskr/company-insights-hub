@@ -185,7 +185,7 @@ export default function Navbar() {
                                 <span>{p.name}</span>
                               </Link>
                             ))}
-                          {products.filter(p => p.type !== 'certificate' && p.type !== 'cert').length === 0 && (
+                          {products.filter(p => !['certificate', 'cert'].includes(p.type as string)).length === 0 && (
                             <p className="px-4 py-3 text-sm" style={{ color: 'var(--text-muted)' }}>No reports available</p>
                           )}
                         </>
