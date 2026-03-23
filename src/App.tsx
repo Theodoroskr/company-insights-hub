@@ -36,9 +36,13 @@ import AccountProfilePage from "./pages/account/AccountProfilePage";
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminOrdersPage from "./pages/admin/AdminOrdersPage";
+import AdminOrderDetailPage from "./pages/admin/AdminOrderDetailPage";
 import AdminFulfillmentPage from "./pages/admin/AdminFulfillmentPage";
 import AdminProductsPage from "./pages/admin/AdminProductsPage";
 import AdminCustomersPage from "./pages/admin/AdminCustomersPage";
+import AdminPromoCodesPage from "./pages/admin/AdminPromoCodesPage";
+import AdminSourceHealthPage from "./pages/admin/AdminSourceHealthPage";
+import AdminAuditLogsPage from "./pages/admin/AdminAuditLogsPage";
 import AdminSettingsPage from "./pages/admin/AdminSettingsPage";
 
 const queryClient = new QueryClient();
