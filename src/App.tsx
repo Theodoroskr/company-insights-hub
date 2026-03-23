@@ -16,6 +16,8 @@ import HomePage from "./pages/HomePage";
 import SearchResultsPage from "./pages/SearchResultsPage";
 import CompanyProfilePage from "./pages/CompanyProfilePage";
 import CompanyBrowseByLetterPage from "./pages/CompanyBrowseByLetterPage";
+import ProductLandingPage from "./pages/ProductLandingPage";
+import CompanySetUpPage from "./pages/CompanySetUpPage";
 import CartPage from "./pages/CartPage";
 import CheckoutDetailsPage from "./pages/CheckoutDetailsPage";
 import CheckoutPaymentPage from "./pages/CheckoutPaymentPage";
@@ -61,6 +63,8 @@ const App = () => (
               <Route path="/" element={<HomePage />} />
               <Route path="/company/search" element={<SearchResultsPage />} />
               <Route path="/search" element={<Navigate to="/company/search" replace />} />
+              <Route path="/report" element={<ProductLandingPage />} />
+              <Route path="/company-set-up" element={<CompanySetUpPage />} />
               <Route path="/company/:slug" element={<CompanyProfilePage />} />
               <Route path="/companies/:letter" element={<CompanyBrowseByLetterPage />} />
 
