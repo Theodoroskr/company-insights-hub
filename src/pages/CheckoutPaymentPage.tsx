@@ -142,6 +142,16 @@ export default function CheckoutPaymentPage() {
         )
       );
 
+      // Submit to API4All immediately after order creation
+      try {
+        await supabase.functions.invoke('create-api4all-order', {
+          body: { order_id: orderData.id },
+        });
+      } catch (fulfillmentErr) {
+        // Non-blocking — order is already saved, fulfillment will retry via cron
+        console.warn('API4All submission failed (will retry):', fulfillmentErr);
+      }
+
       // Store success info for confirmation page
       sessionStorage.setItem(
         'checkout_success',
