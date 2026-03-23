@@ -107,32 +107,64 @@ function ProductOrderRow({
   const price = product.base_price + (currentSpeed?.price_delta ?? 0);
   const [modalOpen, setModalOpen] = useState(false);
 
-  // Cast company to Company shape expected by modal
   const companyForModal = company as unknown as import('../types/database').Company;
 
+  const handleSample = () => {
+    if (product.sample_pdf_url) {
+      window.open(product.sample_pdf_url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   return (
-    <div className="py-4 border-b last:border-0" style={{ borderColor: 'var(--bg-border)' }}>
+    <div className="py-3 border-b last:border-0" style={{ borderColor: 'var(--bg-border)' }}>
+      {/* Name + delivery */}
       <div className="flex items-start justify-between gap-2">
         <span className="text-sm font-medium" style={{ color: 'var(--text-heading)' }}>
           {PRODUCT_ICONS[product.type] ?? '📄'} {product.name}
         </span>
-        <span className="text-xs shrink-0" style={{ color: product.is_instant ? 'var(--status-active)' : 'var(--text-muted)' }}>
-          {product.is_instant ? '⚡ Instant' : `📋 ${product.delivery_sla_hours}hr SLA`}
+        <span
+          className="text-xs shrink-0"
+          style={{ color: product.is_instant ? 'var(--status-active)' : 'var(--text-muted)' }}
+        >
+          {product.is_instant ? '⚡ Instant' : `${product.delivery_sla_hours}hr`}
         </span>
       </div>
 
-      {product.description && (
-        <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-          {product.description}
-        </p>
-      )}
-
-      <div className="mt-3 flex items-center justify-between">
-        <span className="text-xl font-bold" style={{ color: 'var(--text-heading)' }}>
+      {/* Price pill + buttons */}
+      <div className="mt-2.5 flex items-center gap-2">
+        {/* Price pill */}
+        <span
+          className="text-sm font-semibold text-center"
+          style={{
+            border: '1px solid var(--bg-border)',
+            borderRadius: '999px',
+            padding: '2px 10px',
+            minWidth: '60px',
+            color: 'var(--text-heading)',
+            display: 'inline-block',
+          }}
+        >
           €{price.toFixed(0)}
         </span>
+
+        {/* Sample button (outlined) */}
+        {product.sample_pdf_url && (
+          <button
+            onClick={handleSample}
+            className="px-3 py-1.5 rounded text-xs font-medium border transition-all active:scale-95 hover:bg-opacity-5"
+            style={{
+              borderColor: 'var(--brand-accent)',
+              color: 'var(--brand-accent)',
+              borderRadius: '6px',
+            }}
+          >
+            Sample
+          </button>
+        )}
+
+        {/* Order Now button */}
         <button
-          className="px-4 py-2 rounded text-sm font-semibold text-white transition-all active:scale-95"
+          className="ml-auto px-3 py-1.5 rounded text-xs font-semibold text-white transition-all active:scale-95"
           style={{ backgroundColor: 'var(--brand-accent)', borderRadius: '6px' }}
           onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--brand-accent-hover)')}
           onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'var(--brand-accent)')}
@@ -148,6 +180,51 @@ function ProductOrderRow({
         preselectedProduct={product}
         preselectedCompany={companyForModal}
       />
+    </div>
+  );
+}
+
+// ── Collapsible product section ───────────────────────────────
+
+function ProductSection({
+  title,
+  products,
+  company,
+  defaultVisible = 3,
+}: {
+  title: string;
+  products: Product[];
+  company: { id: string; icg_code: string; name: string; reg_no: string | null; slug: string | null; country_code: string };
+  defaultVisible?: number;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  if (products.length === 0) return null;
+
+  const visible = expanded ? products : products.slice(0, defaultVisible);
+  const hasMore = products.length > defaultVisible;
+
+  return (
+    <div>
+      <h3 className="text-sm font-semibold mb-1" style={{ color: 'var(--text-subheading)' }}>
+        {title}
+      </h3>
+      <div
+        className="overflow-hidden transition-all duration-300"
+        style={{ maxHeight: expanded ? `${products.length * 80}px` : `${defaultVisible * 80}px` }}
+      >
+        {visible.map((product) => (
+          <ProductOrderRow key={product.id} product={product} company={company} />
+        ))}
+      </div>
+      {hasMore && (
+        <button
+          onClick={() => setExpanded((v) => !v)}
+          className="mt-1 text-xs transition-opacity hover:opacity-70 flex items-center gap-1"
+          style={{ color: 'var(--brand-accent)' }}
+        >
+          {expanded ? <>See less ∧</> : <>See more ∨</>}
+        </button>
+      )}
     </div>
   );
 }
@@ -297,9 +374,19 @@ export default function CompanyProfilePage() {
   }
 
   const countryInfo = getCountryInfo(company.country_code);
-  const nonMonitoringProducts = products.filter((p) => p.type !== 'monitoring');
+  const reportProducts = products.filter((p) => p.type !== 'monitoring' && p.type !== 'certificate');
+  const certificateProducts = products.filter((p) => p.type === 'certificate');
   const monitoringProduct = products.find((p) => p.type === 'monitoring');
   const samplePdfUrl = products[0]?.sample_pdf_url ?? null;
+
+  const companySidebarShape = {
+    id: company.id,
+    icg_code: company.icg_code,
+    name: company.name,
+    reg_no: company.reg_no,
+    slug: company.slug,
+    country_code: company.country_code,
+  };
 
   const orgSchema = {
     '@context': 'https://schema.org',
@@ -604,8 +691,8 @@ export default function CompanyProfilePage() {
           <aside id="sidebar-products" className="w-full lg:w-80 shrink-0">
             <div className="lg:sticky lg:top-24 space-y-4">
 
-              {/* Card 1 — Order Reports */}
-              {nonMonitoringProducts.length > 0 && (
+              {/* Card 1 — Order Reports + Certificates */}
+              {(reportProducts.length > 0 || certificateProducts.length > 0) && (
                 <div
                   className="rounded-lg border p-5"
                   style={{
@@ -614,32 +701,32 @@ export default function CompanyProfilePage() {
                     borderRadius: '8px',
                   }}
                 >
-                  <h2
-                    className="font-semibold text-lg"
-                    style={{ color: 'var(--text-heading)' }}
-                  >
-                    Order Reports
+                  <h2 className="font-semibold text-base mb-0.5" style={{ color: 'var(--text-heading)' }}>
+                    Order Reports & Certificates
                   </h2>
-                  <p className="text-sm mb-1" style={{ color: 'var(--text-muted)' }}>
+                  <p className="text-xs mb-4" style={{ color: 'var(--text-muted)' }}>
                     for {company.name}
                   </p>
 
-                  <div className="mt-4">
-                    {nonMonitoringProducts.map((product) => (
-                      <ProductOrderRow
-                        key={product.id}
-                        product={product}
-                        company={{
-                          id: company.id,
-                          icg_code: company.icg_code,
-                          name: company.name,
-                          reg_no: company.reg_no,
-                          slug: company.slug,
-                          country_code: company.country_code,
-                        }}
+                  {/* Order Reports section */}
+                  {reportProducts.length > 0 && (
+                    <ProductSection
+                      title="Order Reports"
+                      products={reportProducts}
+                      company={companySidebarShape}
+                    />
+                  )}
+
+                  {/* Certificates section */}
+                  {certificateProducts.length > 0 && (
+                    <div className={reportProducts.length > 0 ? 'mt-4 pt-4 border-t' : ''} style={{ borderColor: 'var(--bg-border)' }}>
+                      <ProductSection
+                        title="Certificates"
+                        products={certificateProducts}
+                        company={companySidebarShape}
                       />
-                    ))}
-                  </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -678,16 +765,33 @@ export default function CompanyProfilePage() {
                   className="mt-3 w-full py-2 rounded text-sm font-semibold text-white transition-all active:scale-95"
                   style={{ backgroundColor: 'var(--brand-primary)', borderRadius: '6px' }}
                   onClick={() =>
-                    navigate(
-                      `/checkout?product=monitoring&company=${company.icg_code}`
-                    )
+                    navigate(`/checkout?product=monitoring&company=${company.icg_code}`)
                   }
                 >
                   Start Monitoring
                 </button>
               </div>
 
-              {/* Card 3 — Sample Report */}
+              {/* Card 3 — Dicover internationally */}
+              <div
+                className="rounded-lg p-4"
+                style={{ backgroundColor: 'var(--bg-subtle)', borderRadius: '8px' }}
+              >
+                <p className="text-sm" style={{ color: 'var(--text-body)' }}>
+                  Looking for similar companies internationally?
+                </p>
+                <a
+                  href={`https://www.infocreditworld.com/#${encodeURIComponent(company.name)}/blank&c`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 mt-3 px-4 py-2 rounded text-sm font-medium text-white transition-all active:scale-95"
+                  style={{ backgroundColor: 'var(--brand-accent)' }}
+                >
+                  Dicover ↗
+                </a>
+              </div>
+
+              {/* Card 4 — Sample Report */}
               {samplePdfUrl && (
                 <div
                   className="rounded-lg border p-4 text-center"
