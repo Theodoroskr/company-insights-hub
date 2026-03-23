@@ -348,6 +348,7 @@ export type Database = {
         Row: {
           api4all_item_code: string | null
           api4all_order_id: string | null
+          assigned_to: string | null
           company_id: string | null
           created_at: string | null
           fresh_investigation: boolean | null
@@ -363,6 +364,7 @@ export type Database = {
         Insert: {
           api4all_item_code?: string | null
           api4all_order_id?: string | null
+          assigned_to?: string | null
           company_id?: string | null
           created_at?: string | null
           fresh_investigation?: boolean | null
@@ -378,6 +380,7 @@ export type Database = {
         Update: {
           api4all_item_code?: string | null
           api4all_order_id?: string | null
+          assigned_to?: string | null
           company_id?: string | null
           created_at?: string | null
           fresh_investigation?: boolean | null
@@ -589,6 +592,53 @@ export type Database = {
           role?: string | null
         }
         Relationships: []
+      }
+      promo_codes: {
+        Row: {
+          code: string
+          created_at: string | null
+          discount_type: string
+          discount_value: number
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          max_uses: number | null
+          tenant_id: string | null
+          uses_count: number
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          discount_type?: string
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          tenant_id?: string | null
+          uses_count?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          discount_type?: string
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          tenant_id?: string | null
+          uses_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promo_codes_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       search_logs: {
         Row: {

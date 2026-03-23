@@ -36,9 +36,13 @@ import AccountProfilePage from "./pages/account/AccountProfilePage";
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminOrdersPage from "./pages/admin/AdminOrdersPage";
+import AdminOrderDetailPage from "./pages/admin/AdminOrderDetailPage";
 import AdminFulfillmentPage from "./pages/admin/AdminFulfillmentPage";
 import AdminProductsPage from "./pages/admin/AdminProductsPage";
 import AdminCustomersPage from "./pages/admin/AdminCustomersPage";
+import AdminPromoCodesPage from "./pages/admin/AdminPromoCodesPage";
+import AdminSourceHealthPage from "./pages/admin/AdminSourceHealthPage";
+import AdminAuditLogsPage from "./pages/admin/AdminAuditLogsPage";
 import AdminSettingsPage from "./pages/admin/AdminSettingsPage";
 
 const queryClient = new QueryClient();
@@ -80,9 +84,13 @@ const App = () => (
               {/* ── Admin only ── */}
               <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
               <Route path="/admin/orders" element={<AdminRoute><AdminOrdersPage /></AdminRoute>} />
+              <Route path="/admin/orders/:id" element={<AdminRoute><AdminOrderDetailPage /></AdminRoute>} />
               <Route path="/admin/fulfillment" element={<AdminRoute><AdminFulfillmentPage /></AdminRoute>} />
               <Route path="/admin/products" element={<AdminRoute><AdminProductsPage /></AdminRoute>} />
               <Route path="/admin/customers" element={<AdminRoute><AdminCustomersPage /></AdminRoute>} />
+              <Route path="/admin/promo-codes" element={<AdminRoute><AdminPromoCodesPage /></AdminRoute>} />
+              <Route path="/admin/source-health" element={<AdminRoute><AdminSourceHealthPage /></AdminRoute>} />
+              <Route path="/admin/audit-logs" element={<AdminRoute><AdminAuditLogsPage /></AdminRoute>} />
               <Route path="/admin/settings" element={<AdminRoute><AdminSettingsPage /></AdminRoute>} />
 
               {/* ── Catch-all ── */}
