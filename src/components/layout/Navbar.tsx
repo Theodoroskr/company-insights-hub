@@ -6,7 +6,7 @@ import { supabase } from '../../lib/supabase';
 import { useCart } from '../../contexts/CartContext';
 import type { Product } from '../../types/database';
 
-type DropdownTab = 'reports' | 'certificates' | 'register';
+type OpenMenu = 'reports' | 'certificates' | 'register' | null;
 
 export default function Navbar() {
   const { tenant } = useTenant();
