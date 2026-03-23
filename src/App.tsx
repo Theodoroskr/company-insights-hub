@@ -15,8 +15,9 @@ import CompanyProfilePage from "./pages/CompanyProfilePage";
 import CompanyBrowseByLetterPage from "./pages/CompanyBrowseByLetterPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import CheckoutSuccessPage from "./pages/CheckoutSuccessPage";
-import LoginPage from "./pages/LoginPage";
-import RegisterPage from "./pages/RegisterPage";
+import LoginPage from "./pages/auth/LoginPage";
+import RegisterPage from "./pages/auth/RegisterPage";
+import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
 import NotFound from "./pages/NotFound";
 
 // Account pages
