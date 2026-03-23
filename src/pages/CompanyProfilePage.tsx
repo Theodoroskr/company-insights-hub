@@ -180,26 +180,26 @@ export default function CompanyProfilePage() {
     return countries.find((c) => c.code.toUpperCase() === code.toUpperCase());
   };
 
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   useEffect(() => {
     if (!slug || !tenant) return;
 
     async function load() {
       setIsLoading(true);
 
-      // Fetch company
-      const { data: companyData, error } = await supabase
-        .from('companies')
-        .select('*')
-        .eq('slug', slug!)
-        .maybeSingle();
+      // Use edge function to get company with stale-while-revalidate
+      const { data: efData } = await supabase.functions.invoke('get-company', {
+        body: { slug, tenant_id: tenant!.id },
+      });
 
-      if (error || !companyData) {
+      if (!efData?.company) {
         setNotFound(true);
         setIsLoading(false);
         return;
       }
 
-      const comp = companyData as Company;
+      const comp = efData.company as Company;
       setCompany(comp);
 
       // Fetch products and affiliated in parallel
@@ -220,7 +220,6 @@ export default function CompanyProfilePage() {
       ]);
 
       if (productsRes.data) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setProducts(
           (productsRes.data as unknown as Product[]).map((p) => ({
             ...p,
@@ -238,6 +237,25 @@ export default function CompanyProfilePage() {
 
     load();
   }, [slug, tenant]);
+
+  const handleFreshDataRequest = async () => {
+    if (!company || !tenant || isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      await supabase.functions.invoke('search-companies', {
+        body: {
+          q: company.name,
+          country: company.country_code.toLowerCase(),
+          tenant_id: tenant.id,
+          fresh: true,
+        },
+      });
+      // Reload the page to show fresh data
+      window.location.reload();
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   // ── Not found ──
   if (!isLoading && notFound) {
@@ -369,11 +387,12 @@ export default function CompanyProfilePage() {
                 Data sourced from official registry · Last updated:{' '}
                 {formatDate(company.cached_at)}{' '}
                 <button
-                  className="ml-1 not-italic hover:underline"
+                  className="ml-1 not-italic hover:underline disabled:opacity-50"
                   style={{ color: 'var(--brand-accent)' }}
-                  onClick={() => {/* future: trigger fresh data request */}}
+                  onClick={handleFreshDataRequest}
+                  disabled={isRefreshing}
                 >
-                  Request fresh data →
+                  {isRefreshing ? 'Refreshing…' : 'Request fresh data →'}
                 </button>
               </p>
             </div>

@@ -55,7 +55,7 @@ export default function SearchWidget({
     }
   }, [isGlobal, tenant, selectedCountry]);
 
-  // Live search
+  // Live search via edge function
   useEffect(() => {
     if (debouncedQuery.length < 3) {
       setResults([]);
@@ -64,25 +64,27 @@ export default function SearchWidget({
     }
 
     async function runSearch() {
+      if (!tenant) return;
       setIsSearching(true);
-      let q = supabase
-        .from('companies')
-        .select('id, name, reg_no, status, slug, country_code')
-        .ilike('name', `%${debouncedQuery}%`)
-        .limit(5);
-
-      if (selectedCountry) {
-        q = q.eq('country_code', selectedCountry);
+      try {
+        const { data, error } = await supabase.functions.invoke('search-companies', {
+          body: {
+            q: debouncedQuery,
+            country: selectedCountry || tenant.country_code || 'cy',
+            tenant_id: tenant.id,
+          },
+        });
+        if (!error && data?.results) {
+          setResults((data.results as Company[]).slice(0, 8));
+          setShowResults(true);
+        }
+      } finally {
+        setIsSearching(false);
       }
-
-      const { data } = await q;
-      setResults((data as Company[]) ?? []);
-      setShowResults(true);
-      setIsSearching(false);
     }
 
     runSearch();
-  }, [debouncedQuery, selectedCountry]);
+  }, [debouncedQuery, selectedCountry, tenant]);
 
   // Close dropdown on outside click
   useEffect(() => {

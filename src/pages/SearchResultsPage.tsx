@@ -10,8 +10,6 @@ import { useCountries } from '../lib/countries';
 import { supabase } from '@/integrations/supabase/client';
 import type { Company } from '../types/database';
 
-const PAGE_SIZE = 50;
-
 export default function SearchResultsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -24,8 +22,9 @@ export default function SearchResultsPage() {
   const [results, setResults] = useState<Company[]>([]);
   const [filtered, setFiltered] = useState<Company[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
+  const [dataSource, setDataSource] = useState<'api4all' | 'cache' | null>(null);
+  const [firstCachedAt, setFirstCachedAt] = useState<string | null>(null);
 
   // Filter state
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'dissolved'>('all');
@@ -47,59 +46,44 @@ export default function SearchResultsPage() {
       if (!q || q.length < 2 || !tenant) return;
       setIsLoading(true);
 
-      const offset = append ? results.length : 0;
-
-      let query = supabase
-        .from('companies')
-        .select('*')
-        .eq('tenant_id', tenant.id)
-        .ilike('name', `%${q}%`)
-        .order('name', { ascending: true })
-        .range(offset, offset + PAGE_SIZE - 1);
-
-      if (countryParam) {
-        query = query.eq('country_code', countryParam.toUpperCase());
-      }
-
-      const { data, error } = await query;
-
-      if (!error && data) {
-        const companies = data as Company[];
-        // Client-side sort: exact match first, starts-with second, rest
-        const sorted = [...companies].sort((a, b) => {
-          const aU = a.name.toUpperCase();
-          const bU = b.name.toUpperCase();
-          const qU = q.toUpperCase();
-          const aScore = aU === qU ? 0 : aU.startsWith(qU) ? 1 : 2;
-          const bScore = bU === qU ? 0 : bU.startsWith(qU) ? 1 : 2;
-          if (aScore !== bScore) return aScore - bScore;
-          return aU.localeCompare(bU);
+      try {
+        const { data, error } = await supabase.functions.invoke('search-companies', {
+          body: {
+            q,
+            country: countryParam || tenant.country_code || 'cy',
+            tenant_id: tenant.id,
+          },
         });
 
-        const newResults = append ? [...results, ...sorted] : sorted;
-        setResults(newResults);
-        setHasMore(companies.length === PAGE_SIZE);
+        if (!error && data?.results) {
+          const companies: Company[] = data.results;
+          const newResults = append ? [...results, ...companies] : companies;
+          setResults(newResults);
+          setHasMore(companies.length === 50);
+          setDataSource(data.source ?? null);
+          setFirstCachedAt(companies[0]?.cached_at ?? null);
 
-        // Extract unique legal types
-        const types = Array.from(
-          new Set(newResults.map((c) => c.legal_form).filter(Boolean) as string[])
-        );
-        setLegalTypes(types);
-        if (!append) setSelectedLegalTypes(types);
+          const types = Array.from(
+            new Set(newResults.map((c) => c.legal_form).filter(Boolean) as string[])
+          );
+          setLegalTypes(types);
+          if (!append) setSelectedLegalTypes(types);
+        }
+      } finally {
+        setIsLoading(false);
       }
-
-      setIsLoading(false);
     },
-    [q, countryParam, tenant, results]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [q, countryParam, tenant?.id]
   );
 
-  // Initial fetch when q or tenant changes
+  // Reset + fetch when params change
   useEffect(() => {
     setResults([]);
-    setPage(1);
     setHasMore(false);
     setStatusFilter('all');
     setSelectedCountries([]);
+    setDataSource(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q, countryParam, tenant?.id]);
 
@@ -312,6 +296,13 @@ export default function SearchResultsPage() {
                     Showing results from{' '}
                     {countryParam ? countryName : 'all countries'} company registry
                   </p>
+                  {dataSource && (
+                    <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                      {dataSource === 'api4all'
+                        ? '🟢 Live data from official registry'
+                        : `⏱ Cached data · ${firstCachedAt ? new Date(firstCachedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : ''}`}
+                    </p>
+                  )}
                 </>
               )}
             </div>
