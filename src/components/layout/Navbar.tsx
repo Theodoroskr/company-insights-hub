@@ -169,7 +169,7 @@ export default function Navbar() {
                       {activeTab === 'reports' && (
                         <>
                           {Object.entries(grouped)
-                            .filter(([type]) => type !== 'certificate' && type !== 'cert')
+                            .filter(([type]) => !['certificate', 'cert'].includes(type as string))
                             .flatMap(([, ps]) => ps)
                             .map((p) => (
                               <Link
