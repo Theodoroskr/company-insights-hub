@@ -449,12 +449,12 @@ export default function Navbar() {
               ))}
 
               {/* Reports */}
-              {products.filter(p => p.type !== 'certificate' && p.type !== 'cert').length > 0 && (
+              {products.filter(p => (p.type as string) !== 'certificate' && (p.type as string) !== 'cert').length > 0 && (
                 <div>
                   <p className="py-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
                     Reports
                   </p>
-                  {products.filter(p => p.type !== 'certificate' && p.type !== 'cert').map((p) => (
+                  {products.filter(p => (p.type as string) !== 'certificate' && (p.type as string) !== 'cert').map((p) => (
                     <Link
                       key={p.id}
                       to={`/report?type=${p.slug}`}
@@ -469,12 +469,12 @@ export default function Navbar() {
                 </div>
               )}
               {/* Certificates */}
-              {products.filter(p => p.type === 'certificate' || p.type === 'cert').length > 0 && (
+              {products.filter(p => (p.type as string) === 'certificate' || (p.type as string) === 'cert').length > 0 && (
                 <div>
                   <p className="py-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
                     Certificates
                   </p>
-                  {products.filter(p => p.type === 'certificate' || p.type === 'cert').map((p) => (
+                  {products.filter(p => (p.type as string) === 'certificate' || (p.type as string) === 'cert').map((p) => (
                     <Link
                       key={p.id}
                       to={`/report?type=${p.slug}`}
