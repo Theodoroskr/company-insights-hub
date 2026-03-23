@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      api4all_tokens: {
+        Row: {
+          access_token: string
+          created_at: string | null
+          expires_at: string
+          id: string
+          project_code: string | null
+        }
+        Insert: {
+          access_token: string
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          project_code?: string | null
+        }
+        Update: {
+          access_token?: string
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          project_code?: string | null
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
