@@ -39,7 +39,7 @@ function Breadcrumb({ companyName }: { companyName: string }) {
     <nav className="text-sm mb-4 flex items-center gap-1 flex-wrap" style={{ color: 'var(--text-muted)' }}>
       <Link to="/" className="hover:underline" style={{ color: 'var(--text-muted)' }}>Home</Link>
       <span>›</span>
-      <Link to="/search" className="hover:underline" style={{ color: 'var(--text-muted)' }}>Search</Link>
+      <Link to="/company/search" className="hover:underline" style={{ color: 'var(--text-muted)' }}>Search</Link>
       <span>›</span>
       <span style={{ color: 'var(--text-body)' }}>{companyName}</span>
     </nav>
