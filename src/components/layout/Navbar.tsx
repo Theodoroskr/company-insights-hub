@@ -27,6 +27,7 @@ const PRODUCT_TYPE_LABELS: Record<string, string> = {
 export default function Navbar() {
   const { tenant } = useTenant();
   const navigate = useNavigate();
+  const { totalItems } = useCart();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [session, setSession] = useState<null | { user: { email?: string; id: string } }>(null);
