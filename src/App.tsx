@@ -76,11 +76,17 @@ const App = () => (
 
               {/* ── Protected: Account ── */}
               <Route path="/account" element={<ProtectedRoute><AccountDashboard /></ProtectedRoute>} />
+              <Route path="/account/profile" element={<ProtectedRoute><AccountProfilePage /></ProtectedRoute>} />
               <Route path="/account/orders" element={<ProtectedRoute><AccountOrdersPage /></ProtectedRoute>} />
               <Route path="/account/orders/:id" element={<ProtectedRoute><AccountOrderDetailPage /></ProtectedRoute>} />
+              <Route path="/account/invoices" element={<ProtectedRoute><AccountInvoicesPage /></ProtectedRoute>} />
               <Route path="/account/downloads" element={<ProtectedRoute><AccountDownloadsPage /></ProtectedRoute>} />
               <Route path="/account/monitoring" element={<ProtectedRoute><AccountMonitoringPage /></ProtectedRoute>} />
-              <Route path="/account/profile" element={<ProtectedRoute><AccountProfilePage /></ProtectedRoute>} />
+
+              {/* ── Legacy dashboard redirects ── */}
+              <Route path="/dashboard/profile" element={<Navigate to="/account/profile" replace />} />
+              <Route path="/dashboard/reports" element={<Navigate to="/account/orders" replace />} />
+              <Route path="/dashboard/invoices" element={<Navigate to="/account/invoices" replace />} />
 
               {/* ── Admin only ── */}
               <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
