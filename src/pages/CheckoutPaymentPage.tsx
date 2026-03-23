@@ -121,8 +121,7 @@ export default function CheckoutPaymentPage() {
 
       const { data: orderData, error: orderErr } = await supabase
         .from('orders')
-        .insert(insertPayload
-        })
+        .insert(insertPayload)
         .select()
         .single();
 
