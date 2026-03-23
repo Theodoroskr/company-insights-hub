@@ -17,9 +17,8 @@ export default function Navbar() {
   const [session, setSession] = useState<null | { user: { email?: string; id: string } }>(null);
   const [userProfile, setUserProfile] = useState<{ full_name?: string; role?: string } | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [productsOpen, setProductsOpen] = useState(false);
+  const [openMenu, setOpenMenu] = useState<OpenMenu>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<DropdownTab>('reports');
 
   const productsRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
