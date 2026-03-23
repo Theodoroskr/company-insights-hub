@@ -691,8 +691,8 @@ export default function CompanyProfilePage() {
           <aside id="sidebar-products" className="w-full lg:w-80 shrink-0">
             <div className="lg:sticky lg:top-24 space-y-4">
 
-              {/* Card 1 — Order Reports */}
-              {nonMonitoringProducts.length > 0 && (
+              {/* Card 1 — Order Reports + Certificates */}
+              {(reportProducts.length > 0 || certificateProducts.length > 0) && (
                 <div
                   className="rounded-lg border p-5"
                   style={{
@@ -701,32 +701,32 @@ export default function CompanyProfilePage() {
                     borderRadius: '8px',
                   }}
                 >
-                  <h2
-                    className="font-semibold text-lg"
-                    style={{ color: 'var(--text-heading)' }}
-                  >
-                    Order Reports
+                  <h2 className="font-semibold text-base mb-0.5" style={{ color: 'var(--text-heading)' }}>
+                    Order Reports & Certificates
                   </h2>
-                  <p className="text-sm mb-1" style={{ color: 'var(--text-muted)' }}>
+                  <p className="text-xs mb-4" style={{ color: 'var(--text-muted)' }}>
                     for {company.name}
                   </p>
 
-                  <div className="mt-4">
-                    {nonMonitoringProducts.map((product) => (
-                      <ProductOrderRow
-                        key={product.id}
-                        product={product}
-                        company={{
-                          id: company.id,
-                          icg_code: company.icg_code,
-                          name: company.name,
-                          reg_no: company.reg_no,
-                          slug: company.slug,
-                          country_code: company.country_code,
-                        }}
+                  {/* Order Reports section */}
+                  {reportProducts.length > 0 && (
+                    <ProductSection
+                      title="Order Reports"
+                      products={reportProducts}
+                      company={companySidebarShape}
+                    />
+                  )}
+
+                  {/* Certificates section */}
+                  {certificateProducts.length > 0 && (
+                    <div className={reportProducts.length > 0 ? 'mt-4 pt-4 border-t' : ''} style={{ borderColor: 'var(--bg-border)' }}>
+                      <ProductSection
+                        title="Certificates"
+                        products={certificateProducts}
+                        company={companySidebarShape}
                       />
-                    ))}
-                  </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -765,16 +765,33 @@ export default function CompanyProfilePage() {
                   className="mt-3 w-full py-2 rounded text-sm font-semibold text-white transition-all active:scale-95"
                   style={{ backgroundColor: 'var(--brand-primary)', borderRadius: '6px' }}
                   onClick={() =>
-                    navigate(
-                      `/checkout?product=monitoring&company=${company.icg_code}`
-                    )
+                    navigate(`/checkout?product=monitoring&company=${company.icg_code}`)
                   }
                 >
                   Start Monitoring
                 </button>
               </div>
 
-              {/* Card 3 — Sample Report */}
+              {/* Card 3 — Dicover internationally */}
+              <div
+                className="rounded-lg p-4"
+                style={{ backgroundColor: 'var(--bg-subtle)', borderRadius: '8px' }}
+              >
+                <p className="text-sm" style={{ color: 'var(--text-body)' }}>
+                  Looking for similar companies internationally?
+                </p>
+                <a
+                  href={`https://www.infocreditworld.com/#${encodeURIComponent(company.name)}/blank&c`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 mt-3 px-4 py-2 rounded text-sm font-medium text-white transition-all active:scale-95"
+                  style={{ backgroundColor: 'var(--brand-accent)' }}
+                >
+                  Dicover ↗
+                </a>
+              </div>
+
+              {/* Card 4 — Sample Report */}
               {samplePdfUrl && (
                 <div
                   className="rounded-lg border p-4 text-center"
