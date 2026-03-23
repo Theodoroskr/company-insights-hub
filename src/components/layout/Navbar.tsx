@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, ChevronDown, User, LogOut, Settings, Package, Download } from 'lucide-react';
+import { Menu, X, ChevronDown, User, LogOut, Settings, Package, Download, ShoppingCart } from 'lucide-react';
 import { useTenant } from '../../lib/tenant';
 import { supabase } from '../../lib/supabase';
+import { useCart } from '../../contexts/CartContext';
 import type { Product } from '../../types/database';
 
 const PRODUCT_TYPE_ICONS: Record<string, string> = {

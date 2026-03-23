@@ -9,6 +9,8 @@ import RiskTrafficLight from '../components/ui/RiskTrafficLight';
 import { useTenant } from '../lib/tenant.tsx';
 import { useCountries } from '../lib/countries';
 import { supabase } from '@/integrations/supabase/client';
+import { useCart } from '../contexts/CartContext';
+import { toast } from '@/hooks/use-toast';
 import type { Company, Product, ProductSpeed } from '../types/database';
 
 // ── Helpers ──────────────────────────────────────────────────
