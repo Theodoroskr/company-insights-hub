@@ -6,23 +6,7 @@ import { supabase } from '../../lib/supabase';
 import { useCart } from '../../contexts/CartContext';
 import type { Product } from '../../types/database';
 
-const PRODUCT_TYPE_ICONS: Record<string, string> = {
-  structure:   '📋',
-  kyb:         '🔍',
-  certificate: '📄',
-  monitoring:  '👁',
-  extract:     '💳',
-  credit:      '📊',
-};
-
-const PRODUCT_TYPE_LABELS: Record<string, string> = {
-  structure:   'Reports',
-  kyb:         'KYB & Compliance',
-  certificate: 'Certificates',
-  monitoring:  'Monitoring',
-  extract:     'Extracts',
-  credit:      'Credit Reports',
-};
+type DropdownTab = 'reports' | 'certificates' | 'register';
 
 export default function Navbar() {
   const { tenant } = useTenant();
