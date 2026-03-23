@@ -100,21 +100,15 @@ function ProductOrderRow({
   product: Product;
   company: { id: string; icg_code: string; name: string; reg_no: string | null; slug: string | null; country_code: string };
 }) {
-  const navigate = useNavigate();
-  const { addItem } = useCart();
   const speeds: ProductSpeed[] = Array.isArray(product.available_speeds)
     ? (product.available_speeds as ProductSpeed[])
     : [];
-  const [selectedSpeed, setSelectedSpeed] = useState(speeds[0]?.code ?? 'Normal');
-
-  const currentSpeed = speeds.find((s) => s.code === selectedSpeed);
+  const currentSpeed = speeds[0];
   const price = product.base_price + (currentSpeed?.price_delta ?? 0);
+  const [modalOpen, setModalOpen] = useState(false);
 
-  const handleAddToCart = () => {
-    addItem(product, company, selectedSpeed);
-    toast({ title: '🛒 Added to cart', description: `${product.name} for ${company.name}` });
-    navigate('/cart');
-  };
+  // Cast company to Company shape expected by modal
+  const companyForModal = company as unknown as import('../types/database').Company;
 
   return (
     <div className="py-4 border-b last:border-0" style={{ borderColor: 'var(--bg-border)' }}>
@@ -133,21 +127,6 @@ function ProductOrderRow({
         </p>
       )}
 
-      {speeds.length > 1 && (
-        <select
-          className="mt-3 w-full text-xs border rounded px-2 py-1.5 outline-none"
-          style={{ borderColor: 'var(--bg-border)', color: 'var(--text-body)' }}
-          value={selectedSpeed}
-          onChange={(e) => setSelectedSpeed(e.target.value)}
-        >
-          {speeds.map((s) => (
-            <option key={s.code} value={s.code}>
-              {s.label} — €{(product.base_price + s.price_delta).toFixed(0)}
-            </option>
-          ))}
-        </select>
-      )}
-
       <div className="mt-3 flex items-center justify-between">
         <span className="text-xl font-bold" style={{ color: 'var(--text-heading)' }}>
           €{price.toFixed(0)}
@@ -157,11 +136,18 @@ function ProductOrderRow({
           style={{ backgroundColor: 'var(--brand-accent)', borderRadius: '6px' }}
           onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--brand-accent-hover)')}
           onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'var(--brand-accent)')}
-          onClick={handleAddToCart}
+          onClick={() => setModalOpen(true)}
         >
           Order Now
         </button>
       </div>
+
+      <OrderReportModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        preselectedProduct={product}
+        preselectedCompany={companyForModal}
+      />
     </div>
   );
 }
