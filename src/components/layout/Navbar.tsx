@@ -381,7 +381,7 @@ export default function Navbar() {
             <div className="flex-1 overflow-y-auto py-4 px-5 space-y-2">
               {[
                 { to: '/', label: 'Home' },
-                { to: '/search', label: 'Search Companies' },
+                { to: '/company/search', label: 'Search Companies' },
                 { to: '/about', label: 'About' },
                 { to: '/contact', label: 'Contact' },
               ].map(({ to, label }) => (
