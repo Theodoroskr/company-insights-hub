@@ -448,12 +448,13 @@ export default function Navbar() {
                 </Link>
               ))}
 
-              {products.length > 0 && (
+              {/* Reports */}
+              {products.filter(p => p.type !== 'certificate' && p.type !== 'cert').length > 0 && (
                 <div>
                   <p className="py-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
-                    Products
+                    Reports
                   </p>
-                  {products.map((p) => (
+                  {products.filter(p => p.type !== 'certificate' && p.type !== 'cert').map((p) => (
                     <Link
                       key={p.id}
                       to={`/report?type=${p.slug}`}
@@ -461,12 +462,44 @@ export default function Navbar() {
                       className="flex items-center gap-2 py-2 text-sm"
                       style={{ color: 'var(--text-body)' }}
                     >
-                      <span>{PRODUCT_TYPE_ICONS[p.type] ?? '📋'}</span>
+                      <span>📋</span>
                       {p.name}
                     </Link>
                   ))}
                 </div>
               )}
+              {/* Certificates */}
+              {products.filter(p => p.type === 'certificate' || p.type === 'cert').length > 0 && (
+                <div>
+                  <p className="py-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
+                    Certificates
+                  </p>
+                  {products.filter(p => p.type === 'certificate' || p.type === 'cert').map((p) => (
+                    <Link
+                      key={p.id}
+                      to={`/report?type=${p.slug}`}
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-2 py-2 text-sm"
+                      style={{ color: 'var(--text-body)' }}
+                    >
+                      <span>📄</span>
+                      {p.name}
+                    </Link>
+                  ))}
+                </div>
+              )}
+              {/* Register a Company */}
+              <div>
+                <p className="py-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
+                  Register a Company
+                </p>
+                <Link to="/company-set-up" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 py-2 text-sm" style={{ color: 'var(--text-body)' }}>
+                  <span>🏢</span> Company Set Up
+                </Link>
+                <Link to="/business-name-approval" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 py-2 text-sm" style={{ color: 'var(--text-body)' }}>
+                  <span>✅</span> Business Name Approval
+                </Link>
+              </div>
             </div>
 
             <div
