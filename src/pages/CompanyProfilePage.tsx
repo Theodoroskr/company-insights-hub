@@ -107,32 +107,64 @@ function ProductOrderRow({
   const price = product.base_price + (currentSpeed?.price_delta ?? 0);
   const [modalOpen, setModalOpen] = useState(false);
 
-  // Cast company to Company shape expected by modal
   const companyForModal = company as unknown as import('../types/database').Company;
 
+  const handleSample = () => {
+    if (product.sample_pdf_url) {
+      window.open(product.sample_pdf_url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   return (
-    <div className="py-4 border-b last:border-0" style={{ borderColor: 'var(--bg-border)' }}>
+    <div className="py-3 border-b last:border-0" style={{ borderColor: 'var(--bg-border)' }}>
+      {/* Name + delivery */}
       <div className="flex items-start justify-between gap-2">
         <span className="text-sm font-medium" style={{ color: 'var(--text-heading)' }}>
           {PRODUCT_ICONS[product.type] ?? '📄'} {product.name}
         </span>
-        <span className="text-xs shrink-0" style={{ color: product.is_instant ? 'var(--status-active)' : 'var(--text-muted)' }}>
-          {product.is_instant ? '⚡ Instant' : `📋 ${product.delivery_sla_hours}hr SLA`}
+        <span
+          className="text-xs shrink-0"
+          style={{ color: product.is_instant ? 'var(--status-active)' : 'var(--text-muted)' }}
+        >
+          {product.is_instant ? '⚡ Instant' : `${product.delivery_sla_hours}hr`}
         </span>
       </div>
 
-      {product.description && (
-        <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-          {product.description}
-        </p>
-      )}
-
-      <div className="mt-3 flex items-center justify-between">
-        <span className="text-xl font-bold" style={{ color: 'var(--text-heading)' }}>
+      {/* Price pill + buttons */}
+      <div className="mt-2.5 flex items-center gap-2">
+        {/* Price pill */}
+        <span
+          className="text-sm font-semibold text-center"
+          style={{
+            border: '1px solid var(--bg-border)',
+            borderRadius: '999px',
+            padding: '2px 10px',
+            minWidth: '60px',
+            color: 'var(--text-heading)',
+            display: 'inline-block',
+          }}
+        >
           €{price.toFixed(0)}
         </span>
+
+        {/* Sample button (outlined) */}
+        {product.sample_pdf_url && (
+          <button
+            onClick={handleSample}
+            className="px-3 py-1.5 rounded text-xs font-medium border transition-all active:scale-95 hover:bg-opacity-5"
+            style={{
+              borderColor: 'var(--brand-accent)',
+              color: 'var(--brand-accent)',
+              borderRadius: '6px',
+            }}
+          >
+            Sample
+          </button>
+        )}
+
+        {/* Order Now button */}
         <button
-          className="px-4 py-2 rounded text-sm font-semibold text-white transition-all active:scale-95"
+          className="ml-auto px-3 py-1.5 rounded text-xs font-semibold text-white transition-all active:scale-95"
           style={{ backgroundColor: 'var(--brand-accent)', borderRadius: '6px' }}
           onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--brand-accent-hover)')}
           onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'var(--brand-accent)')}
@@ -148,6 +180,51 @@ function ProductOrderRow({
         preselectedProduct={product}
         preselectedCompany={companyForModal}
       />
+    </div>
+  );
+}
+
+// ── Collapsible product section ───────────────────────────────
+
+function ProductSection({
+  title,
+  products,
+  company,
+  defaultVisible = 3,
+}: {
+  title: string;
+  products: Product[];
+  company: { id: string; icg_code: string; name: string; reg_no: string | null; slug: string | null; country_code: string };
+  defaultVisible?: number;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  if (products.length === 0) return null;
+
+  const visible = expanded ? products : products.slice(0, defaultVisible);
+  const hasMore = products.length > defaultVisible;
+
+  return (
+    <div>
+      <h3 className="text-sm font-semibold mb-1" style={{ color: 'var(--text-subheading)' }}>
+        {title}
+      </h3>
+      <div
+        className="overflow-hidden transition-all duration-300"
+        style={{ maxHeight: expanded ? `${products.length * 80}px` : `${defaultVisible * 80}px` }}
+      >
+        {visible.map((product) => (
+          <ProductOrderRow key={product.id} product={product} company={company} />
+        ))}
+      </div>
+      {hasMore && (
+        <button
+          onClick={() => setExpanded((v) => !v)}
+          className="mt-1 text-xs transition-opacity hover:opacity-70 flex items-center gap-1"
+          style={{ color: 'var(--brand-accent)' }}
+        >
+          {expanded ? <>See less ∧</> : <>See more ∨</>}
+        </button>
+      )}
     </div>
   );
 }
