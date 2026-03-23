@@ -18,6 +18,7 @@ import CompanyProfilePage from "./pages/CompanyProfilePage";
 import CompanyBrowseByLetterPage from "./pages/CompanyBrowseByLetterPage";
 import ProductLandingPage from "./pages/ProductLandingPage";
 import CompanySetUpPage from "./pages/CompanySetUpPage";
+import BusinessNameApprovalPage from "./pages/BusinessNameApprovalPage";
 import CartPage from "./pages/CartPage";
 import CheckoutDetailsPage from "./pages/CheckoutDetailsPage";
 import CheckoutPaymentPage from "./pages/CheckoutPaymentPage";
