@@ -6,7 +6,7 @@ import { supabase } from '../../lib/supabase';
 import { useCart } from '../../contexts/CartContext';
 import type { Product } from '../../types/database';
 
-type DropdownTab = 'reports' | 'certificates' | 'register';
+type OpenMenu = 'reports' | 'certificates' | 'register' | null;
 
 export default function Navbar() {
   const { tenant } = useTenant();
@@ -17,11 +17,10 @@ export default function Navbar() {
   const [session, setSession] = useState<null | { user: { email?: string; id: string } }>(null);
   const [userProfile, setUserProfile] = useState<{ full_name?: string; role?: string } | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [productsOpen, setProductsOpen] = useState(false);
+  const [openMenu, setOpenMenu] = useState<OpenMenu>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<DropdownTab>('reports');
 
-  const productsRef = useRef<HTMLDivElement>(null);
+  const navRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   // Auth state
@@ -60,8 +59,8 @@ export default function Navbar() {
   // Close dropdowns on outside click
   useEffect(() => {
     function handler(e: MouseEvent) {
-      if (productsRef.current && !productsRef.current.contains(e.target as Node)) {
-        setProductsOpen(false);
+      if (navRef.current && !navRef.current.contains(e.target as Node)) {
+        setOpenMenu(null);
       }
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
         setUserMenuOpen(false);
@@ -77,28 +76,29 @@ export default function Navbar() {
     navigate('/');
   };
 
-  const isAdmin =
-    userProfile?.role === 'admin' || userProfile?.role === 'super_admin';
+  const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'super_admin';
 
   const initials = userProfile?.full_name
-    ? userProfile.full_name
-        .split(' ')
-        .map((n) => n[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2)
+    ? userProfile.full_name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
     : (session?.user?.email?.[0] ?? 'U').toUpperCase();
 
-  // Group products by type
-  const grouped = products.reduce<Record<string, Product[]>>((acc, p) => {
-    if (!acc[p.type]) acc[p.type] = [];
-    acc[p.type].push(p);
-    return acc;
-  }, {});
+  const isCert = (type: string) => type === 'certificate' || type === 'cert';
+  const reportProducts = products.filter((p) => !isCert(p.type as string));
+  const certProducts = products.filter((p) => isCert(p.type as string));
+
+  const toggleMenu = (menu: OpenMenu) => setOpenMenu((prev) => (prev === menu ? null : menu));
+
+  const menuBtnStyle = (menu: OpenMenu) => ({
+    color: openMenu === menu ? 'var(--brand-accent)' : 'var(--text-body)',
+  });
+
+  const dropdownLinkClass =
+    'flex items-center gap-3 px-4 py-2.5 text-sm transition-colors w-full text-left';
 
   return (
     <>
       <nav
+        ref={navRef}
         className="sticky top-0 z-50 bg-white"
         style={{ borderBottom: '1px solid var(--bg-border)' }}
       >
@@ -108,145 +108,143 @@ export default function Navbar() {
             {/* ── Logo ── */}
             <Link
               to="/"
-              className="flex-shrink-0 font-bold text-lg tracking-tight"
-              style={{ color: 'var(--brand-primary)', fontSize: '1.1rem' }}
+              className="flex-shrink-0 font-bold tracking-tight"
+              style={{ color: 'var(--brand-primary)', fontSize: '1.05rem' }}
             >
               {tenant?.brand_name ?? 'Companies House'}
             </Link>
 
             {/* ── Desktop nav ── */}
-            <div className="hidden md:flex items-center gap-6">
+            <div className="hidden md:flex items-center gap-1">
 
-              {/* Products dropdown — tabbed */}
-              <div ref={productsRef} className="relative">
+              {/* Reports */}
+              <div className="relative">
                 <button
                   type="button"
-                  onClick={() => setProductsOpen((v) => !v)}
-                  className="flex items-center gap-1 text-sm font-medium transition-colors"
-                  style={{ color: productsOpen ? 'var(--brand-accent)' : 'var(--text-body)' }}
-                  onMouseOver={(e) => (e.currentTarget.style.color = 'var(--brand-accent)')}
-                  onMouseOut={(e) => (e.currentTarget.style.color = productsOpen ? 'var(--brand-accent)' : 'var(--text-body)')}
+                  onClick={() => toggleMenu('reports')}
+                  className="flex items-center gap-1 px-3 py-2 text-sm font-medium rounded transition-colors"
+                  style={menuBtnStyle('reports')}
                 >
-                  Products
-                  <ChevronDown className={`w-4 h-4 transition-transform ${productsOpen ? 'rotate-180' : ''}`} />
+                  Reports
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${openMenu === 'reports' ? 'rotate-180' : ''}`} />
                 </button>
 
-                {productsOpen && (
+                {openMenu === 'reports' && (
                   <div
-                    className="absolute left-0 top-full mt-2 bg-white rounded-lg shadow-xl border z-50 overflow-hidden"
-                    style={{ borderColor: 'var(--bg-border)', width: '420px' }}
+                    className="absolute left-0 top-full mt-1 bg-white rounded-lg shadow-xl border z-50 overflow-hidden"
+                    style={{ borderColor: 'var(--bg-border)', minWidth: '260px' }}
                   >
-                    {/* ── Tab headers ── */}
-                    <div className="flex border-b" style={{ borderColor: 'var(--bg-border)' }}>
-                      {(
-                        [
-                          { key: 'reports',      label: '📋 Reports' },
-                          { key: 'certificates', label: '📄 Certificates' },
-                          { key: 'register',     label: '🏢 Register' },
-                        ] as { key: DropdownTab; label: string }[]
-                      ).map(({ key, label }) => (
-                        <button
-                          key={key}
-                          type="button"
-                          onClick={() => setActiveTab(key)}
-                          className="flex-1 py-2.5 text-xs font-semibold transition-colors"
-                          style={{
-                            color: activeTab === key ? 'var(--brand-accent)' : 'var(--text-muted)',
-                            borderBottom: activeTab === key ? '2px solid var(--brand-accent)' : '2px solid transparent',
-                            marginBottom: '-1px',
-                            background: 'none',
-                          }}
-                        >
-                          {label}
-                        </button>
-                      ))}
+                    <div className="py-1.5">
+                      {reportProducts.length === 0 ? (
+                        <p className="px-4 py-3 text-sm" style={{ color: 'var(--text-muted)' }}>No reports available</p>
+                      ) : (
+                        reportProducts.map((p) => (
+                          <Link
+                            key={p.id}
+                            to={`/report?type=${p.slug}`}
+                            onClick={() => setOpenMenu(null)}
+                            className={dropdownLinkClass}
+                            style={{ color: 'var(--text-body)' }}
+                            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
+                            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                          >
+                            <span className="text-base">📋</span>
+                            <span>{p.name}</span>
+                          </Link>
+                        ))
+                      )}
                     </div>
+                  </div>
+                )}
+              </div>
 
-                    {/* ── Tab content ── */}
-                    <div className="py-2 max-h-72 overflow-y-auto">
+              {/* Certificates */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => toggleMenu('certificates')}
+                  className="flex items-center gap-1 px-3 py-2 text-sm font-medium rounded transition-colors"
+                  style={menuBtnStyle('certificates')}
+                >
+                  Certificates
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${openMenu === 'certificates' ? 'rotate-180' : ''}`} />
+                </button>
 
-                      {/* Reports tab */}
-                      {activeTab === 'reports' && (
-                        <>
-                          {Object.entries(grouped)
-                            .filter(([type]) => !['certificate', 'cert'].includes(type as string))
-                            .flatMap(([, ps]) => ps)
-                            .map((p) => (
-                              <Link
-                                key={p.id}
-                                to={`/report?type=${p.slug}`}
-                                onClick={() => setProductsOpen(false)}
-                                className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors"
-                                style={{ color: 'var(--text-body)' }}
-                                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
-                                onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                              >
-                                <span className="text-base">📋</span>
-                                <span>{p.name}</span>
-                              </Link>
-                            ))}
-                          {products.filter(p => !['certificate', 'cert'].includes(p.type as string)).length === 0 && (
-                            <p className="px-4 py-3 text-sm" style={{ color: 'var(--text-muted)' }}>No reports available</p>
-                          )}
-                        </>
-                      )}
-
-                      {/* Certificates tab */}
-                      {activeTab === 'certificates' && (
-                        <>
-                          {[...(grouped['certificate'] ?? []), ...(grouped['cert'] ?? [])].map((p) => (
-                            <Link
-                              key={p.id}
-                              to={`/report?type=${p.slug}`}
-                              onClick={() => setProductsOpen(false)}
-                              className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors"
-                              style={{ color: 'var(--text-body)' }}
-                              onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
-                              onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                            >
-                              <span className="text-base">📄</span>
-                              <span>{p.name}</span>
-                            </Link>
-                          ))}
-                          {(grouped['certificate'] ?? []).length === 0 && (grouped['cert'] ?? []).length === 0 && (
-                            <p className="px-4 py-3 text-sm" style={{ color: 'var(--text-muted)' }}>No certificates available</p>
-                          )}
-                        </>
-                      )}
-
-                      {/* Register tab */}
-                      {activeTab === 'register' && (
-                        <>
+                {openMenu === 'certificates' && (
+                  <div
+                    className="absolute left-0 top-full mt-1 bg-white rounded-lg shadow-xl border z-50 overflow-hidden"
+                    style={{ borderColor: 'var(--bg-border)', minWidth: '280px' }}
+                  >
+                    <div className="py-1.5">
+                      {certProducts.length === 0 ? (
+                        <p className="px-4 py-3 text-sm" style={{ color: 'var(--text-muted)' }}>No certificates available</p>
+                      ) : (
+                        certProducts.map((p) => (
                           <Link
-                            to="/company-set-up"
-                            onClick={() => setProductsOpen(false)}
-                            className="flex items-center gap-3 px-4 py-3 text-sm transition-colors"
+                            key={p.id}
+                            to={`/report?type=${p.slug}`}
+                            onClick={() => setOpenMenu(null)}
+                            className={dropdownLinkClass}
                             style={{ color: 'var(--text-body)' }}
                             onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
                             onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                           >
-                            <span className="text-base">🏢</span>
-                            <div>
-                              <p className="font-semibold" style={{ color: 'var(--text-heading)' }}>Company Set Up</p>
-                              <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Register a new company in Cyprus</p>
-                            </div>
+                            <span className="text-base">📄</span>
+                            <span>{p.name}</span>
                           </Link>
-                          <Link
-                            to="/business-name-approval"
-                            onClick={() => setProductsOpen(false)}
-                            className="flex items-center gap-3 px-4 py-3 text-sm transition-colors"
-                            style={{ color: 'var(--text-body)' }}
-                            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
-                            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                          >
-                            <span className="text-base">✅</span>
-                            <div>
-                              <p className="font-semibold" style={{ color: 'var(--text-heading)' }}>Business Name Approval</p>
-                              <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Check and reserve your trade or company name</p>
-                            </div>
-                          </Link>
-                        </>
+                        ))
                       )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Register a Company */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => toggleMenu('register')}
+                  className="flex items-center gap-1 px-3 py-2 text-sm font-medium rounded transition-colors"
+                  style={menuBtnStyle('register')}
+                >
+                  Register a Company
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${openMenu === 'register' ? 'rotate-180' : ''}`} />
+                </button>
+
+                {openMenu === 'register' && (
+                  <div
+                    className="absolute left-0 top-full mt-1 bg-white rounded-lg shadow-xl border z-50 overflow-hidden"
+                    style={{ borderColor: 'var(--bg-border)', minWidth: '280px' }}
+                  >
+                    <div className="py-1.5">
+                      <Link
+                        to="/company-set-up"
+                        onClick={() => setOpenMenu(null)}
+                        className={dropdownLinkClass}
+                        style={{ color: 'var(--text-body)' }}
+                        onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
+                        onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                      >
+                        <span className="text-base">🏢</span>
+                        <div>
+                          <p className="font-semibold text-sm" style={{ color: 'var(--text-heading)' }}>Company Set Up</p>
+                          <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Register a new company in Cyprus</p>
+                        </div>
+                      </Link>
+                      <Link
+                        to="/business-name-approval"
+                        onClick={() => setOpenMenu(null)}
+                        className={dropdownLinkClass}
+                        style={{ color: 'var(--text-body)' }}
+                        onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
+                        onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                      >
+                        <span className="text-base">✅</span>
+                        <div>
+                          <p className="font-semibold text-sm" style={{ color: 'var(--text-heading)' }}>Business Name Approval</p>
+                          <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Check and reserve your trade or company name</p>
+                        </div>
+                      </Link>
                     </div>
                   </div>
                 )}
@@ -254,7 +252,7 @@ export default function Navbar() {
 
               <Link
                 to="/about"
-                className="text-sm font-medium transition-colors"
+                className="px-3 py-2 text-sm font-medium rounded transition-colors"
                 style={{ color: 'var(--text-body)' }}
                 onMouseOver={(e) => (e.currentTarget.style.color = 'var(--brand-accent)')}
                 onMouseOut={(e) => (e.currentTarget.style.color = 'var(--text-body)')}
@@ -264,7 +262,7 @@ export default function Navbar() {
 
               <Link
                 to="/contact"
-                className="text-sm font-medium transition-colors"
+                className="px-3 py-2 text-sm font-medium rounded transition-colors"
                 style={{ color: 'var(--text-body)' }}
                 onMouseOver={(e) => (e.currentTarget.style.color = 'var(--brand-accent)')}
                 onMouseOut={(e) => (e.currentTarget.style.color = 'var(--text-body)')}
@@ -287,7 +285,7 @@ export default function Navbar() {
                 <ShoppingCart className="w-5 h-5" />
                 {totalItems > 0 && (
                   <span
-                    className="absolute -top-0.5 -right-0.5 w-4.5 h-4.5 rounded-full text-white flex items-center justify-center font-bold"
+                    className="absolute -top-0.5 -right-0.5 rounded-full text-white flex items-center justify-center font-bold"
                     style={{
                       backgroundColor: 'var(--brand-accent)',
                       fontSize: '10px',
@@ -308,12 +306,8 @@ export default function Navbar() {
                     to="/login"
                     className="px-4 py-2 text-sm font-medium rounded transition-all border border-transparent"
                     style={{ color: 'var(--brand-primary)' }}
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.borderColor = 'var(--brand-primary)';
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.borderColor = 'transparent';
-                    }}
+                    onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--brand-primary)'; }}
+                    onMouseOut={(e) => { e.currentTarget.style.borderColor = 'transparent'; }}
                   >
                     Sign In
                   </Link>
@@ -321,12 +315,8 @@ export default function Navbar() {
                     to="/register"
                     className="px-4 py-2 text-sm font-semibold rounded text-white transition-all active:scale-95"
                     style={{ backgroundColor: 'var(--brand-accent)', borderRadius: '6px' }}
-                    onMouseOver={(e) =>
-                      (e.currentTarget.style.backgroundColor = 'var(--brand-accent-hover)')
-                    }
-                    onMouseOut={(e) =>
-                      (e.currentTarget.style.backgroundColor = 'var(--brand-accent)')
-                    }
+                    onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--brand-accent-hover)')}
+                    onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'var(--brand-accent)')}
                   >
                     Register
                   </Link>
@@ -369,8 +359,10 @@ export default function Navbar() {
                           key={to}
                           to={to}
                           onClick={() => setUserMenuOpen(false)}
-                          className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                          className="flex items-center gap-3 px-4 py-2 text-sm transition-colors"
                           style={{ color: 'var(--text-body)' }}
+                          onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
+                          onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                         >
                           {icon}
                           {label}
@@ -380,8 +372,10 @@ export default function Navbar() {
                         <Link
                           to="/admin"
                           onClick={() => setUserMenuOpen(false)}
-                          className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                          className="flex items-center gap-3 px-4 py-2 text-sm transition-colors"
                           style={{ color: 'var(--brand-accent)' }}
+                          onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
+                          onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                         >
                           <Settings className="w-4 h-4" />
                           Admin Panel
@@ -391,8 +385,10 @@ export default function Navbar() {
                       <button
                         type="button"
                         onClick={handleSignOut}
-                        className="flex w-full items-center gap-3 px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                        className="flex w-full items-center gap-3 px-4 py-2 text-sm transition-colors"
                         style={{ color: 'var(--status-dissolved)' }}
+                        onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
+                        onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                       >
                         <LogOut className="w-4 h-4" />
                         Sign Out
@@ -419,10 +415,7 @@ export default function Navbar() {
 
       {/* ── Mobile slide-in menu ── */}
       {mobileOpen && (
-        <div
-          className="md:hidden fixed inset-0 z-40"
-          onClick={() => setMobileOpen(false)}
-        >
+        <div className="md:hidden fixed inset-0 z-40" onClick={() => setMobileOpen(false)}>
           <div className="absolute inset-0 bg-black/40" />
           <div
             className="absolute right-0 top-0 h-full w-72 bg-white shadow-2xl flex flex-col"
@@ -435,11 +428,7 @@ export default function Navbar() {
               <span className="font-bold" style={{ color: 'var(--brand-primary)' }}>
                 {tenant?.brand_name ?? 'Companies House'}
               </span>
-              <button
-                type="button"
-                onClick={() => setMobileOpen(false)}
-                style={{ color: 'var(--text-muted)' }}
-              >
+              <button type="button" onClick={() => setMobileOpen(false)} style={{ color: 'var(--text-muted)' }}>
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -463,12 +452,12 @@ export default function Navbar() {
               ))}
 
               {/* Reports */}
-              {products.filter(p => (p.type as string) !== 'certificate' && (p.type as string) !== 'cert').length > 0 && (
+              {reportProducts.length > 0 && (
                 <div>
                   <p className="py-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
                     Reports
                   </p>
-                  {products.filter(p => (p.type as string) !== 'certificate' && (p.type as string) !== 'cert').map((p) => (
+                  {reportProducts.map((p) => (
                     <Link
                       key={p.id}
                       to={`/report?type=${p.slug}`}
@@ -482,13 +471,14 @@ export default function Navbar() {
                   ))}
                 </div>
               )}
+
               {/* Certificates */}
-              {products.filter(p => (p.type as string) === 'certificate' || (p.type as string) === 'cert').length > 0 && (
+              {certProducts.length > 0 && (
                 <div>
                   <p className="py-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
                     Certificates
                   </p>
-                  {products.filter(p => (p.type as string) === 'certificate' || (p.type as string) === 'cert').map((p) => (
+                  {certProducts.map((p) => (
                     <Link
                       key={p.id}
                       to={`/report?type=${p.slug}`}
@@ -502,6 +492,7 @@ export default function Navbar() {
                   ))}
                 </div>
               )}
+
               {/* Register a Company */}
               <div>
                 <p className="py-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
@@ -516,21 +507,14 @@ export default function Navbar() {
               </div>
             </div>
 
-            <div
-              className="p-5 border-t space-y-2"
-              style={{ borderColor: 'var(--bg-border)' }}
-            >
+            <div className="p-5 border-t space-y-2" style={{ borderColor: 'var(--bg-border)' }}>
               {!session ? (
                 <>
                   <Link
                     to="/login"
                     onClick={() => setMobileOpen(false)}
                     className="block w-full text-center py-2.5 text-sm font-medium border rounded"
-                    style={{
-                      borderColor: 'var(--brand-primary)',
-                      color: 'var(--brand-primary)',
-                      borderRadius: '6px',
-                    }}
+                    style={{ borderColor: 'var(--brand-primary)', color: 'var(--brand-primary)', borderRadius: '6px' }}
                   >
                     Sign In
                   </Link>
@@ -548,11 +532,7 @@ export default function Navbar() {
                   type="button"
                   onClick={handleSignOut}
                   className="block w-full text-center py-2.5 text-sm font-medium border rounded"
-                  style={{
-                    borderColor: 'var(--bg-border)',
-                    color: 'var(--status-dissolved)',
-                    borderRadius: '6px',
-                  }}
+                  style={{ borderColor: 'var(--bg-border)', color: 'var(--status-dissolved)', borderRadius: '6px' }}
                 >
                   Sign Out
                 </button>
