@@ -166,7 +166,7 @@ export default function Navbar() {
                         {typeProducts.map((p) => (
                           <Link
                             key={p.id}
-                            to={`/products/${p.slug}`}
+                            to={`/report?type=${p.slug}`}
                             onClick={() => setProductsOpen(false)}
                             className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
                             style={{ color: 'var(--text-body)' }}
