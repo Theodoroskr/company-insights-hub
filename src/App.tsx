@@ -18,6 +18,7 @@ import CompanyProfilePage from "./pages/CompanyProfilePage";
 import CompanyBrowseByLetterPage from "./pages/CompanyBrowseByLetterPage";
 import ProductLandingPage from "./pages/ProductLandingPage";
 import CompanySetUpPage from "./pages/CompanySetUpPage";
+import BusinessNameApprovalPage from "./pages/BusinessNameApprovalPage";
 import CartPage from "./pages/CartPage";
 import CheckoutDetailsPage from "./pages/CheckoutDetailsPage";
 import CheckoutPaymentPage from "./pages/CheckoutPaymentPage";
@@ -65,6 +66,7 @@ const App = () => (
               <Route path="/search" element={<Navigate to="/company/search" replace />} />
               <Route path="/report" element={<ProductLandingPage />} />
               <Route path="/company-set-up" element={<CompanySetUpPage />} />
+              <Route path="/business-name-approval" element={<BusinessNameApprovalPage />} />
               <Route path="/company/:slug" element={<CompanyProfilePage />} />
               <Route path="/companies/:letter" element={<CompanyBrowseByLetterPage />} />
 
