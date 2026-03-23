@@ -1,14 +1,25 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { Search, ExternalLink } from 'lucide-react';
 import PageLayout from '../components/layout/PageLayout';
 import StatusBadge from '../components/ui/StatusBadge';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
-import SearchWidget from '../components/search/SearchWidget';
+import EmptyState from '../components/ui/EmptyState';
 import { useTenant } from '../lib/tenant.tsx';
 import { useCountries } from '../lib/countries';
 import { supabase } from '@/integrations/supabase/client';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 import type { Company } from '../types/database';
+
+const LEGAL_TYPE_OPTIONS = [
+  'Business Name',
+  'Limited Company',
+  'Partnership',
+  'Old Partnership',
+  'Overseas Company',
+];
 
 export default function SearchResultsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -26,20 +37,20 @@ export default function SearchResultsPage() {
   const [dataSource, setDataSource] = useState<'api4all' | 'cache' | null>(null);
   const [firstCachedAt, setFirstCachedAt] = useState<string | null>(null);
 
-  // Filter state
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'dissolved'>('all');
-  const [legalTypes, setLegalTypes] = useState<string[]>([]);
-  const [selectedLegalTypes, setSelectedLegalTypes] = useState<string[]>([]);
+  // Sidebar state
+  const [sidebarQuery, setSidebarQuery] = useState(q);
+  const [legalTypeFilter, setLegalTypeFilter] = useState<string>('all');
   const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
+
+  // Keep sidebarQuery in sync with URL param
+  useEffect(() => {
+    setSidebarQuery(q);
+  }, [q]);
 
   const getCountryName = (code: string) => {
     const c = countries.find((x) => x.code.toUpperCase() === code.toUpperCase());
     return c ? `${c.flag_emoji ?? ''} ${c.name}` : code;
   };
-
-  const countryName = countryParam
-    ? countries.find((c) => c.code.toUpperCase() === countryParam.toUpperCase())?.name ?? countryParam
-    : 'all countries';
 
   const fetchResults = useCallback(
     async (append = false) => {
@@ -62,12 +73,6 @@ export default function SearchResultsPage() {
           setHasMore(companies.length === 50);
           setDataSource(data.source ?? null);
           setFirstCachedAt(companies[0]?.cached_at ?? null);
-
-          const types = Array.from(
-            new Set(newResults.map((c) => c.legal_form).filter(Boolean) as string[])
-          );
-          setLegalTypes(types);
-          if (!append) setSelectedLegalTypes(types);
         }
       } finally {
         setIsLoading(false);
@@ -77,11 +82,10 @@ export default function SearchResultsPage() {
     [q, countryParam, tenant?.id]
   );
 
-  // Reset + fetch when params change
   useEffect(() => {
     setResults([]);
     setHasMore(false);
-    setStatusFilter('all');
+    setLegalTypeFilter('all');
     setSelectedCountries([]);
     setDataSource(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -95,34 +99,29 @@ export default function SearchResultsPage() {
   // Apply filters
   useEffect(() => {
     let f = [...results];
-    if (statusFilter === 'active') f = f.filter((c) => c.status?.toLowerCase() === 'active');
-    if (statusFilter === 'dissolved') f = f.filter((c) => c.status?.toLowerCase() === 'dissolved');
-    if (selectedLegalTypes.length > 0 && selectedLegalTypes.length < legalTypes.length) {
-      f = f.filter((c) => !c.legal_form || selectedLegalTypes.includes(c.legal_form));
+    if (legalTypeFilter !== 'all') {
+      f = f.filter((c) => c.legal_form === legalTypeFilter);
     }
     if (tenant?.slug === 'icw' && selectedCountries.length > 0) {
       f = f.filter((c) => selectedCountries.includes(c.country_code));
     }
     setFiltered(f);
-  }, [results, statusFilter, selectedLegalTypes, legalTypes, selectedCountries, tenant?.slug]);
+  }, [results, legalTypeFilter, selectedCountries, tenant?.slug]);
 
-  const handleSearch = (newQ: string, newCountry: string) => {
-    const params: Record<string, string> = {};
-    if (newQ) params.q = newQ;
-    if (newCountry) params.country = newCountry;
-    setSearchParams(params);
+  const handleSidebarSearch = () => {
+    const val = sidebarQuery.trim();
+    if (val) {
+      const params: Record<string, string> = { q: val };
+      if (countryParam) params.country = countryParam;
+      setSearchParams(params);
+    }
   };
 
-  const toggleLegalType = (type: string) => {
-    setSelectedLegalTypes((prev) =>
-      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
-    );
-  };
-
-  const toggleCountry = (code: string) => {
-    setSelectedCountries((prev) =>
-      prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code]
-    );
+  const handleReset = () => {
+    setSidebarQuery('');
+    setLegalTypeFilter('all');
+    setSelectedCountries([]);
+    setSearchParams({});
   };
 
   const countriesInResults = Array.from(new Set(results.map((c) => c.country_code)));
@@ -131,7 +130,8 @@ export default function SearchResultsPage() {
     <PageLayout>
       <Helmet>
         <title>
-          Search results for "{q}" — {tenant?.brand_name ?? 'Companies House'}
+          {q ? `Search results for "${q}"` : 'Search Companies'} —{' '}
+          {tenant?.brand_name ?? 'Companies House'}
         </title>
         <meta
           name="description"
@@ -140,131 +140,91 @@ export default function SearchResultsPage() {
         <meta name="robots" content="noindex" />
       </Helmet>
 
-      {/* Compact search bar at top */}
-      <div style={{ backgroundColor: 'var(--brand-primary)' }} className="py-6">
-        <div className="max-w-5xl mx-auto px-4">
-          <SearchWidget
-            defaultQuery={q}
-            defaultCountry={countryParam}
-            onSearch={handleSearch}
-            size="compact"
-            isGlobal={tenant?.slug === 'icw'}
-          />
-        </div>
-      </div>
-
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* ── LEFT: Filters ── */}
-          <aside className="w-full lg:w-60 shrink-0">
+          {/* ── LEFT SIDEBAR ── */}
+          <aside className="w-full lg:w-[280px] shrink-0">
             <div
               className="rounded-lg border p-4 sticky top-24"
               style={{ borderColor: 'var(--bg-border)', backgroundColor: '#fff' }}
             >
-              <h2
-                className="text-sm font-semibold mb-3"
-                style={{ color: 'var(--text-subheading)' }}
-              >
-                Refine Search
+              {/* Section: Search Company */}
+              <h2 className="text-sm font-semibold mb-3" style={{ color: 'var(--text-subheading)' }}>
+                Search Company
               </h2>
 
-              {/* Search input */}
-              <div className="space-y-2">
+              <div className="flex gap-2">
                 <input
                   type="text"
-                  defaultValue={q}
-                  id="refine-q"
-                  placeholder="Company name…"
-                  className="w-full border rounded px-3 py-2 text-sm outline-none focus:border-blue-500"
-                  style={{
-                    borderColor: 'var(--bg-border)',
-                    color: 'var(--text-body)',
-                  }}
+                  value={sidebarQuery}
+                  onChange={(e) => setSidebarQuery(e.target.value)}
+                  placeholder="Enter a Company name"
+                  className="flex-1 border rounded-md px-3 py-2 text-sm outline-none focus:border-brand-accent transition-colors"
+                  style={{ borderColor: 'var(--bg-border)', color: 'var(--text-body)' }}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      const val = (e.target as HTMLInputElement).value.trim();
-                      if (val) handleSearch(val, countryParam);
-                    }
+                    if (e.key === 'Enter') handleSidebarSearch();
                   }}
                 />
                 <button
-                  className="w-full py-2 rounded text-sm font-medium text-white transition-all active:scale-95"
-                  style={{ backgroundColor: 'var(--brand-accent)', borderRadius: '6px' }}
-                  onClick={() => {
-                    const el = document.getElementById('refine-q') as HTMLInputElement;
-                    if (el?.value.trim()) handleSearch(el.value.trim(), countryParam);
-                  }}
+                  onClick={handleSidebarSearch}
+                  className="w-9 h-9 rounded-md flex items-center justify-center shrink-0 transition-opacity hover:opacity-80 active:scale-95"
+                  style={{ backgroundColor: 'var(--text-heading)' }}
+                  aria-label="Search"
                 >
-                  Search
+                  <Search className="w-4 h-4 text-white" />
                 </button>
               </div>
 
-              {/* Status */}
-              <div className="mt-5">
-                <h3
-                  className="text-xs font-semibold uppercase tracking-wide mb-2"
-                  style={{ color: 'var(--text-muted)' }}
+              {/* Section: Filters */}
+              <div className="mt-6">
+                <p className="text-sm font-medium mb-3" style={{ color: 'var(--text-subheading)' }}>
+                  Filters
+                </p>
+
+                <RadioGroup
+                  value={legalTypeFilter}
+                  onValueChange={setLegalTypeFilter}
+                  className="gap-2"
                 >
-                  Status
-                </h3>
-                {(['all', 'active', 'dissolved'] as const).map((s) => (
-                  <label key={s} className="flex items-center gap-2 mb-1 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="status-filter"
-                      checked={statusFilter === s}
-                      onChange={() => setStatusFilter(s)}
-                      className="accent-blue-600"
-                    />
-                    <span className="text-sm capitalize" style={{ color: 'var(--text-body)' }}>
-                      {s === 'all' ? 'All' : s === 'active' ? 'Active only' : 'Dissolved only'}
-                    </span>
-                  </label>
-                ))}
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="all" id="lt-all" />
+                    <Label htmlFor="lt-all" className="text-sm cursor-pointer font-normal" style={{ color: 'var(--text-body)' }}>
+                      All types
+                    </Label>
+                  </div>
+                  {LEGAL_TYPE_OPTIONS.map((type) => (
+                    <div key={type} className="flex items-center gap-2">
+                      <RadioGroupItem value={type} id={`lt-${type}`} />
+                      <Label
+                        htmlFor={`lt-${type}`}
+                        className="text-sm cursor-pointer font-normal"
+                        style={{ color: 'var(--text-body)' }}
+                      >
+                        {type}
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
               </div>
 
-              {/* Legal type */}
-              {legalTypes.length > 0 && (
-                <div className="mt-5">
-                  <h3
-                    className="text-xs font-semibold uppercase tracking-wide mb-2"
-                    style={{ color: 'var(--text-muted)' }}
-                  >
-                    Legal Type
-                  </h3>
-                  {legalTypes.map((type) => (
-                    <label key={type} className="flex items-center gap-2 mb-1 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={selectedLegalTypes.includes(type)}
-                        onChange={() => toggleLegalType(type)}
-                        className="accent-blue-600"
-                      />
-                      <span className="text-sm" style={{ color: 'var(--text-body)' }}>
-                        {type}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              )}
-
-              {/* Country — ICW only */}
+              {/* Country filter — ICW only */}
               {tenant?.slug === 'icw' && countriesInResults.length > 1 && (
                 <div className="mt-5">
-                  <h3
-                    className="text-xs font-semibold uppercase tracking-wide mb-2"
-                    style={{ color: 'var(--text-muted)' }}
-                  >
+                  <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>
                     Country
-                  </h3>
+                  </p>
                   {countriesInResults.map((code) => (
                     <label key={code} className="flex items-center gap-2 mb-1 cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={
-                          selectedCountries.length === 0 || selectedCountries.includes(code)
+                        checked={selectedCountries.length === 0 || selectedCountries.includes(code)}
+                        onChange={() =>
+                          setSelectedCountries((prev) =>
+                            prev.includes(code)
+                              ? prev.filter((c) => c !== code)
+                              : [...prev, code]
+                          )
                         }
-                        onChange={() => toggleCountry(code)}
                         className="accent-blue-600"
                       />
                       <span className="text-sm" style={{ color: 'var(--text-body)' }}>
@@ -274,6 +234,34 @@ export default function SearchResultsPage() {
                   ))}
                 </div>
               )}
+
+              {/* International CTA */}
+              <div
+                className="mt-6 rounded-lg p-4"
+                style={{ backgroundColor: 'var(--bg-subtle)' }}
+              >
+                <p className="text-sm" style={{ color: 'var(--text-body)' }}>
+                  Looking for similar companies internationally?
+                </p>
+                <a
+                  href={`https://www.infocreditworld.com/#${encodeURIComponent(q)}/blank&c`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 mt-3 px-4 py-2 rounded text-sm font-medium text-white transition-all active:scale-95"
+                  style={{ backgroundColor: 'var(--brand-accent)' }}
+                >
+                  Dicover <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </div>
+
+              {/* Reset */}
+              <button
+                onClick={handleReset}
+                className="block w-full text-center text-sm mt-6 transition-opacity hover:opacity-70"
+                style={{ color: 'var(--brand-accent)' }}
+              >
+                RESET
+              </button>
             </div>
           </aside>
 
@@ -281,29 +269,15 @@ export default function SearchResultsPage() {
           <main className="flex-1 min-w-0">
             {/* Header */}
             <div className="mb-5">
-              {isLoading && results.length === 0 ? (
-                <LoadingSkeleton lines={2} className="max-w-xs" />
-              ) : (
-                <>
-                  <p
-                    className="text-lg font-semibold"
-                    style={{ color: 'var(--text-heading)' }}
-                  >
-                    {filtered.length} {filtered.length === 1 ? 'company' : 'companies'} found
-                    {q ? ` for "${q}"` : ''}
-                  </p>
-                  <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                    Showing results from{' '}
-                    {countryParam ? countryName : 'all countries'} company registry
-                  </p>
-                  {dataSource && (
-                    <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                      {dataSource === 'api4all'
-                        ? '🟢 Live data from official registry'
-                        : `⏱ Cached data · ${firstCachedAt ? new Date(firstCachedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : ''}`}
-                    </p>
-                  )}
-                </>
+              <h2 className="text-xl font-semibold mb-1" style={{ color: 'var(--text-heading)' }}>
+                Companies
+              </h2>
+              {!isLoading && dataSource && (
+                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                  {dataSource === 'api4all'
+                    ? '🟢 Live data from official registry'
+                    : `⏱ Cached data · ${firstCachedAt ? new Date(firstCachedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : ''}`}
+                </p>
               )}
             </div>
 
@@ -322,49 +296,9 @@ export default function SearchResultsPage() {
               </div>
             )}
 
-            {/* Not found */}
-            {!isLoading && q && filtered.length === 0 && results.length === 0 && (
-              <div
-                className="rounded-lg border p-10 text-center"
-                style={{ borderColor: 'var(--bg-border)' }}
-              >
-                <div className="text-5xl mb-4" style={{ color: 'var(--text-muted)' }}>
-                  🔍
-                </div>
-                <h2
-                  className="text-xl font-semibold mb-2"
-                  style={{ color: 'var(--text-heading)' }}
-                >
-                  No companies found for "{q}"
-                </h2>
-                <p className="text-sm mb-6" style={{ color: 'var(--text-muted)' }}>
-                  Try a different spelling or fewer words
-                </p>
-                <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                  <button
-                    onClick={() => {
-                      setStatusFilter('all');
-                      setSelectedLegalTypes(legalTypes);
-                      setSelectedCountries([]);
-                    }}
-                    className="px-5 py-2 rounded text-sm font-medium text-white transition-all active:scale-95"
-                    style={{ backgroundColor: 'var(--brand-accent)', borderRadius: '6px' }}
-                  >
-                    Try a broader search
-                  </button>
-                  <Link
-                    to={`/contact?message=Manual search request for: ${encodeURIComponent(q)}`}
-                    className="px-5 py-2 rounded text-sm font-medium border transition-all active:scale-95"
-                    style={{
-                      borderColor: 'var(--brand-accent)',
-                      color: 'var(--brand-accent)',
-                      borderRadius: '6px',
-                    }}
-                  >
-                    Request a manual search →
-                  </Link>
-                </div>
-              </div>
+            {/* Empty state */}
+            {!isLoading && filtered.length === 0 && (
+              <EmptyState message="No Companies yet" />
             )}
 
             {/* Results list */}
@@ -384,10 +318,9 @@ export default function SearchResultsPage() {
                     }
                   >
                     <div className="flex items-start justify-between gap-4">
-                      {/* Left */}
                       <div className="flex-1 min-w-0">
                         <h3
-                          className="text-lg font-semibold truncate"
+                          className="text-base font-semibold truncate"
                           style={{ color: 'var(--text-heading)' }}
                         >
                           {company.name}
@@ -403,6 +336,12 @@ export default function SearchResultsPage() {
                               <span>Reg: {company.reg_no}</span>
                             </>
                           )}
+                          {company.legal_form && (
+                            <>
+                              <span>·</span>
+                              <span>{company.legal_form}</span>
+                            </>
+                          )}
                           {company.status && (
                             <>
                               <span>·</span>
@@ -412,7 +351,6 @@ export default function SearchResultsPage() {
                         </div>
                       </div>
 
-                      {/* Right — desktop */}
                       <div className="hidden sm:block shrink-0">
                         <button
                           className="px-4 py-2 rounded text-sm font-medium border transition-all group-hover:bg-opacity-10"
@@ -455,46 +393,6 @@ export default function SearchResultsPage() {
             {isLoading && results.length > 0 && (
               <div className="mt-4">
                 <LoadingSkeleton lines={2} />
-              </div>
-            )}
-
-            {/* Global search CTA — single-country tenants only */}
-            {tenant?.slug !== 'icw' && q && (
-              <div
-                className="mt-10 rounded-lg border p-6"
-                style={{
-                  backgroundColor: 'var(--bg-subtle)',
-                  borderColor: 'var(--bg-border)',
-                  borderRadius: '8px',
-                }}
-              >
-                <div className="flex items-start gap-4">
-                  <span className="text-3xl">🌍</span>
-                  <div>
-                    <h3
-                      className="font-semibold"
-                      style={{ color: 'var(--text-heading)' }}
-                    >
-                      Search for "{q}" globally
-                    </h3>
-                    <p className="text-sm mt-1" style={{ color: 'var(--text-body)' }}>
-                      Find companies with similar names in other countries via the Infocredit global
-                      network
-                    </p>
-                    <a
-                      href={`https://www.infocreditworld.com/#${encodeURIComponent(q)}/blank&c`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-block mt-4 px-5 py-2 rounded text-sm font-medium text-white transition-all active:scale-95"
-                      style={{
-                        backgroundColor: 'var(--brand-accent)',
-                        borderRadius: '6px',
-                      }}
-                    >
-                      Search Internationally →
-                    </a>
-                  </div>
-                </div>
               </div>
             )}
           </main>

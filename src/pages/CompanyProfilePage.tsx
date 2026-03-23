@@ -6,11 +6,10 @@ import StatusBadge from '../components/ui/StatusBadge';
 import GatedContent from '../components/ui/GatedContent';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import RiskTrafficLight from '../components/ui/RiskTrafficLight';
+import OrderReportModal from '../components/orders/OrderReportModal';
 import { useTenant } from '../lib/tenant.tsx';
 import { useCountries } from '../lib/countries';
 import { supabase } from '@/integrations/supabase/client';
-import { useCart } from '../contexts/CartContext';
-import { toast } from '@/hooks/use-toast';
 import type { Company, Product, ProductSpeed } from '../types/database';
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -40,7 +39,7 @@ function Breadcrumb({ companyName }: { companyName: string }) {
     <nav className="text-sm mb-4 flex items-center gap-1 flex-wrap" style={{ color: 'var(--text-muted)' }}>
       <Link to="/" className="hover:underline" style={{ color: 'var(--text-muted)' }}>Home</Link>
       <span>›</span>
-      <Link to="/search" className="hover:underline" style={{ color: 'var(--text-muted)' }}>Search</Link>
+      <Link to="/company/search" className="hover:underline" style={{ color: 'var(--text-muted)' }}>Search</Link>
       <span>›</span>
       <span style={{ color: 'var(--text-body)' }}>{companyName}</span>
     </nav>
@@ -101,21 +100,15 @@ function ProductOrderRow({
   product: Product;
   company: { id: string; icg_code: string; name: string; reg_no: string | null; slug: string | null; country_code: string };
 }) {
-  const navigate = useNavigate();
-  const { addItem } = useCart();
   const speeds: ProductSpeed[] = Array.isArray(product.available_speeds)
     ? (product.available_speeds as ProductSpeed[])
     : [];
-  const [selectedSpeed, setSelectedSpeed] = useState(speeds[0]?.code ?? 'Normal');
-
-  const currentSpeed = speeds.find((s) => s.code === selectedSpeed);
+  const currentSpeed = speeds[0];
   const price = product.base_price + (currentSpeed?.price_delta ?? 0);
+  const [modalOpen, setModalOpen] = useState(false);
 
-  const handleAddToCart = () => {
-    addItem(product, company, selectedSpeed);
-    toast({ title: '🛒 Added to cart', description: `${product.name} for ${company.name}` });
-    navigate('/cart');
-  };
+  // Cast company to Company shape expected by modal
+  const companyForModal = company as unknown as import('../types/database').Company;
 
   return (
     <div className="py-4 border-b last:border-0" style={{ borderColor: 'var(--bg-border)' }}>
@@ -134,21 +127,6 @@ function ProductOrderRow({
         </p>
       )}
 
-      {speeds.length > 1 && (
-        <select
-          className="mt-3 w-full text-xs border rounded px-2 py-1.5 outline-none"
-          style={{ borderColor: 'var(--bg-border)', color: 'var(--text-body)' }}
-          value={selectedSpeed}
-          onChange={(e) => setSelectedSpeed(e.target.value)}
-        >
-          {speeds.map((s) => (
-            <option key={s.code} value={s.code}>
-              {s.label} — €{(product.base_price + s.price_delta).toFixed(0)}
-            </option>
-          ))}
-        </select>
-      )}
-
       <div className="mt-3 flex items-center justify-between">
         <span className="text-xl font-bold" style={{ color: 'var(--text-heading)' }}>
           €{price.toFixed(0)}
@@ -158,11 +136,18 @@ function ProductOrderRow({
           style={{ backgroundColor: 'var(--brand-accent)', borderRadius: '6px' }}
           onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--brand-accent-hover)')}
           onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'var(--brand-accent)')}
-          onClick={handleAddToCart}
+          onClick={() => setModalOpen(true)}
         >
           Order Now
         </button>
       </div>
+
+      <OrderReportModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        preselectedProduct={product}
+        preselectedCompany={companyForModal}
+      />
     </div>
   );
 }
@@ -275,7 +260,7 @@ export default function CompanyProfilePage() {
             We couldn't find a company matching that profile URL.
           </p>
           <Link
-            to="/search"
+            to="/company/search"
             className="px-6 py-3 rounded text-sm font-semibold text-white"
             style={{ backgroundColor: 'var(--brand-accent)', borderRadius: '6px' }}
           >

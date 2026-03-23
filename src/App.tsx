@@ -59,7 +59,8 @@ const App = () => (
             <Routes>
               {/* ── Public ── */}
               <Route path="/" element={<HomePage />} />
-              <Route path="/search" element={<SearchResultsPage />} />
+              <Route path="/company/search" element={<SearchResultsPage />} />
+              <Route path="/search" element={<Navigate to="/company/search" replace />} />
               <Route path="/company/:slug" element={<CompanyProfilePage />} />
               <Route path="/companies/:letter" element={<CompanyBrowseByLetterPage />} />
 
