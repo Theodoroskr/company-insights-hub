@@ -644,7 +644,14 @@ export default function CompanyProfilePage() {
                       <ProductOrderRow
                         key={product.id}
                         product={product}
-                        companyIcgCode={company.icg_code}
+                        company={{
+                          id: company.id,
+                          icg_code: company.icg_code,
+                          name: company.name,
+                          reg_no: company.reg_no,
+                          slug: company.slug,
+                          country_code: company.country_code,
+                        }}
                       />
                     ))}
                   </div>
