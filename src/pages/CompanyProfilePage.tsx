@@ -374,9 +374,19 @@ export default function CompanyProfilePage() {
   }
 
   const countryInfo = getCountryInfo(company.country_code);
-  const nonMonitoringProducts = products.filter((p) => p.type !== 'monitoring');
+  const reportProducts = products.filter((p) => p.type !== 'monitoring' && p.type !== 'certificate');
+  const certificateProducts = products.filter((p) => p.type === 'certificate');
   const monitoringProduct = products.find((p) => p.type === 'monitoring');
   const samplePdfUrl = products[0]?.sample_pdf_url ?? null;
+
+  const companySidebarShape = {
+    id: company.id,
+    icg_code: company.icg_code,
+    name: company.name,
+    reg_no: company.reg_no,
+    slug: company.slug,
+    country_code: company.country_code,
+  };
 
   const orgSchema = {
     '@context': 'https://schema.org',
