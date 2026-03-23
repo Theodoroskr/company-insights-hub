@@ -404,7 +404,7 @@ export default function Navbar() {
                   {products.map((p) => (
                     <Link
                       key={p.id}
-                      to={`/products/${p.slug}`}
+                      to={`/report?type=${p.slug}`}
                       onClick={() => setMobileOpen(false)}
                       className="flex items-center gap-2 py-2 text-sm"
                       style={{ color: 'var(--text-body)' }}
