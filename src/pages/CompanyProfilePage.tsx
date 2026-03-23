@@ -387,11 +387,12 @@ export default function CompanyProfilePage() {
                 Data sourced from official registry · Last updated:{' '}
                 {formatDate(company.cached_at)}{' '}
                 <button
-                  className="ml-1 not-italic hover:underline"
+                  className="ml-1 not-italic hover:underline disabled:opacity-50"
                   style={{ color: 'var(--brand-accent)' }}
-                  onClick={() => {/* future: trigger fresh data request */}}
+                  onClick={handleFreshDataRequest}
+                  disabled={isRefreshing}
                 >
-                  Request fresh data →
+                  {isRefreshing ? 'Refreshing…' : 'Request fresh data →'}
                 </button>
               </p>
             </div>
