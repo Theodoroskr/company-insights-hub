@@ -12,6 +12,7 @@ import {
   APOSTILLE_PRICE,
   URGENT_DELIVERY_PRICE,
   COURIER_DELIVERY_PRICE,
+  SERVICE_DELIVERY_FEE,
   VAT_RATE as CERT_VAT_RATE,
 } from '../data/cyprusCertificates';
 
