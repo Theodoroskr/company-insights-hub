@@ -339,3 +339,26 @@ export const URGENT_DELIVERY_PRICE = 20;
 export const COURIER_DELIVERY_PRICE = 25;
 export const CERT_PRICE = 40;
 export const VAT_RATE = 0.19;
+
+/**
+ * Map the legal_form string from API4ALL / company record to our EntityType.
+ * Returns null when no mapping applies (e.g. Overseas Company).
+ */
+export function legalFormToEntityType(legalForm: string | null | undefined): EntityType | null {
+  if (!legalForm) return null;
+  const lf = legalForm.trim().toLowerCase();
+  if (lf === 'business name') return 'business_name';
+  if (lf === 'partnership' || lf === 'old partnership') return 'partnership';
+  if (lf === 'limited company' || lf.includes('company')) return 'company';
+  return null;
+}
+
+/**
+ * Get the top N primary (most-requested) certificates for an entity type.
+ */
+export function getPrimaryCertificatesForEntity(entityType: EntityType, limit = 3): CertificateDefinition[] {
+  const groups = certificatesByEntity[entityType];
+  const primary = groups.find((g) => g.primary);
+  if (!primary) return [];
+  return primary.certificates.slice(0, limit);
+}
