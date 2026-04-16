@@ -27,7 +27,8 @@ const NAV_ITEMS = [
   { label: 'Source Health', icon: Activity,         to: '/admin/source-health' },
   { label: 'Audit Logs',    icon: ScrollText,       to: '/admin/audit-logs' },
   { label: 'Settings',      icon: Settings,         to: '/admin/settings' },
-];
+  { label: 'Tenants',       icon: Globe,            to: '/admin/tenants', superAdminOnly: true },
+] as const;
 
 interface AdminLayoutProps {
   children: React.ReactNode;
