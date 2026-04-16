@@ -788,7 +788,97 @@ export default function CompanyProfilePage() {
           <aside id="sidebar-products" className="w-full lg:w-80 shrink-0">
             <div className="lg:sticky lg:top-24 space-y-4">
 
-              {/* Card 1 — Order Reports + Certificates */}
+              {/* Hero CTA — Most popular report */}
+              {(() => {
+                const heroProduct = structureProduct ?? reportProducts[0];
+                if (!heroProduct) return null;
+                const speeds: ProductSpeed[] = Array.isArray(heroProduct.available_speeds)
+                  ? (heroProduct.available_speeds as ProductSpeed[])
+                  : [];
+                const price = heroProduct.base_price + (speeds[0]?.price_delta ?? 0);
+                const companyForModal = company as unknown as import('../types/database').Company;
+
+                return (
+                  <div
+                    className="rounded-lg p-5 relative overflow-hidden"
+                    style={{
+                      background: 'linear-gradient(135deg, var(--brand-primary), var(--brand-primary-dark, #0f2847))',
+                      borderRadius: '10px',
+                      boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
+                    }}
+                  >
+                    {/* Popular badge */}
+                    <span
+                      className="inline-block text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full mb-3"
+                      style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: '#fff' }}
+                    >
+                      ⭐ Most Popular
+                    </span>
+
+                    <h3 className="text-lg font-bold text-white leading-tight">
+                      {heroProduct.name}
+                    </h3>
+                    <p className="text-sm mt-1 leading-relaxed" style={{ color: 'rgba(255,255,255,0.8)' }}>
+                      for {company.name}
+                    </p>
+
+                    {/* Key features */}
+                    <ul className="mt-3 space-y-1.5">
+                      {(heroProduct.what_is_included ?? []).slice(0, 4).map((item, i) => (
+                        <li key={i} className="flex items-start gap-2 text-xs" style={{ color: 'rgba(255,255,255,0.9)' }}>
+                          <span className="mt-0.5">✓</span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    {/* Price */}
+                    <div className="mt-4 flex items-baseline gap-2">
+                      <span className="text-2xl font-bold text-white">€{price.toFixed(0)}</span>
+                      <span className="text-xs" style={{ color: 'rgba(255,255,255,0.7)' }}>
+                        + VAT · {heroProduct.is_instant ? '⚡ Instant' : `Delivered in ${heroProduct.delivery_sla_hours}hrs`}
+                      </span>
+                    </div>
+
+                    {/* CTA button */}
+                    <button
+                      className="mt-4 w-full py-2.5 rounded-lg text-sm font-bold transition-all active:scale-[0.97]"
+                      style={{
+                        backgroundColor: 'var(--brand-accent)',
+                        color: '#fff',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                      }}
+                      onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--brand-accent-hover)')}
+                      onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'var(--brand-accent)')}
+                      onClick={() => setStructureModalOpen(true)}
+                    >
+                      Order Now →
+                    </button>
+
+                    {/* View Example link */}
+                    {heroProduct.sample_pdf_url && (
+                      <a
+                        href={heroProduct.sample_pdf_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-1.5 mt-2.5 text-xs font-medium hover:underline"
+                        style={{ color: 'rgba(255,255,255,0.85)' }}
+                      >
+                        📄 View Example Report
+                      </a>
+                    )}
+
+                    <OrderReportModal
+                      isOpen={structureModalOpen}
+                      onClose={() => setStructureModalOpen(false)}
+                      preselectedProduct={heroProduct}
+                      preselectedCompany={companyForModal}
+                    />
+                  </div>
+                );
+              })()}
+
+              {/* Card 1 — All Reports + Certificates */}
               {(reportProducts.length > 0 || certificateProducts.length > 0) && (
                 <div
                   className="rounded-lg border p-5"
@@ -799,7 +889,7 @@ export default function CompanyProfilePage() {
                   }}
                 >
                   <h2 className="font-semibold text-base mb-0.5" style={{ color: 'var(--text-heading)' }}>
-                    Order Reports & Certificates
+                    All Reports & Certificates
                   </h2>
                   <p className="text-xs mb-4" style={{ color: 'var(--text-muted)' }}>
                     for {company.name}
