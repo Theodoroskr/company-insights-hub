@@ -158,9 +158,14 @@ export default function CompanyBrowseByLetterPage() {
 
         {/* Results count */}
         {!isLoading && (
-          <p className="text-sm mb-4" style={{ color: 'var(--text-muted)' }}>
-            {companies.length} {companies.length === 1 ? 'company' : 'companies'} starting with{' '}
-            <strong style={{ color: 'var(--text-body)' }}>{activeLetter}</strong>
+            <p className="text-sm mb-4" style={{ color: 'var(--text-muted)' }}>
+              {allCompanies.length} {allCompanies.length === 1 ? 'company' : 'companies'} starting with{' '}
+              <strong style={{ color: 'var(--text-body)' }}>{activeLetter}</strong>
+              {totalPages > 1 && (
+                <span className="ml-2">
+                  · Page {page} of {totalPages}
+                </span>
+              )}
             {dataSource === 'cache' && (
               <span className="ml-2 text-xs" style={{ color: 'var(--text-muted)' }}>
                 (from cache)
