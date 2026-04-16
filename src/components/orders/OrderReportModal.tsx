@@ -98,6 +98,17 @@ export default function OrderReportModal({
       : [];
     const speedCode = speeds[0]?.code ?? 'Normal';
     addItem(selectedProduct, selectedCompany, speedCode);
+    setJustAdded(true);
+  };
+
+  const handleContinueShopping = () => {
+    setJustAdded(false);
+    setSelectedProduct(null);
+    setSelectedCompany(preselectedCompany ?? null);
+    setComment('');
+  };
+
+  const handleGoToCart = () => {
     onClose();
     navigate('/cart');
   };
