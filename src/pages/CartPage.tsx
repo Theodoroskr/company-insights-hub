@@ -1,11 +1,17 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { X, ShoppingCart, FileX } from 'lucide-react';
+import { X, ShoppingCart, FileX, Stamp, Zap, Truck, ShieldCheck } from 'lucide-react';
 import PageLayout from '../components/layout/PageLayout';
-import { useCart } from '../contexts/CartContext';
+import { useCart, type CertificateOrder } from '../contexts/CartContext';
 import { useTenant } from '../lib/tenant';
 import type { ProductSpeed } from '../types/database';
+import {
+  APOSTILLE_PRICE,
+  URGENT_DELIVERY_PRICE,
+  COURIER_DELIVERY_PRICE,
+  entityTypeLabels,
+} from '../data/cyprusCertificates';
 
 const PAYMENT_LOGOS = [
   { name: 'Visa', icon: '💳' },
@@ -14,9 +20,98 @@ const PAYMENT_LOGOS = [
   { name: 'Stripe', icon: '⚡' },
 ];
 
+function CertOrderBlock({
+  order,
+  onRemove,
+}: {
+  order: CertificateOrder;
+  onRemove: () => void;
+}) {
+  const apostilleCount = order.certificates.filter((c) => c.apostille).length;
+  const certTotal = order.certificates.reduce((s, c) => s + c.price, 0);
+  const apostilleTotal = apostilleCount * APOSTILLE_PRICE;
+  const urgentTotal = order.urgentDelivery ? URGENT_DELIVERY_PRICE : 0;
+  const courierTotal = order.courierDelivery ? COURIER_DELIVERY_PRICE : 0;
+  const blockTotal = certTotal + apostilleTotal + urgentTotal + courierTotal;
+
+  return (
+    <div className="py-5 border-b" style={{ borderColor: 'var(--bg-border)' }}>
+      <div className="flex items-start justify-between gap-2 mb-3">
+        <div>
+          <p className="text-sm font-semibold" style={{ color: 'var(--text-heading)' }}>
+            {order.companyName}
+          </p>
+          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+            {entityTypeLabels[order.entityType]}
+            {order.regNo && ` · Reg: ${order.regNo}`}
+          </p>
+        </div>
+        <button
+          onClick={onRemove}
+          className="shrink-0 p-1 rounded hover:bg-red-50 transition-colors"
+          style={{ color: 'var(--text-muted)' }}
+          aria-label="Remove order"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Certs list */}
+      <div className="space-y-1 mb-3">
+        {order.certificates.map((c) => (
+          <div key={c.slug} className="flex justify-between text-sm" style={{ color: 'var(--text-body)' }}>
+            <span className="truncate pr-2">
+              📋 {c.name}
+              {c.apostille && (
+                <span className="ml-1.5 text-xs inline-flex items-center gap-0.5" style={{ color: 'var(--status-active)' }}>
+                  <Stamp className="w-3 h-3" /> Apostille
+                </span>
+              )}
+            </span>
+            <span className="font-medium whitespace-nowrap">€{c.price + (c.apostille ? APOSTILLE_PRICE : 0)}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Add-ons */}
+      {(order.urgentDelivery || order.courierDelivery) && (
+        <div className="space-y-1 mb-2 pt-2 border-t" style={{ borderColor: 'var(--bg-border)' }}>
+          {order.urgentDelivery && (
+            <div className="flex justify-between text-xs" style={{ color: 'var(--text-muted)' }}>
+              <span className="flex items-center gap-1"><Zap className="w-3 h-3" /> Urgent Delivery</span>
+              <span>€{URGENT_DELIVERY_PRICE}</span>
+            </div>
+          )}
+          {order.courierDelivery && (
+            <div className="flex justify-between text-xs" style={{ color: 'var(--text-muted)' }}>
+              <span className="flex items-center gap-1"><Truck className="w-3 h-3" /> Courier Delivery</span>
+              <span>€{COURIER_DELIVERY_PRICE}</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="flex justify-between text-sm font-bold pt-2" style={{ color: 'var(--text-heading)' }}>
+        <span>Order subtotal</span>
+        <span>€{blockTotal.toFixed(2)}</span>
+      </div>
+    </div>
+  );
+}
+
 export default function CartPage() {
   const { tenant } = useTenant();
-  const { items, removeItem, updateSpeed, subtotal, totalVat, grandTotal, totalItems } = useCart();
+  const {
+    items,
+    certificateOrders,
+    removeItem,
+    removeCertificateOrder,
+    updateSpeed,
+    subtotal,
+    totalVat,
+    grandTotal,
+    totalItems,
+  } = useCart();
   const navigate = useNavigate();
 
   const handleCheckout = () => {
@@ -58,18 +153,37 @@ export default function CartPage() {
             <p className="text-sm mb-6" style={{ color: 'var(--text-muted)' }}>
               Looks like you have no items in your shopping cart.
             </p>
-            <Link
-              to="/"
-              className="px-6 py-2.5 rounded text-sm font-semibold text-white active:scale-95 transition-transform"
-              style={{ backgroundColor: 'var(--brand-accent)', borderRadius: '6px' }}
-            >
-              Continue Shopping
-            </Link>
+            <div className="flex gap-3 flex-wrap justify-center">
+              <Link
+                to="/"
+                className="px-6 py-2.5 rounded text-sm font-semibold text-white active:scale-95 transition-transform"
+                style={{ backgroundColor: 'var(--brand-accent)', borderRadius: '6px' }}
+              >
+                Continue Shopping
+              </Link>
+              <Link
+                to="/certificates"
+                className="px-6 py-2.5 rounded text-sm font-semibold border active:scale-95 transition-transform"
+                style={{ borderColor: 'var(--brand-accent)', color: 'var(--brand-accent)', borderRadius: '6px' }}
+              >
+                Order Certificates
+              </Link>
+            </div>
           </div>
         ) : (
           <div className="flex flex-col lg:flex-row gap-6">
             {/* ── Left: cart items ── */}
             <div className="flex-1 min-w-0">
+              {/* Certificate orders */}
+              {certificateOrders.map((order) => (
+                <CertOrderBlock
+                  key={order.id}
+                  order={order}
+                  onRemove={() => removeCertificateOrder(order.id)}
+                />
+              ))}
+
+              {/* Report items */}
               {items.map((item) => {
                 const speeds: ProductSpeed[] = Array.isArray(item.product.available_speeds)
                   ? (item.product.available_speeds as ProductSpeed[])
@@ -81,7 +195,6 @@ export default function CartPage() {
                     className="py-5 border-b flex gap-4 items-start"
                     style={{ borderColor: 'var(--bg-border)' }}
                   >
-                    {/* Product info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <div>
@@ -99,26 +212,16 @@ export default function CartPage() {
                           onClick={() => removeItem(item.id)}
                           className="shrink-0 p-1 rounded hover:bg-red-50 transition-colors"
                           style={{ color: 'var(--text-muted)' }}
-                          onMouseOver={(e) =>
-                            (e.currentTarget.style.color = 'var(--status-dissolved)')
-                          }
-                          onMouseOut={(e) =>
-                            (e.currentTarget.style.color = 'var(--text-muted)')
-                          }
                           aria-label="Remove item"
                         >
                           <X className="w-4 h-4" />
                         </button>
                       </div>
 
-                      <p
-                        className="text-sm mt-2 font-medium"
-                        style={{ color: 'var(--text-body)' }}
-                      >
+                      <p className="text-sm mt-2 font-medium" style={{ color: 'var(--text-body)' }}>
                         📋 {item.product.name}
                       </p>
 
-                      {/* Speed selector */}
                       {speeds.length > 1 && (
                         <div className="mt-2">
                           <select
@@ -140,11 +243,7 @@ export default function CartPage() {
                         </div>
                       )}
 
-                      {/* Price breakdown */}
-                      <div
-                        className="mt-3 flex items-center gap-4 text-sm"
-                        style={{ color: 'var(--text-muted)' }}
-                      >
+                      <div className="mt-3 flex items-center gap-4 text-sm" style={{ color: 'var(--text-muted)' }}>
                         <span className="font-bold text-base" style={{ color: 'var(--text-heading)' }}>
                           €{item.price.toFixed(2)}
                         </span>
@@ -164,21 +263,14 @@ export default function CartPage() {
                 className="rounded-lg border p-5 sticky top-24"
                 style={{ borderColor: 'var(--bg-border)', backgroundColor: '#fff' }}
               >
-                <h2
-                  className="font-semibold text-lg mb-4"
-                  style={{ color: 'var(--text-heading)' }}
-                >
+                <h2 className="font-semibold text-lg mb-4" style={{ color: 'var(--text-heading)' }}>
                   Total
                 </h2>
 
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span style={{ color: 'var(--text-body)' }}>Total</span>
+                    <span style={{ color: 'var(--text-body)' }}>Subtotal</span>
                     <span style={{ color: 'var(--text-body)' }}>€{subtotal.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span style={{ color: 'var(--text-muted)' }}>Service Fee</span>
-                    <span style={{ color: 'var(--text-muted)' }}>€0.00</span>
                   </div>
                   <div className="flex justify-between">
                     <span style={{ color: 'var(--text-muted)' }}>VAT</span>
@@ -186,19 +278,13 @@ export default function CartPage() {
                   </div>
                 </div>
 
-                <div
-                  className="my-4 border-t"
-                  style={{ borderColor: 'var(--bg-border)' }}
-                />
+                <div className="my-4 border-t" style={{ borderColor: 'var(--bg-border)' }} />
 
                 <div className="flex justify-between items-baseline mb-5">
                   <span className="text-sm font-semibold" style={{ color: 'var(--text-heading)' }}>
-                    Sub-total
+                    Grand Total
                   </span>
-                  <span
-                    className="text-xl font-bold"
-                    style={{ color: 'var(--brand-accent)' }}
-                  >
+                  <span className="text-xl font-bold" style={{ color: 'var(--brand-accent)' }}>
                     €{grandTotal.toFixed(2)}
                   </span>
                 </div>
@@ -209,13 +295,6 @@ export default function CartPage() {
                   onClick={handleCheckout}
                   className="w-full py-2.5 rounded text-sm font-semibold text-white transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ backgroundColor: 'var(--brand-accent)', borderRadius: '6px' }}
-                  onMouseOver={(e) => {
-                    if (totalItems > 0)
-                      e.currentTarget.style.backgroundColor = 'var(--brand-accent-hover)';
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--brand-accent)';
-                  }}
                 >
                   Checkout →
                 </button>
