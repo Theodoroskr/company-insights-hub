@@ -758,15 +758,13 @@ export default function CompanyProfilePage() {
                 </p>
               )}
 
-              <a
-                href={`https://www.infocreditworld.com/#${encodeURIComponent(company.name)}/blank&c`}
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                to={`/company/search?q=${encodeURIComponent(company.name)}`}
                 className="inline-block text-sm mt-4 hover:underline"
                 style={{ color: 'var(--brand-accent)' }}
               >
-                Search globally for '{company.name}' →
-              </a>
+                Search for more companies with similar directors →
+              </Link>
             </SectionCard>
 
             {/* H — Disclaimer */}
