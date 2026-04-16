@@ -514,6 +514,14 @@ export default function CompanyProfilePage() {
                   preselectedCompany={company as unknown as import('../types/database').Company}
                 />
               )}
+              {structureProduct && (
+                <OrderReportModal
+                  isOpen={structureModalOpen}
+                  onClose={() => setStructureModalOpen(false)}
+                  preselectedProduct={structureProduct}
+                  preselectedCompany={company as unknown as import('../types/database').Company}
+                />
+              )}
             </SectionCard>
 
             {/* C — Registered Address */}
