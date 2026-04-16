@@ -515,7 +515,7 @@ export default function CertificatesPage() {
 
                     {/* Add-ons */}
                     <div className="border-t mt-3 pt-3 space-y-3" style={{ borderColor: 'var(--bg-border)' }}>
-                      <label className="flex items-center justify-between cursor-pointer group">
+                      <label className="flex items-center justify-between cursor-pointer group" onClick={(e) => { e.preventDefault(); setUrgentDelivery(!urgentDelivery); }}>
                         <div className="flex items-center gap-2">
                           <div
                             className="w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-all"
@@ -533,7 +533,7 @@ export default function CertificatesPage() {
                         <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>+€{URGENT_DELIVERY_PRICE}</span>
                       </label>
 
-                      <label className="flex items-center justify-between cursor-pointer group">
+                      <label className="flex items-center justify-between cursor-pointer group" onClick={(e) => { e.preventDefault(); setCourierDelivery(!courierDelivery); }}>
                         <div className="flex items-center gap-2">
                           <div
                             className="w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-all"
