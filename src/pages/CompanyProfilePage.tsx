@@ -378,6 +378,7 @@ export default function CompanyProfilePage() {
   const reportProducts = products.filter((p) => p.type !== 'monitoring' && p.type !== 'certificate');
   const certificateProducts = products.filter((p) => p.type === 'certificate');
   const monitoringProduct = products.find((p) => p.type === 'monitoring');
+  const kybProduct = products.find((p) => p.type === 'kyb' || p.slug === 'cyprus-kyb-report');
   const samplePdfUrl = products[0]?.sample_pdf_url ?? null;
 
   const companySidebarShape = {
