@@ -629,6 +629,7 @@ export default function Navbar() {
               {[
                 { to: '/', label: 'Home' },
                 { to: '/company/search', label: 'Search Companies' },
+                { to: '/pricing', label: 'Pricing' },
                 { to: '/about', label: 'About' },
                 { to: '/contact', label: 'Contact' },
               ].map(({ to, label }) => (
