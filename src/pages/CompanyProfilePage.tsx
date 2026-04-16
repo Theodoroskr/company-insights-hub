@@ -752,9 +752,7 @@ export default function CompanyProfilePage() {
                 </div>
               ) : (
                 <p className="text-sm italic" style={{ color: 'var(--text-muted)' }}>
-                  {Array.isArray(company.directors_json) && company.directors_json.length > 0
-                    ? 'No affiliated companies found yet. More connections appear as companies are searched.'
-                    : 'Affiliated company data included in Structure Report'}
+                  No affiliated companies found yet. More connections appear as companies are searched.
                 </p>
               )}
 
