@@ -247,6 +247,135 @@ function ProductSection({
   );
 }
 
+// ── Certificate Multi-Select (sidebar) ────────────────────────
+
+function CertificateMultiSelect({
+  products,
+  company,
+}: {
+  products: Product[];
+  company: { id: string; icg_code: string; name: string; reg_no: string | null; slug: string | null; country_code: string };
+}) {
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [expanded, setExpanded] = useState(false);
+  const { addItem } = useCart();
+  const navigate = useNavigate();
+
+  const visible = expanded ? products : products.slice(0, 3);
+  const hasMore = products.length > 3;
+
+  const toggle = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const selectAll = () => {
+    if (selectedIds.size === products.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(products.map((p) => p.id)));
+    }
+  };
+
+  const handleAddToCart = () => {
+    const certs = products.filter((p) => selectedIds.has(p.id));
+    for (const cert of certs) {
+      const speeds: ProductSpeed[] = Array.isArray(cert.available_speeds)
+        ? (cert.available_speeds as ProductSpeed[])
+        : [];
+      const speedCode = speeds[0]?.code ?? 'Normal';
+      addItem(cert, company, speedCode);
+    }
+    navigate('/cart');
+  };
+
+  const totalPrice = products
+    .filter((p) => selectedIds.has(p.id))
+    .reduce((s, p) => s + p.base_price, 0);
+
+  return (
+    <div className={products.length > 0 ? 'mt-4 pt-4 border-t' : ''} style={{ borderColor: 'var(--bg-border)' }}>
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-sm font-semibold" style={{ color: 'var(--text-subheading)' }}>
+          Order Certificates
+        </h3>
+        <button
+          onClick={selectAll}
+          className="text-[11px] font-medium hover:underline"
+          style={{ color: 'var(--brand-accent)' }}
+        >
+          {selectedIds.size === products.length ? 'Deselect All' : 'Select All'}
+        </button>
+      </div>
+
+      <div className="space-y-0">
+        {visible.map((product) => {
+          const isSelected = selectedIds.has(product.id);
+          return (
+            <label
+              key={product.id}
+              className="flex items-center gap-2.5 py-2 border-b last:border-0 cursor-pointer transition-colors hover:bg-gray-50 rounded px-1 -mx-1"
+              style={{ borderColor: 'var(--bg-border)' }}
+              onClick={(e) => { e.preventDefault(); toggle(product.id); }}
+            >
+              <div
+                className="w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-all"
+                style={{
+                  borderColor: isSelected ? 'var(--brand-accent)' : 'var(--bg-border)',
+                  backgroundColor: isSelected ? 'var(--brand-accent)' : 'transparent',
+                }}
+              >
+                {isSelected && <Check className="w-3 h-3 text-white" />}
+              </div>
+              <span className="text-xs font-medium flex-1" style={{ color: 'var(--text-heading)' }}>
+                📄 {product.name}
+              </span>
+              <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                €{product.base_price.toFixed(0)}
+              </span>
+            </label>
+          );
+        })}
+      </div>
+
+      {hasMore && (
+        <button
+          onClick={() => setExpanded((v) => !v)}
+          className="mt-1 text-xs transition-opacity hover:opacity-70 flex items-center gap-1"
+          style={{ color: 'var(--brand-accent)' }}
+        >
+          {expanded ? <>See less ∧</> : <>See all {products.length} certificates ∨</>}
+        </button>
+      )}
+
+      {selectedIds.size > 0 && (
+        <div className="mt-3 pt-3 border-t" style={{ borderColor: 'var(--bg-border)' }}>
+          <div className="flex items-baseline justify-between mb-2">
+            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+              {selectedIds.size} certificate{selectedIds.size > 1 ? 's' : ''} selected
+            </span>
+            <span className="text-sm font-bold" style={{ color: 'var(--text-heading)' }}>
+              €{totalPrice.toFixed(0)}
+            </span>
+          </div>
+          <button
+            onClick={handleAddToCart}
+            className="w-full py-2 rounded text-xs font-semibold text-white transition-all active:scale-95 flex items-center justify-center gap-1.5"
+            style={{ backgroundColor: 'var(--brand-accent)', borderRadius: '6px' }}
+          >
+            <ShoppingCart className="w-3.5 h-3.5" />
+            Add to Cart — €{totalPrice.toFixed(0)}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Main page ─────────────────────────────────────────────────
 
 export default function CompanyProfilePage() {
