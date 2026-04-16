@@ -726,11 +726,11 @@ export default function CompanyProfilePage() {
             <SectionCard>
               <SectionTitle>Registered Address</SectionTitle>
               <GatedContent
-                isUnlocked={false}
+                isUnlocked={isUnlocked}
                 message="Included in all paid reports"
               >
                 <p className="text-sm" style={{ color: 'var(--text-body)' }}>
-                  123 Example Street, Nicosia 1234, Cyprus
+                  {company.registered_address ?? '—'}
                 </p>
               </GatedContent>
             </SectionCard>
@@ -777,7 +777,7 @@ export default function CompanyProfilePage() {
                     {/* Gated history */}
                     <div className="mt-3">
                       <GatedContent
-                        isUnlocked={false}
+                        isUnlocked={isUnlocked}
                         message="Order Structure Report to view full appointment history and addresses"
                         ctaLabel="Order Structure Report"
                         onCta={openStructureModal}
@@ -813,7 +813,7 @@ export default function CompanyProfilePage() {
                 </h2>
               </div>
               <GatedContent
-                isUnlocked={false}
+                isUnlocked={isUnlocked}
                 message="Order Structure Report to view full shareholder history, share percentages and addresses"
                 ctaLabel="Order Structure Report"
                 onCta={openStructureModal}
@@ -839,7 +839,7 @@ export default function CompanyProfilePage() {
             {company.country_code?.toUpperCase() === 'GB' && company.reg_no ? (
               <UKCompanySections
                 companyNumber={company.reg_no}
-                isUnlocked={false}
+                isUnlocked={isUnlocked}
                 onOrderReport={openStructureModal}
               />
             ) : (
@@ -853,7 +853,7 @@ export default function CompanyProfilePage() {
                   </span>
                 </p>
                 <GatedContent
-                  isUnlocked={false}
+                  isUnlocked={isUnlocked}
                   message="Order Structure Report to view all filings and download documents"
                   ctaLabel="Order Structure Report"
                   onCta={openStructureModal}
