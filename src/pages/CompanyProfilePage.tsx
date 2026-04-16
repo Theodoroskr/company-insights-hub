@@ -10,6 +10,7 @@ import RiskTrafficLight from '../components/ui/RiskTrafficLight';
 import CountryFlag from '../components/ui/CountryFlag';
 import CoverageTierBadge from '../components/ui/CoverageTierBadge';
 import OrderReportModal from '../components/orders/OrderReportModal';
+import UKCompanySections from '../components/company/UKCompanySections';
 import { useTenant } from '../lib/tenant.tsx';
 import { useCountries } from '../lib/countries';
 import { useCart } from '../contexts/CartContext';
@@ -800,43 +801,51 @@ export default function CompanyProfilePage() {
               </GatedContent>
             </SectionCard>
 
-            {/* F — Filings & Documents */}
-            <SectionCard>
-              <SectionTitle>Filings & Documents</SectionTitle>
-              <p className="text-sm mb-3" style={{ color: 'var(--text-body)' }}>
-                This company has filed documents with the registry.
-                <br />
-                <span style={{ color: 'var(--text-muted)' }}>
-                  Last filing: information available in full report
-                </span>
-              </p>
-              <GatedContent
+            {/* F — Filings & Documents (UK gets real CH data, others get placeholder) */}
+            {company.country_code?.toUpperCase() === 'GB' && company.reg_no ? (
+              <UKCompanySections
+                companyNumber={company.reg_no}
                 isUnlocked={false}
-                message="Order Structure Report to view all filings and download documents"
-                ctaLabel="Order Structure Report"
-                onCta={openStructureModal}
-              >
-                <table className="w-full text-sm">
-                  <tbody>
-                    {[
-                      ['Annual Return', '2024', '████████'],
-                      ['Director Change', '2023', '████████'],
-                      ['Address Change', '2022', '████████'],
-                    ].map(([type, year, ref], i) => (
-                      <tr
-                        key={i}
-                        className="border-b last:border-0"
-                        style={{ borderColor: 'var(--bg-border)' }}
-                      >
-                        <td className="py-2 pr-4" style={{ color: 'var(--text-body)' }}>{type}</td>
-                        <td className="py-2 pr-4" style={{ color: 'var(--text-muted)' }}>{year}</td>
-                        <td className="py-2" style={{ color: 'var(--text-muted)' }}>{ref}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </GatedContent>
-            </SectionCard>
+                onOrderReport={openStructureModal}
+              />
+            ) : (
+              <SectionCard>
+                <SectionTitle>Filings & Documents</SectionTitle>
+                <p className="text-sm mb-3" style={{ color: 'var(--text-body)' }}>
+                  This company has filed documents with the registry.
+                  <br />
+                  <span style={{ color: 'var(--text-muted)' }}>
+                    Last filing: information available in full report
+                  </span>
+                </p>
+                <GatedContent
+                  isUnlocked={false}
+                  message="Order Structure Report to view all filings and download documents"
+                  ctaLabel="Order Structure Report"
+                  onCta={openStructureModal}
+                >
+                  <table className="w-full text-sm">
+                    <tbody>
+                      {[
+                        ['Annual Return', '2024', '████████'],
+                        ['Director Change', '2023', '████████'],
+                        ['Address Change', '2022', '████████'],
+                      ].map(([type, year, ref], i) => (
+                        <tr
+                          key={i}
+                          className="border-b last:border-0"
+                          style={{ borderColor: 'var(--bg-border)' }}
+                        >
+                          <td className="py-2 pr-4" style={{ color: 'var(--text-body)' }}>{type}</td>
+                          <td className="py-2 pr-4" style={{ color: 'var(--text-muted)' }}>{year}</td>
+                          <td className="py-2" style={{ color: 'var(--text-muted)' }}>{ref}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </GatedContent>
+              </SectionCard>
+            )}
 
             {/* G — Affiliated Companies */}
             <SectionCard>
