@@ -16,6 +16,7 @@ import {
   Stamp,
   Truck,
   Zap,
+  FileText,
 } from 'lucide-react';
 import PageLayout from '../components/layout/PageLayout';
 import { useCart } from '../contexts/CartContext';
