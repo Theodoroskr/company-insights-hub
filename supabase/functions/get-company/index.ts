@@ -153,9 +153,86 @@ serve(async (req) => {
     }
 
     // ── 3. Refresh from API ───────────────────────────────
+    const countryCode = (company.country_code ?? 'cy').toLowerCase();
+
+    // ── 3a. UK branch: refresh from Companies House ────────
+    if (countryCode === 'gb') {
+      try {
+        const chKey = Deno.env.get('COMPANIES_HOUSE_UK_API_KEY') ?? '';
+        const auth = 'Basic ' + btoa(`${chKey}:`);
+        const cn = company.reg_no ?? company.icg_code?.replace(/^GB:/, '') ?? '';
+        if (cn) {
+          const [profRes, offRes] = await Promise.all([
+            fetch(`https://api.company-information.service.gov.uk/company/${cn}`, {
+              headers: { Authorization: auth, Accept: 'application/json' },
+            }),
+            fetch(`https://api.company-information.service.gov.uk/company/${cn}/officers`, {
+              headers: { Authorization: auth, Accept: 'application/json' },
+            }),
+          ]);
+
+          const updateFields: Record<string, unknown> = {
+            cached_at: new Date().toISOString(),
+          };
+
+          if (profRes.ok) {
+            const profile = await profRes.json();
+            updateFields.name = profile.company_name ?? company.name;
+            updateFields.status = profile.company_status ?? company.status;
+            updateFields.legal_form = profile.type ?? company.legal_form;
+            updateFields.registered_address = [
+              profile.registered_office_address?.address_line_1,
+              profile.registered_office_address?.address_line_2,
+              profile.registered_office_address?.locality,
+              profile.registered_office_address?.postal_code,
+              profile.registered_office_address?.country,
+            ].filter(Boolean).join(', ') || company.registered_address;
+            updateFields.raw_source_json = profile;
+          }
+
+          if (offRes.ok) {
+            const off = await offRes.json();
+            const items = (off.items ?? []) as Array<{ name?: string; officer_role?: string; resigned_on?: string }>;
+            const directors = items
+              .filter((o) => !o.resigned_on)
+              .map((o) => ({
+                name: o.name ?? '',
+                role: o.officer_role
+                  ? o.officer_role
+                      .split('-')
+                      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                      .join(' ')
+                  : 'Officer',
+              }))
+              .filter((d) => d.name);
+            if (directors.length > 0) updateFields.directors_json = directors;
+          }
+
+          const { data: refreshed } = await sb
+            .from('companies')
+            .update(updateFields)
+            .eq('id', company.id)
+            .select('*')
+            .maybeSingle();
+
+          if (refreshed) {
+            return new Response(JSON.stringify({ company: refreshed, source: 'refreshed' }), {
+              headers: { ...CORS, 'Content-Type': 'application/json' },
+            });
+          }
+        }
+      } catch (err) {
+        console.error('[get-company] CH UK refresh failed:', err);
+      }
+
+      return new Response(JSON.stringify({ company, source: 'cache' }), {
+        headers: { ...CORS, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // ── 3b. API4ALL branch (non-UK) ────────────────────────
     try {
       const token = await getApiToken(sb);
-      const countryCode = (company.country_code ?? 'cy').toLowerCase();
 
       // Fetch search results + information endpoint in parallel
       const searchUrl = `${API_BASE}/search/${countryCode}/name/${encodeURIComponent(company.name)}`;
