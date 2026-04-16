@@ -26,18 +26,18 @@ export default function PricingPage() {
       .eq('is_active', true)
       .order('display_order', { ascending: true })
       .then(({ data }) => {
-        setProducts((data as Product[]) ?? []);
+        setProducts((data as unknown as Product[]) ?? []);
         setLoading(false);
       });
   }, [tenant?.id]);
 
-  const reports = products.filter((p) => p.type === 'report');
+  const reports = products.filter((p) => ['extract', 'structure', 'kyb', 'credit'].includes(p.type));
   const certificates = products.filter((p) => p.type === 'certificate');
-  const services = products.filter((p) => p.type === 'service');
+  const services = products.filter((p) => p.type === 'monitoring');
 
   const formatPrice = (p: Product) => {
-    const speeds = p.available_speeds as Array<{ label: string; delta: number }> | null;
-    const startPrice = p.base_price + (speeds?.[0]?.delta ?? 0);
+    const speeds = p.available_speeds;
+    const startPrice = p.base_price + (speeds?.[0]?.price_delta ?? 0);
     return `€${startPrice.toFixed(2)}`;
   };
 
@@ -219,7 +219,7 @@ export default function PricingPage() {
       {/* Order modal */}
       {modalProduct && (
         <OrderReportModal
-          open={!!modalProduct}
+          isOpen={!!modalProduct}
           onClose={() => setModalProduct(null)}
           preselectedProduct={modalProduct}
         />
