@@ -853,6 +853,75 @@ export default function CompanyProfilePage() {
               </SectionCard>
             )}
 
+            {/* E (unlocked) — Real Shareholders/PSC from generated report bundle */}
+            {isUnlocked && reportPsc.length > 0 && (
+              <SectionCard>
+                <div className="flex items-center mb-3">
+                  <h2 className="font-semibold text-base" style={{ color: 'var(--text-subheading)' }}>
+                    Shareholders &amp; Beneficial Owners
+                    <RecordBadge count={`${reportPsc.length} record${reportPsc.length === 1 ? '' : 's'}`} />
+                  </h2>
+                </div>
+                <div className="space-y-3">
+                  {reportPsc.map((p, i) => {
+                    const name = (p.name as string) ?? '—';
+                    const kind = ((p.kind as string) ?? '').replace(/-/g, ' ');
+                    const natures = (p.natures_of_control as string[] | undefined) ?? [];
+                    const ceasedOn = p.ceased_on as string | undefined;
+                    const notifiedOn = p.notified_on as string | undefined;
+                    const addr = p.address as Record<string, string> | undefined;
+                    const addressLine = addr
+                      ? [addr.premises, addr.address_line_1, addr.locality, addr.postal_code, addr.country]
+                          .filter(Boolean)
+                          .join(', ')
+                      : '';
+                    const nationality = (p.nationality as string) ?? '';
+                    const isCeased = !!ceasedOn;
+                    return (
+                      <div
+                        key={i}
+                        className="text-sm py-2 border-b last:border-0"
+                        style={{ borderColor: 'var(--bg-border)', opacity: isCeased ? 0.6 : 1 }}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-medium" style={{ color: 'var(--text-body)' }}>{name}</span>
+                          {kind && (
+                            <span
+                              className="text-xs px-2 py-0.5 rounded-full"
+                              style={{ backgroundColor: 'var(--bg-subtle)', color: 'var(--text-muted)' }}
+                            >
+                              {kind}
+                            </span>
+                          )}
+                        </div>
+                        {natures.length > 0 && (
+                          <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                            {natures.map((n) => n.replace(/-/g, ' ')).join(' · ')}
+                          </p>
+                        )}
+                        {addressLine && (
+                          <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                            Address: {addressLine}
+                          </p>
+                        )}
+                        {nationality && (
+                          <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                            Nationality: {nationality}
+                          </p>
+                        )}
+                        <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                          {isCeased ? `Ceased ${formatDate(ceasedOn)}` : `Notified ${formatDate(notifiedOn)}`}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="text-xs mt-3" style={{ color: 'var(--text-muted)' }}>
+                  Source: Companies House UK · From your purchased report
+                </p>
+              </SectionCard>
+            )}
+
             {/* F — Filings & Documents (UK gets real CH data, others get placeholder) */}
             {company.country_code?.toUpperCase() === 'GB' && company.reg_no ? (
               <UKCompanySections
