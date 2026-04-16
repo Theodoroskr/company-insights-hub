@@ -713,36 +713,48 @@ export default function CompanyProfilePage() {
 
               {affiliated.length > 0 ? (
                 <div className="space-y-2">
-                  {affiliated.map((aff) => (
-                    <div
-                      key={aff.id}
-                      className="flex items-center justify-between p-3 rounded border"
-                      style={{ borderColor: 'var(--bg-border)' }}
-                    >
-                      <div>
-                        <Link
-                          to={`/company/${aff.slug ?? aff.id}`}
-                          className="text-sm font-medium hover:underline"
-                          style={{ color: 'var(--brand-accent)' }}
-                        >
-                          {aff.name}
-                        </Link>
-                        {aff.reg_no && (
-                          <span className="ml-2 text-xs" style={{ color: 'var(--text-muted)' }}>
-                            {aff.reg_no}
-                          </span>
-                        )}
-                        <p className="text-xs italic mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                          via shared director
-                        </p>
+                  {affiliated.map((aff) => {
+                    // Find the shared director name(s)
+                    const myDirectors = Array.isArray(company.directors_json) ? company.directors_json : [];
+                    const theirDirectors: DirectorEntry[] = Array.isArray(aff.directors_json) ? aff.directors_json : [];
+                    const myNames = myDirectors.map(d => d.name.toUpperCase());
+                    const sharedNames = theirDirectors
+                      .filter(d => myNames.includes(d.name.toUpperCase()))
+                      .map(d => maskName(d.name));
+
+                    return (
+                      <div
+                        key={aff.id}
+                        className="flex items-center justify-between p-3 rounded border"
+                        style={{ borderColor: 'var(--bg-border)' }}
+                      >
+                        <div>
+                          <Link
+                            to={`/company/${aff.slug ?? aff.id}`}
+                            className="text-sm font-medium hover:underline"
+                            style={{ color: 'var(--brand-accent)' }}
+                          >
+                            {aff.name}
+                          </Link>
+                          {aff.reg_no && (
+                            <span className="ml-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+                              {aff.reg_no}
+                            </span>
+                          )}
+                          <p className="text-xs italic mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                            via {sharedNames.length > 0 ? sharedNames.join(', ') : 'shared director'}
+                          </p>
+                        </div>
+                        {aff.status && <StatusBadge status={aff.status} />}
                       </div>
-                      {aff.status && <StatusBadge status={aff.status} />}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <p className="text-sm italic" style={{ color: 'var(--text-muted)' }}>
-                  Affiliated company data included in Structure Report
+                  {Array.isArray(company.directors_json) && company.directors_json.length > 0
+                    ? 'No affiliated companies found yet. More connections appear as companies are searched.'
+                    : 'Affiliated company data included in Structure Report'}
                 </p>
               )}
 
