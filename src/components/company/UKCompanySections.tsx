@@ -132,19 +132,45 @@ export default function UKCompanySections({
           >
             <table className="w-full text-sm">
               <tbody>
-                {filings.slice(0, 10).map((f, i) => (
-                  <tr key={i} className="border-b last:border-0" style={{ borderColor: 'var(--bg-border)' }}>
-                    <td className="py-2 pr-4" style={{ color: 'var(--text-body)' }}>
-                      {(f.description ?? f.type ?? '').replace(/-/g, ' ').replace(/^./, (s) => s.toUpperCase())}
-                    </td>
-                    <td className="py-2 pr-4 whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>
-                      {formatDate(f.date)}
-                    </td>
-                    <td className="py-2 text-xs" style={{ color: 'var(--text-muted)' }}>
-                      {f.category ?? ''}
-                    </td>
-                  </tr>
-                ))}
+                {filings.slice(0, 10).map((f, i) => {
+                  const docMeta = f.links?.document_metadata;
+                  // CH document_metadata URLs look like https://document-api.company-information.service.gov.uk/document/{id}
+                  // The public viewer is at https://find-and-update.company-information.service.gov.uk/document/{id}
+                  const docId = docMeta?.split('/document/')[1];
+                  const viewerUrl = docId
+                    ? `https://find-and-update.company-information.service.gov.uk/document/${docId}`
+                    : null;
+                  const label = (f.description ?? f.type ?? '')
+                    .replace(/-/g, ' ')
+                    .replace(/^./, (s) => s.toUpperCase());
+                  return (
+                    <tr key={i} className="border-b last:border-0" style={{ borderColor: 'var(--bg-border)' }}>
+                      <td className="py-2 pr-4" style={{ color: 'var(--text-body)' }}>
+                        {isUnlocked && viewerUrl ? (
+                          <a
+                            href={viewerUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:underline inline-flex items-center gap-1"
+                            style={{ color: 'var(--brand-accent)' }}
+                            title="Open original PDF on Companies House"
+                          >
+                            {label}
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        ) : (
+                          label
+                        )}
+                      </td>
+                      <td className="py-2 pr-4 whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>
+                        {formatDate(f.date)}
+                      </td>
+                      <td className="py-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+                        {f.category ?? ''}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </GatedContent>
