@@ -638,7 +638,12 @@ export default function CertificatesPage() {
                     Get a full company structure overview alongside your certificates.
                   </p>
                   <button
-                    onClick={() => navigate('/report?type=structure')}
+                    onClick={() => {
+                      const params = new URLSearchParams({ type: 'structure' });
+                      if (companyName.trim()) params.set('companyName', companyName.trim());
+                      if (regNo.trim()) params.set('regNo', regNo.trim());
+                      navigate(`/report?${params.toString()}`);
+                    }}
                     className="w-full py-2 rounded-lg text-xs font-semibold border transition-all hover:shadow-sm active:scale-[0.98] flex items-center justify-center gap-1.5"
                     style={{
                       borderColor: 'var(--brand-accent)',
