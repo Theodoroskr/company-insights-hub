@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
     if (product?.slug !== "uk-company-report") {
       throw new Error("This function only fulfils uk-company-report items");
     }
-    if (item.fulfillment_status === "fulfilled") {
+    if (item.fulfillment_status === "fulfilled" || item.fulfillment_status === "completed") {
       return new Response(JSON.stringify({ success: true, alreadyFulfilled: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -119,11 +119,11 @@ Deno.serve(async (req) => {
 
     if (repErr) throw repErr;
 
-    // Mark item fulfilled
+    // Mark item completed
     await supabase
       .from("order_items")
       .update({
-        fulfillment_status: "fulfilled",
+        fulfillment_status: "completed",
         verified_at: new Date().toISOString(),
         verified_by: "system:companies-house-uk",
       })
