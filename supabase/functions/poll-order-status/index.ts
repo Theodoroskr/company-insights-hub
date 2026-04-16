@@ -130,6 +130,31 @@ Deno.serve(async (req) => {
               body: JSON.stringify({ order_item_id: item.id }),
             });
 
+            // If the customer added the screening add-on, trigger ComplyAdvantage
+            // (fire-and-forget — fetch-report has already saved the bundle)
+            try {
+              const { data: itemRow } = await supabase
+                .from('order_items')
+                .select('screening_addon')
+                .eq('id', item.id)
+                .maybeSingle();
+              if (itemRow?.screening_addon) {
+                fetch(
+                  `${Deno.env.get('SUPABASE_URL')}/functions/v1/complyadvantage-screen`,
+                  {
+                    method: 'POST',
+                    headers: {
+                      'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ order_item_id: item.id }),
+                  },
+                ).catch((e) => console.error('[poll] screening trigger failed:', e));
+              }
+            } catch (e) {
+              console.error('[poll] screening lookup failed:', e);
+            }
+
             results.push({ item_id: item.id, status: itemStatus, action: 'fetch_report_triggered' });
 
             // Update fulfillment task
