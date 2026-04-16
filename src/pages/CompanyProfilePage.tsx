@@ -804,36 +804,38 @@ export default function CompanyProfilePage() {
               })()}
             </SectionCard>
 
-            {/* E — Shareholders */}
-            <SectionCard>
-              <div className="flex items-center mb-3">
-                <h2 className="font-semibold text-base" style={{ color: 'var(--text-subheading)' }}>
-                  Shareholders
-                  <RecordBadge count="1+ records" />
-                </h2>
-              </div>
-              <GatedContent
-                isUnlocked={isUnlocked}
-                message="Order Structure Report to view full shareholder history, share percentages and addresses"
-                ctaLabel="Order Structure Report"
-                onCta={openStructureModal}
-              >
-                <div className="space-y-2">
-                  {[
-                    '████████ HOLDINGS LTD · 100% shares · 1,000 shares',
-                    'INDIVIDUAL SHAREHOLDER · Address: ████████████',
-                  ].map((row, i) => (
-                    <div
-                      key={i}
-                      className="text-sm py-2 border-b last:border-0"
-                      style={{ color: 'var(--text-body)', borderColor: 'var(--bg-border)' }}
-                    >
-                      {row}
-                    </div>
-                  ))}
+            {/* E — Shareholders (teaser only; real ownership shown via PSC for UK) */}
+            {!isUnlocked && (
+              <SectionCard>
+                <div className="flex items-center mb-3">
+                  <h2 className="font-semibold text-base" style={{ color: 'var(--text-subheading)' }}>
+                    Shareholders
+                    <RecordBadge count="1+ records" />
+                  </h2>
                 </div>
-              </GatedContent>
-            </SectionCard>
+                <GatedContent
+                  isUnlocked={false}
+                  message="Order Structure Report to view full shareholder history, share percentages and addresses"
+                  ctaLabel="Order Structure Report"
+                  onCta={openStructureModal}
+                >
+                  <div className="space-y-2">
+                    {[
+                      '████████ HOLDINGS LTD · 100% shares · 1,000 shares',
+                      'INDIVIDUAL SHAREHOLDER · Address: ████████████',
+                    ].map((row, i) => (
+                      <div
+                        key={i}
+                        className="text-sm py-2 border-b last:border-0"
+                        style={{ color: 'var(--text-body)', borderColor: 'var(--bg-border)' }}
+                      >
+                        {row}
+                      </div>
+                    ))}
+                  </div>
+                </GatedContent>
+              </SectionCard>
+            )}
 
             {/* F — Filings & Documents (UK gets real CH data, others get placeholder) */}
             {company.country_code?.toUpperCase() === 'GB' && company.reg_no ? (
