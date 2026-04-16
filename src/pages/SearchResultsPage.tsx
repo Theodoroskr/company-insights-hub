@@ -439,6 +439,44 @@ export default function SearchResultsPage() {
                               </button>
                             )}
                           </div>
+
+                          {/* Mobile buttons */}
+                          <div className="flex sm:hidden items-center gap-2 mt-3">
+                            <button
+                              className="flex-1 px-3 py-2 rounded text-xs font-medium border transition-all"
+                              style={{
+                                borderColor: 'var(--brand-accent)',
+                                color: 'var(--brand-accent)',
+                                borderRadius: '6px',
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/company/${company.slug ?? company.id}`);
+                              }}
+                            >
+                              View Profile
+                            </button>
+                            {entityType && (
+                              <button
+                                className="flex-1 px-3 py-2 rounded text-xs font-medium text-white transition-all active:scale-95"
+                                style={{
+                                  backgroundColor: 'var(--brand-accent)',
+                                  borderRadius: '6px',
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const params = new URLSearchParams({
+                                    entity: entityType,
+                                    companyName: company.name,
+                                    ...(company.reg_no ? { regNo: company.reg_no } : {}),
+                                  });
+                                  navigate(`/certificates?${params.toString()}`);
+                                }}
+                              >
+                                Order Certificates
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );
