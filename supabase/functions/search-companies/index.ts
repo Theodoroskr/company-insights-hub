@@ -83,6 +83,80 @@ function isRegNoSearch(q: string): boolean {
   return /^[A-Z]{1,4}\d+$/.test(q.trim().toUpperCase());
 }
 
+// ── Companies House UK search ─────────────────────────────────
+const CH_BASE = 'https://api.company-information.service.gov.uk';
+
+function chAuthHeader(): string {
+  const key = Deno.env.get('COMPANIES_HOUSE_UK_API_KEY') ?? '';
+  return 'Basic ' + btoa(`${key}:`);
+}
+
+async function searchCompaniesHouseUK(
+  sb: ReturnType<typeof getSupabase>,
+  q: string,
+  tenantId: string,
+): Promise<Array<Record<string, unknown>>> {
+  const res = await fetch(
+    `${CH_BASE}/search/companies?q=${encodeURIComponent(q)}&items_per_page=20`,
+    { headers: { Authorization: chAuthHeader(), Accept: 'application/json' } },
+  );
+  if (!res.ok) {
+    console.error('[search-companies] CH UK error', res.status, await res.text().catch(() => ''));
+    return [];
+  }
+  const json = await res.json();
+  const items: Array<{
+    company_number: string;
+    title: string;
+    company_status?: string;
+    company_type?: string;
+    address_snippet?: string;
+  }> = json.items ?? [];
+
+  const upserted: Array<Record<string, unknown>> = [];
+
+  for (const it of items) {
+    const baseSlug = generateSlug(it.title, it.company_number);
+    let finalSlug = baseSlug;
+    let attempt = 1;
+    const icgCode = `GB:${it.company_number}`;
+
+    while (true) {
+      const { data: existing } = await sb
+        .from('companies')
+        .select('id, icg_code')
+        .eq('slug', finalSlug)
+        .maybeSingle();
+      if (!existing || existing.icg_code === icgCode) break;
+      attempt++;
+      finalSlug = `${baseSlug}-${attempt}`;
+    }
+
+    const row = {
+      tenant_id: tenantId || null,
+      icg_code: icgCode,
+      country_code: 'GB',
+      name: it.title,
+      reg_no: it.company_number,
+      status: it.company_status ?? null,
+      legal_form: it.company_type ?? null,
+      registered_address: it.address_snippet ?? null,
+      slug: finalSlug,
+      cached_at: new Date().toISOString(),
+    };
+
+    const { data: upRow } = await sb
+      .from('companies')
+      .upsert(row, { onConflict: 'icg_code' })
+      .select('id, icg_code, name, reg_no, vat_no, status, country_code, slug, cached_at, legal_form')
+      .maybeSingle();
+
+    if (upRow) upserted.push(upRow);
+  }
+
+  return upserted;
+}
+
 // ── Main handler ─────────────────────────────────────────────
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
