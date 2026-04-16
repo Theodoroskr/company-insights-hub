@@ -401,6 +401,9 @@ export type Database = {
           speed: string | null
           unit_price: number
           vat_amount: number | null
+          verification_note: string | null
+          verified_at: string | null
+          verified_by: string | null
         }
         Insert: {
           api4all_item_code?: string | null
@@ -417,6 +420,9 @@ export type Database = {
           speed?: string | null
           unit_price: number
           vat_amount?: number | null
+          verification_note?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Update: {
           api4all_item_code?: string | null
@@ -433,6 +439,9 @@ export type Database = {
           speed?: string | null
           unit_price?: number
           vat_amount?: number | null
+          verification_note?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Relationships: [
           {
