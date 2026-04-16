@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { Search, ExternalLink } from 'lucide-react';
+import { Search, ExternalLink, FileText, Award } from 'lucide-react';
 import PageLayout from '../components/layout/PageLayout';
 import StatusBadge from '../components/ui/StatusBadge';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
@@ -12,6 +12,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import type { Company } from '../types/database';
+import {
+  legalFormToEntityType,
+  getPrimaryCertificatesForEntity,
+  entityTypeLabels,
+  CERT_PRICE,
+  type EntityType,
+} from '@/data/cyprusCertificates';
 
 const LEGAL_TYPE_OPTIONS = [
   'Business Name',
