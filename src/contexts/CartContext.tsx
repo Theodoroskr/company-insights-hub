@@ -12,6 +12,7 @@ import {
   APOSTILLE_PRICE,
   URGENT_DELIVERY_PRICE,
   COURIER_DELIVERY_PRICE,
+  SERVICE_DELIVERY_FEE,
   VAT_RATE as CERT_VAT_RATE,
 } from '../data/cyprusCertificates';
 
@@ -102,11 +103,13 @@ function makeId(productId: string, icgCode: string, speedCode: string) {
 }
 
 function calcCertOrderTotals(order: CertificateOrder) {
+  const certCount = order.certificates.length;
   const certTotal = order.certificates.reduce((s, c) => s + c.price, 0);
+  const serviceDeliveryTotal = certCount * SERVICE_DELIVERY_FEE;
   const apostilleTotal = order.certificates.filter((c) => c.apostille).length * APOSTILLE_PRICE;
   const urgentTotal = order.urgentDelivery ? URGENT_DELIVERY_PRICE : 0;
   const courierTotal = order.courierDelivery ? COURIER_DELIVERY_PRICE : 0;
-  const sub = certTotal + apostilleTotal + urgentTotal + courierTotal;
+  const sub = certTotal + serviceDeliveryTotal + apostilleTotal + urgentTotal + courierTotal;
   const vat = parseFloat((sub * CERT_VAT_RATE).toFixed(2));
   return { subtotal: sub, vat };
 }

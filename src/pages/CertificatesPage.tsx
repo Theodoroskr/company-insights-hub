@@ -28,6 +28,7 @@ import {
   APOSTILLE_PRICE,
   URGENT_DELIVERY_PRICE,
   COURIER_DELIVERY_PRICE,
+  SERVICE_DELIVERY_FEE,
   CERT_PRICE,
   VAT_RATE,
   type EntityType,
@@ -336,11 +337,12 @@ export default function CertificatesPage() {
   // ── Price calculations ───────────────────────────────────
   const certCount = selectedSlugs.size;
   const certSubtotal = certCount * CERT_PRICE;
+  const serviceDeliveryTotal = certCount * SERVICE_DELIVERY_FEE;
   const apostilleCount = apostilleSlugs.size;
   const apostilleTotal = apostilleCount * APOSTILLE_PRICE;
   const urgentTotal = urgentDelivery ? URGENT_DELIVERY_PRICE : 0;
   const courierTotal = courierDelivery ? COURIER_DELIVERY_PRICE : 0;
-  const subtotal = certSubtotal + apostilleTotal + urgentTotal + courierTotal;
+  const subtotal = certSubtotal + serviceDeliveryTotal + apostilleTotal + urgentTotal + courierTotal;
   const vat = parseFloat((subtotal * VAT_RATE).toFixed(2));
   const grandTotal = subtotal + vat;
 
@@ -517,6 +519,10 @@ export default function CertificatesPage() {
                       <div className="flex justify-between" style={{ color: 'var(--text-body)' }}>
                         <span>Certificates ({certCount} × €{CERT_PRICE})</span>
                         <span>€{certSubtotal}</span>
+                      </div>
+                      <div className="flex justify-between" style={{ color: 'var(--text-body)' }}>
+                        <span>Service & Delivery ({certCount} × €{SERVICE_DELIVERY_FEE})</span>
+                        <span>€{serviceDeliveryTotal}</span>
                       </div>
                       {apostilleCount > 0 && (
                         <div className="flex justify-between" style={{ color: 'var(--text-body)' }}>

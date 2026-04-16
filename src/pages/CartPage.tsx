@@ -10,6 +10,7 @@ import {
   APOSTILLE_PRICE,
   URGENT_DELIVERY_PRICE,
   COURIER_DELIVERY_PRICE,
+  SERVICE_DELIVERY_FEE,
   entityTypeLabels,
 } from '../data/cyprusCertificates';
 
@@ -29,10 +30,11 @@ function CertOrderBlock({
 }) {
   const apostilleCount = order.certificates.filter((c) => c.apostille).length;
   const certTotal = order.certificates.reduce((s, c) => s + c.price, 0);
+  const serviceDeliveryTotal = order.certificates.length * SERVICE_DELIVERY_FEE;
   const apostilleTotal = apostilleCount * APOSTILLE_PRICE;
   const urgentTotal = order.urgentDelivery ? URGENT_DELIVERY_PRICE : 0;
   const courierTotal = order.courierDelivery ? COURIER_DELIVERY_PRICE : 0;
-  const blockTotal = certTotal + apostilleTotal + urgentTotal + courierTotal;
+  const blockTotal = certTotal + serviceDeliveryTotal + apostilleTotal + urgentTotal + courierTotal;
 
   return (
     <div className="py-5 border-b" style={{ borderColor: 'var(--bg-border)' }}>
@@ -73,23 +75,25 @@ function CertOrderBlock({
         ))}
       </div>
 
-      {/* Add-ons */}
-      {(order.urgentDelivery || order.courierDelivery) && (
-        <div className="space-y-1 mb-2 pt-2 border-t" style={{ borderColor: 'var(--bg-border)' }}>
-          {order.urgentDelivery && (
-            <div className="flex justify-between text-xs" style={{ color: 'var(--text-muted)' }}>
-              <span className="flex items-center gap-1"><Zap className="w-3 h-3" /> Urgent Delivery</span>
-              <span>€{URGENT_DELIVERY_PRICE}</span>
-            </div>
-          )}
-          {order.courierDelivery && (
-            <div className="flex justify-between text-xs" style={{ color: 'var(--text-muted)' }}>
-              <span className="flex items-center gap-1"><Truck className="w-3 h-3" /> Courier Delivery</span>
-              <span>€{COURIER_DELIVERY_PRICE}</span>
-            </div>
-          )}
+      {/* Service & Delivery + Add-ons */}
+      <div className="space-y-1 mb-2 pt-2 border-t" style={{ borderColor: 'var(--bg-border)' }}>
+        <div className="flex justify-between text-xs" style={{ color: 'var(--text-muted)' }}>
+          <span className="flex items-center gap-1"><ShieldCheck className="w-3 h-3" /> Service & Delivery ({order.certificates.length} × €{SERVICE_DELIVERY_FEE})</span>
+          <span>€{serviceDeliveryTotal}</span>
         </div>
-      )}
+        {order.urgentDelivery && (
+          <div className="flex justify-between text-xs" style={{ color: 'var(--text-muted)' }}>
+            <span className="flex items-center gap-1"><Zap className="w-3 h-3" /> Urgent Delivery</span>
+            <span>€{URGENT_DELIVERY_PRICE}</span>
+          </div>
+        )}
+        {order.courierDelivery && (
+          <div className="flex justify-between text-xs" style={{ color: 'var(--text-muted)' }}>
+            <span className="flex items-center gap-1"><Truck className="w-3 h-3" /> Courier Delivery</span>
+            <span>€{COURIER_DELIVERY_PRICE}</span>
+          </div>
+        )}
+      </div>
 
       <div className="flex justify-between text-sm font-bold pt-2" style={{ color: 'var(--text-heading)' }}>
         <span>Order subtotal</span>
