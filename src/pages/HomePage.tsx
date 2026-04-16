@@ -548,6 +548,8 @@ function ProductCard({ product, delay }: { product: Product; delay: number }) {
           to={
             (product.type as string) === 'certificate' || (product.type as string) === 'cert'
               ? '/certificates'
+              : (product.type as string) === 'monitoring'
+              ? '/account/monitoring'
               : `/report?type=${product.slug}`
           }
           className="text-sm font-semibold transition-colors"
@@ -555,7 +557,11 @@ function ProductCard({ product, delay }: { product: Product; delay: number }) {
           onMouseOver={(e) => (e.currentTarget.style.color = 'var(--brand-accent-hover)')}
           onMouseOut={(e) => (e.currentTarget.style.color = 'var(--brand-accent)')}
         >
-          {(product.type as string) === 'certificate' || (product.type as string) === 'cert' ? 'Order Now →' : 'Buy Report →'}
+          {(product.type as string) === 'certificate' || (product.type as string) === 'cert'
+            ? 'Order Now →'
+            : (product.type as string) === 'monitoring'
+            ? 'Subscribe →'
+            : 'Buy Report →'}
         </Link>
       </div>
     </div>
