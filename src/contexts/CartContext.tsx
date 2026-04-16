@@ -77,10 +77,12 @@ interface CartContextValue {
   addItem: (
     product: Product,
     company: CartItem['company'],
-    speedCode?: string
+    speedCode?: string,
+    opts?: { screeningAddon?: boolean }
   ) => void;
   removeItem: (id: string) => void;
   updateSpeed: (id: string, speedCode: string) => void;
+  toggleScreeningAddon: (id: string) => void;
   addCertificateOrder: (order: Omit<CertificateOrder, 'id'>) => void;
   removeCertificateOrder: (id: string) => void;
   clearCart: () => void;
@@ -88,6 +90,8 @@ interface CartContextValue {
   subtotal: number;
   totalVat: number;
   grandTotal: number;
+  /** Total of all screening add-ons across cart, EUR */
+  screeningTotal: number;
 }
 
 const CartContext = createContext<CartContextValue>({
@@ -96,6 +100,7 @@ const CartContext = createContext<CartContextValue>({
   addItem: () => {},
   removeItem: () => {},
   updateSpeed: () => {},
+  toggleScreeningAddon: () => {},
   addCertificateOrder: () => {},
   removeCertificateOrder: () => {},
   clearCart: () => {},
@@ -103,6 +108,7 @@ const CartContext = createContext<CartContextValue>({
   subtotal: 0,
   totalVat: 0,
   grandTotal: 0,
+  screeningTotal: 0,
 });
 
 const STORAGE_KEY = 'ch_cart_v1';
@@ -162,17 +168,27 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [certificateOrders]);
 
   const addItem = useCallback(
-    (product: Product, company: CartItem['company'], speedCode?: string) => {
+    (
+      product: Product,
+      company: CartItem['company'],
+      speedCode?: string,
+      opts?: { screeningAddon?: boolean }
+    ) => {
       const speeds: ProductSpeed[] = Array.isArray(product.available_speeds)
         ? (product.available_speeds as ProductSpeed[])
         : [];
       const resolvedSpeed = speedCode ?? speeds[0]?.code ?? 'Normal';
       const id = makeId(product.id, company.icg_code, resolvedSpeed);
       const { price, vatAmount } = calcPrice(product, resolvedSpeed);
+      const eligible = isScreeningEligible({ type: product.type as string, slug: product.slug });
+      const screeningAddon = !!opts?.screeningAddon && eligible;
 
       setItems((prev) => {
         if (prev.find((i) => i.id === id)) return prev;
-        return [...prev, { id, product, company, speedCode: resolvedSpeed, price, vatAmount }];
+        return [
+          ...prev,
+          { id, product, company, speedCode: resolvedSpeed, price, vatAmount, screeningAddon },
+        ];
       });
     },
     []
@@ -189,6 +205,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
         const newId = makeId(item.product.id, item.company.icg_code, speedCode);
         const { price, vatAmount } = calcPrice(item.product, speedCode);
         return { ...item, id: newId, speedCode, price, vatAmount };
+      })
+    );
+  }, []);
+
+  const toggleScreeningAddon = useCallback((id: string) => {
+    setItems((prev) =>
+      prev.map((item) => {
+        if (item.id !== id) return item;
+        const eligible = isScreeningEligible({
+          type: item.product.type as string,
+          slug: item.product.slug,
+        });
+        if (!eligible) return item;
+        return { ...item, screeningAddon: !item.screeningAddon };
       })
     );
   }, []);
@@ -211,6 +241,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const reportSubtotal = items.reduce((s, i) => s + i.price, 0);
   const reportVat = items.reduce((s, i) => s + i.vatAmount, 0);
 
+  // Screening add-on (€45 per ticked item, no VAT — service line)
+  const screeningTotal = items.reduce(
+    (s, i) => s + (i.screeningAddon ? SCREENING_ADDON_PRICE_EUR : 0),
+    0,
+  );
+
   const certTotals = certificateOrders.reduce(
     (acc, order) => {
       const t = calcCertOrderTotals(order);
@@ -219,7 +255,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     { subtotal: 0, vat: 0 }
   );
 
-  const subtotal = reportSubtotal + certTotals.subtotal;
+  const subtotal = reportSubtotal + certTotals.subtotal + screeningTotal;
   const totalVat = reportVat + certTotals.vat;
   const grandTotal = subtotal + totalVat;
 
@@ -235,6 +271,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         addItem,
         removeItem,
         updateSpeed,
+        toggleScreeningAddon,
         addCertificateOrder,
         removeCertificateOrder,
         clearCart,
@@ -242,6 +279,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         subtotal,
         totalVat,
         grandTotal,
+        screeningTotal,
       }}
     >
       {children}
