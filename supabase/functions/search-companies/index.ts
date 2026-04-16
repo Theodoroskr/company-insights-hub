@@ -220,7 +220,17 @@ serve(async (req) => {
       }
     }
 
-    // ── 2. Get API token ────────────────────────────────────
+    // ── 2. UK branch: route to Companies House ──────────────
+    const countryCode = country || 'cy';
+    if (countryCode === 'gb') {
+      const ukResults = await searchCompaniesHouseUK(sb, q, tenantId);
+      return new Response(
+        JSON.stringify({ results: ukResults, count: ukResults.length, source: 'api4all' }),
+        { headers: { ...CORS, 'Content-Type': 'application/json' } },
+      );
+    }
+
+    // ── 3. Get API4ALL token (non-UK countries) ─────────────
     let token: string;
     try {
       token = await getApiToken(sb);
