@@ -10,7 +10,7 @@ import OrderReportModal from '../components/orders/OrderReportModal';
 import { useTenant } from '../lib/tenant.tsx';
 import { useCountries } from '../lib/countries';
 import { supabase } from '@/integrations/supabase/client';
-import type { Company, Product, ProductSpeed } from '../types/database';
+import type { Company, Product, ProductSpeed, DirectorEntry } from '../types/database';
 
 // ── Helpers ──────────────────────────────────────────────────
 
