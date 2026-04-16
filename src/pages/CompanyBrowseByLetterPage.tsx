@@ -199,7 +199,7 @@ export default function CompanyBrowseByLetterPage() {
         )}
 
         {/* Results table */}
-        {!isLoading && companies.length > 0 && (
+        {!isLoading && companies.length > 0 && (<>
           <div
             className="rounded-lg border overflow-hidden"
             style={{ borderColor: 'var(--bg-border)' }}
