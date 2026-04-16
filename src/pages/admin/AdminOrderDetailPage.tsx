@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ChevronLeft, RefreshCw, ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronLeft, RefreshCw, ChevronDown, ChevronRight, ShieldCheck } from 'lucide-react';
 import AdminLayout from '../../components/layout/AdminLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -36,6 +36,9 @@ interface ItemDetail {
   company_name: string | null;
   product_name: string | null;
   raw_json: any;
+  verified_at: string | null;
+  verified_by: string | null;
+  verification_note: string | null;
 }
 
 const STATUS_OPTIONS = ['pending', 'paid', 'processing', 'completed', 'failed', 'refunded', 'cancelled'];
@@ -89,6 +92,7 @@ export default function AdminOrderDetailPage() {
         order_items (
           id, unit_price, vat_amount, speed, fulfillment_status, sla_deadline,
           api4all_order_id, api4all_item_code, assigned_to,
+          verified_at, verified_by, verification_note,
           companies ( name ),
           products ( name ),
           generated_reports ( api4all_raw_json )
@@ -118,6 +122,9 @@ export default function AdminOrderDetailPage() {
           company_name: i.companies?.name ?? null,
           product_name: i.products?.name ?? null,
           raw_json: i.generated_reports?.[0]?.api4all_raw_json ?? null,
+          verified_at: i.verified_at ?? null,
+          verified_by: i.verified_by ?? null,
+          verification_note: i.verification_note ?? null,
         })),
       });
       setNotes(o.notes ?? '');
@@ -152,6 +159,36 @@ export default function AdminOrderDetailPage() {
       items: prev.items.map(i => i.id === itemId ? { ...i, fulfillment_status: status } : i),
     } : prev);
     toast({ title: `Item status updated to ${status}` });
+  };
+
+  const verifyItem = async (itemId: string) => {
+    const note = prompt('Optional verification note:');
+    const { data: userData } = await supabase.auth.getUser();
+    const verifierEmail = userData?.user?.email ?? 'admin';
+    const now = new Date().toISOString();
+    await supabase.from('order_items').update({
+      verified_at: now,
+      verified_by: verifierEmail,
+      verification_note: note || null,
+    } as any).eq('id', itemId);
+    setOrder(prev => prev ? {
+      ...prev,
+      items: prev.items.map(i => i.id === itemId ? { ...i, verified_at: now, verified_by: verifierEmail, verification_note: note || null } : i),
+    } : prev);
+    toast({ title: 'Certificate marked as verified' });
+  };
+
+  const unverifyItem = async (itemId: string) => {
+    await supabase.from('order_items').update({
+      verified_at: null,
+      verified_by: null,
+      verification_note: null,
+    } as any).eq('id', itemId);
+    setOrder(prev => prev ? {
+      ...prev,
+      items: prev.items.map(i => i.id === itemId ? { ...i, verified_at: null, verified_by: null, verification_note: null } : i),
+    } : prev);
+    toast({ title: 'Verification removed' });
   };
 
   if (loading) {
@@ -252,7 +289,30 @@ export default function AdminOrderDetailPage() {
                     >
                       Retry
                     </button>
+                    {!item.verified_at ? (
+                      <button
+                        onClick={() => verifyItem(item.id)}
+                        className="text-xs px-2.5 py-1 rounded transition-colors flex items-center gap-1"
+                        style={{ backgroundColor: 'var(--brand-accent)', color: '#fff' }}
+                      >
+                        <ShieldCheck className="h-3 w-3" /> Verify Certificate
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => unverifyItem(item.id)}
+                        className="text-xs px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded hover:bg-emerald-200 transition-colors flex items-center gap-1"
+                      >
+                        <ShieldCheck className="h-3 w-3" /> Verified ✓
+                      </button>
+                    )}
                   </div>
+                  {item.verified_at && (
+                    <div className="mt-2 text-xs text-emerald-700 bg-emerald-50 rounded px-3 py-1.5 inline-flex items-center gap-2">
+                      <ShieldCheck className="h-3.5 w-3.5" />
+                      Verified by {item.verified_by} on {format(new Date(item.verified_at), 'MMM d, yyyy HH:mm')}
+                      {item.verification_note && <span className="text-muted-foreground ml-1">— {item.verification_note}</span>}
+                    </div>
+                  )}
                   <div className="mt-3">
                     <JsonViewer data={item.raw_json} />
                   </div>

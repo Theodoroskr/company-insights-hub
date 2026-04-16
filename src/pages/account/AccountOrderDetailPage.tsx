@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { ArrowLeft, Download } from 'lucide-react';
+import { ArrowLeft, Download, ShieldCheck } from 'lucide-react';
 import AccountLayout from '../../components/layout/AccountLayout';
 import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../lib/tenant';
@@ -19,6 +19,7 @@ interface OrderDetail {
     unit_price: number;
     vat_amount: number | null;
     sla_deadline: string | null;
+    verified_at: string | null;
     product: { name: string; delivery_sla_hours: number | null } | null;
     company: { name: string; reg_no: string | null; slug: string | null } | null;
     report: { download_token: string | null; download_expires_at: string | null; pdf_storage_path: string | null } | null;
@@ -53,7 +54,7 @@ export default function AccountOrderDetailPage() {
         .select(`
           id, order_ref, created_at, status, total, guest_email,
           order_items (
-            id, fulfillment_status, unit_price, vat_amount, sla_deadline,
+            id, fulfillment_status, unit_price, vat_amount, sla_deadline, verified_at,
             products ( name, delivery_sla_hours ),
             companies ( name, reg_no, slug ),
             generated_reports ( download_token, download_expires_at, pdf_storage_path )
@@ -79,6 +80,7 @@ export default function AccountOrderDetailPage() {
             unit_price: i.unit_price,
             vat_amount: i.vat_amount,
             sla_deadline: i.sla_deadline,
+            verified_at: i.verified_at ?? null,
             product: i.products ?? null,
             company: i.companies ?? null,
             report: i.generated_reports?.[0] ?? null,
@@ -200,9 +202,17 @@ export default function AccountOrderDetailPage() {
                       className="mt-4 pt-4 border-t flex items-center justify-between gap-4 flex-wrap"
                       style={{ borderColor: 'var(--bg-border)' }}
                     >
-                      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                        Link expires: {item.report.download_expires_at ? formatDate(item.report.download_expires_at) : '30 days from delivery'}
-                      </p>
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                          Link expires: {item.report.download_expires_at ? formatDate(item.report.download_expires_at) : '30 days from delivery'}
+                        </p>
+                        {item.verified_at && (
+                          <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <ShieldCheck className="w-3.5 h-3.5" />
+                            Verified Document
+                          </span>
+                        )}
+                      </div>
                       <button
                         type="button"
                         className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded transition-all active:scale-95"
