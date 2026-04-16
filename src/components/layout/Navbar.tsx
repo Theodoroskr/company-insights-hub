@@ -591,16 +591,42 @@ export default function Navbar() {
               )}
             </div>
 
-            {/* ── Mobile hamburger ── */}
-            <button
-              type="button"
-              onClick={() => setMobileOpen((v) => !v)}
-              className="md:hidden p-2 rounded"
-              style={{ color: 'var(--text-body)' }}
-              aria-label="Toggle mobile menu"
-            >
-              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
+            {/* ── Mobile cart + hamburger ── */}
+            <div className="md:hidden flex items-center gap-1">
+              <Link
+                to="/cart"
+                className="relative p-2 rounded transition-colors"
+                style={{ color: 'var(--text-body)' }}
+                aria-label="Cart"
+              >
+                <ShoppingCart className="w-5 h-5" />
+                {totalItems > 0 && (
+                  <span
+                    className="absolute -top-0.5 -right-0.5 rounded-full text-white flex items-center justify-center font-bold"
+                    style={{
+                      backgroundColor: 'var(--brand-accent)',
+                      fontSize: '10px',
+                      minWidth: '18px',
+                      height: '18px',
+                      lineHeight: '18px',
+                      textAlign: 'center',
+                      padding: '0 4px',
+                    }}
+                  >
+                    {totalItems}
+                  </span>
+                )}
+              </Link>
+              <button
+                type="button"
+                onClick={() => setMobileOpen((v) => !v)}
+                className="p-2 rounded"
+                style={{ color: 'var(--text-body)' }}
+                aria-label="Toggle mobile menu"
+              >
+                {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+            </div>
           </div>
         </div>
       </nav>
