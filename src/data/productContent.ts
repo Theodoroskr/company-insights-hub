@@ -285,6 +285,47 @@ const industry: ProductContent = {
     'Our reports are prepared by financial analysts with extensive experience gathering and analyzing empirical data from public sources and our in-house database.',
 };
 
+// ── Global Structure Report ───────────────────────────────────
+
+const globalStructure: ProductContent = {
+  description: [
+    'The Global Structure Report provides key registration data, directors, shareholders and corporate hierarchy for companies across 200+ countries — delivered instantly via our worldwide API network.',
+    'Ideal for pre-screening counterparties, validating supplier details, or building a baseline company profile before entering into a business relationship internationally.',
+  ],
+  sectionHeading: 'THE GLOBAL STRUCTURE REPORT INCLUDES:',
+  accordionItems: [
+    { title: 'Company Registration Details', body: 'Official registration number, date of incorporation, and jurisdiction of registration.' },
+    { title: 'Directors & Officers', body: 'Names, positions, and appointment dates of directors and officers where available from official sources.' },
+    { title: 'Shareholders & Ownership', body: 'Ownership percentages, shareholder names and beneficial ownership data where disclosed.' },
+    { title: 'Registered Address', body: 'The official registered address as filed with the local company registry.' },
+    { title: 'Company Status', body: 'Current status of the entity — active, dissolved, struck off, or in liquidation.' },
+    { title: 'Legal Form & Jurisdiction', body: 'The legal form (LLC, PLC, etc.) and the jurisdiction under which the company operates.' },
+    { title: 'Share Capital', body: 'Authorised and issued share capital structure where available.' },
+  ],
+  deliveryNote: 'Reports are generated instantly using our global API network covering 200+ countries. Data is sourced from official registries and licensed providers worldwide.',
+};
+
+// ── Global KYB Report ─────────────────────────────────────────
+
+const globalKyb: ProductContent = {
+  description: [
+    'The Global KYB (Know Your Business) Report is a comprehensive instant company intelligence report covering 200+ countries. It delivers ownership structure, directors, financial indicators and risk assessment in seconds.',
+    'Essential for compliance teams, risk managers and procurement departments who need to verify international counterparties quickly and reliably.',
+  ],
+  sectionHeading: 'THE GLOBAL KYB REPORT INCLUDES:',
+  accordionItems: [
+    { title: 'Company Registration Details', body: 'Official registration number, date and jurisdiction sourced from the relevant national registry.' },
+    { title: 'Directors & Officers', body: 'Full board composition with names, positions, nationalities and appointment dates.' },
+    { title: 'Shareholders & UBO', body: 'Ownership chain including Ultimate Beneficial Owner (UBO) data where available.' },
+    { title: 'Financial Indicators', body: 'Key financial metrics including turnover, profit, assets and liabilities where disclosed.' },
+    { title: 'Risk Scoring & Credit Assessment', body: 'Automated risk score and credit assessment based on available financial and non-financial parameters.' },
+    { title: 'Company Status & Legal Form', body: 'Current status, legal form, and any adverse filings such as liquidation or insolvency proceedings.' },
+    { title: 'Contact & Address Information', body: 'Registered address, trading address, phone, email and website where available.' },
+    { title: 'Industry Classification', body: 'NACE codes or local industry classifications describing the company activities.' },
+  ],
+  deliveryNote: 'Reports are generated instantly via our global API network. Data is sourced from official registries and licensed data providers across 200+ countries.',
+};
+
 // ── Tab definitions ───────────────────────────────────────────
 
 export interface TabDef {
@@ -309,6 +350,8 @@ export const PRODUCT_TABS: TabDef[] = [
   { slug: 'certificate_historic',      label: 'Historic Certificates by Date',        content: certificate },
   { slug: 'competitors',               label: 'Competitors Analysis Report',          content: competitors },
   { slug: 'industry',                  label: 'Industry Analysis Report',             content: industry },
+  { slug: 'global-structure-report',   label: 'Global Structure Report',              content: globalStructure },
+  { slug: 'global-kyb-report',         label: 'Global KYB Report',                    content: globalKyb },
 ];
 
 export const SLUG_TO_TAB: Record<string, TabDef> = Object.fromEntries(
