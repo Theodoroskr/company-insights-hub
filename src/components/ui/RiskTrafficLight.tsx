@@ -8,10 +8,11 @@ interface RiskTrafficLightProps {
 }
 
 const RISK_CONFIG: Record<RiskBand, { color: string; label: string }> = {
-  low:      { color: '#16A34A', label: 'Low Risk' },
-  medium:   { color: '#D97706', label: 'Medium Risk' },
-  high:     { color: '#DC2626', label: 'High Risk' },
-  critical: { color: '#7F1D1D', label: 'Critical Risk' },
+  low:       { color: 'var(--risk-low)',       label: 'Low Risk' },
+  medium:    { color: 'var(--risk-medium)',    label: 'Medium Risk' },
+  high:      { color: 'var(--risk-high)',      label: 'High Risk' },
+  very_high: { color: 'var(--risk-very-high)', label: 'Very High Risk' },
+  critical:  { color: 'var(--risk-critical)',  label: 'Critical Risk' },
 };
 
 export default function RiskTrafficLight({

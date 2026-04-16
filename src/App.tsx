@@ -33,6 +33,7 @@ import ContactPage from "./pages/ContactPage";
 import TermsPage from "./pages/TermsPage";
 import PrivacyPage from "./pages/PrivacyPage";
 import NotFound from "./pages/NotFound";
+import CountryDashboardPage from "./pages/CountryDashboardPage";
 
 // Account pages
 import AccountDashboard from "./pages/account/AccountDashboard";
@@ -76,6 +77,7 @@ const App = () => (
               <Route path="/business-name-approval" element={<BusinessNameApprovalPage />} />
               <Route path="/company/:slug" element={<CompanyProfilePage />} />
               <Route path="/companies/:letter" element={<CompanyBrowseByLetterPage />} />
+              <Route path="/country/:code" element={<CountryDashboardPage />} />
 
               {/* ── Static pages ── */}
               <Route path="/about" element={<AboutPage />} />
