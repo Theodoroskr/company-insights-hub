@@ -25,7 +25,7 @@ const TRUST_BADGES = [
   { icon: <Shield className="w-5 h-5" />, text: 'Secure payments via Stripe' },
   { icon: <Database className="w-5 h-5" />, text: 'Official registry data' },
   { icon: <Zap className="w-5 h-5" />, text: 'Instant digital delivery' },
-  { icon: <Globe className="w-5 h-5" />, text: '200+ countries covered' },
+  { icon: <Globe className="w-5 h-5" />, text: 'Trusted local source' },
 ];
 
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
@@ -166,7 +166,6 @@ export default function HomePage() {
           <div className="flex flex-wrap items-center justify-center gap-10 md:gap-16 mb-8">
             {[
               { value: '10,000+', label: 'Reports Delivered' },
-              { value: '200+', label: 'Countries Covered' },
               { value: '500+', label: 'Business Clients' },
               { value: '99.9%', label: 'Uptime SLA' },
             ].map(({ value, label }) => (
