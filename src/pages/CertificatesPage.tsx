@@ -100,7 +100,7 @@ function CertCard({
 
       {/* Apostille checkbox */}
       {cert.apostilleAvailable && selected && (
-        <label className="flex items-center gap-2 mt-3 cursor-pointer group">
+        <label className="flex items-center gap-2 mt-3 cursor-pointer group" onClick={(e) => { e.preventDefault(); onToggleApostille(); }}>
           <div
             className="w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-all"
             style={{
