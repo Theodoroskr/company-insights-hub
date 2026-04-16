@@ -27,9 +27,17 @@ export default function CompanyBrowseByLetterPage() {
 
   const activeLetter = (letter ?? 'a').toUpperCase();
 
-  const [companies, setCompanies] = useState<CompanyRow[]>([]);
+  const [allCompanies, setAllCompanies] = useState<CompanyRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [dataSource, setDataSource] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 20;
+
+  // Reset page when letter changes
+  useEffect(() => { setPage(1); }, [activeLetter]);
+
+  const totalPages = Math.max(1, Math.ceil(allCompanies.length / PAGE_SIZE));
+  const companies = allCompanies.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const countryName =
     tenant?.country_code
