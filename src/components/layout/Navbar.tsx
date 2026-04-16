@@ -181,6 +181,7 @@ function NavbarSearch({ tenantId }: { tenantId: string }) {
   );
 }
 
+type OpenMenu = 'reports' | 'certificates' | 'register' | null;
 
 export default function Navbar() {
   const { tenant } = useTenant();
