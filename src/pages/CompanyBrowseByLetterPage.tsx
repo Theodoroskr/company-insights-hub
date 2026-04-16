@@ -67,7 +67,7 @@ export default function CompanyBrowseByLetterPage() {
           );
           // Sort alphabetically
           filtered.sort((a, b) => a.name.localeCompare(b.name));
-          setCompanies(filtered);
+          setAllCompanies(filtered);
           setDataSource(data.source ?? 'api4all');
           setIsLoading(false);
           return;
@@ -86,7 +86,7 @@ export default function CompanyBrowseByLetterPage() {
         .limit(200);
 
       if (cached) {
-        setCompanies(cached as CompanyRow[]);
+        setAllCompanies(cached as CompanyRow[]);
         setDataSource('cache');
       }
       setIsLoading(false);
