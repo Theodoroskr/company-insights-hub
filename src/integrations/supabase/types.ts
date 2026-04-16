@@ -141,6 +141,7 @@ export type Database = {
         Row: {
           cached_at: string | null
           country_code: string
+          directors_json: Json | null
           icg_code: string
           id: string
           legal_form: string | null
@@ -158,6 +159,7 @@ export type Database = {
         Insert: {
           cached_at?: string | null
           country_code: string
+          directors_json?: Json | null
           icg_code: string
           id?: string
           legal_form?: string | null
@@ -175,6 +177,7 @@ export type Database = {
         Update: {
           cached_at?: string | null
           country_code?: string
+          directors_json?: Json | null
           icg_code?: string
           id?: string
           legal_form?: string | null
