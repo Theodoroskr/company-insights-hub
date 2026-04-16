@@ -237,6 +237,98 @@ export default function HomePage() {
       </section>
 
       {/* ═══════════════════════════════════════════════════
+          SECTION 2.5 — USE CASES + WORLD MAP (ICW only)
+      ═══════════════════════════════════════════════════ */}
+      {isGlobal && (
+        <section
+          className="py-20 px-4 relative overflow-hidden"
+          style={{ backgroundColor: 'var(--bg-subtle)' }}
+        >
+          <div
+            aria-hidden
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              backgroundImage: `url("data:image/svg+xml;utf8,${encodeURIComponent(
+                `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 500'><defs><pattern id='d' x='0' y='0' width='8' height='8' patternUnits='userSpaceOnUse'><circle cx='2' cy='2' r='1.2' fill='%23334155' opacity='0.4'/></pattern><mask id='m'><rect width='1000' height='500' fill='black'/><path fill='white' d='M150,140 Q180,100 230,110 T320,130 L340,170 Q330,200 290,210 T200,220 Q160,210 140,180 Z M380,90 Q450,70 520,90 T640,110 Q680,130 670,180 T580,220 Q500,230 430,200 T370,150 Z M700,120 Q780,110 850,140 T910,200 Q900,240 830,250 T720,230 Q680,200 690,160 Z M250,260 Q300,250 340,280 T380,360 Q360,420 300,430 T230,400 Q210,350 230,300 Z M460,260 Q540,260 600,290 T640,370 Q620,420 550,430 T470,410 Q440,370 450,310 Z M740,290 Q800,280 840,310 T850,380 Q820,420 770,420 T720,380 Q710,330 730,300 Z'/></mask></defs><rect width='1000' height='500' fill='url(%23d)' mask='url(%23m)'/></svg>`
+              )}")`,
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'center',
+              backgroundSize: 'min(1200px, 110%) auto',
+              opacity: 0.5,
+            }}
+          />
+
+          <div className="max-w-6xl mx-auto relative">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: 'var(--text-heading)' }}>
+                Built for moments traditional providers can't serve
+              </h2>
+              <p className="text-base max-w-2xl mx-auto" style={{ color: 'var(--text-muted)' }}>
+                One-off, cross-border and frontier-market intelligence — without procurement cycles, demos or annual contracts.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[
+                {
+                  icon: <Briefcase className="w-6 h-6" />,
+                  tag: 'Cross-Border Counterparty Check',
+                  title: 'Verify a foreign supplier in minutes',
+                  desc: 'Instant KYB and structure report on any company in 200+ jurisdictions. Built for legal, finance and procurement teams onboarding international counterparties.',
+                  bullet: 'Typical use: M&A target screening, supplier onboarding, sanctions context.',
+                },
+                {
+                  icon: <FileText className="w-6 h-6" />,
+                  tag: 'Tender & Bid Pack',
+                  title: 'Complete bid documentation in one click',
+                  desc: 'Bundle Good Standing, Directors, Shareholders and Country Risk into a single download. Ready to attach to your tender response — branded PDFs, official sources.',
+                  bullet: 'Typical use: Government tenders, RFP responses, banking facility applications.',
+                },
+                {
+                  icon: <MapIcon className="w-6 h-6" />,
+                  tag: 'Frontier Markets',
+                  title: 'Coverage where others say "no data"',
+                  desc: 'Deep network into emerging and frontier jurisdictions — Middle East, Africa, Caucasus, Central Asia. Heritage Infocredit relationships, not a re-seller of EU databases.',
+                  bullet: 'Typical use: Trade finance, NGO due diligence, oil & gas, commodity trading.',
+                },
+              ].map(({ icon, tag, title, desc, bullet }) => (
+                <div
+                  key={tag}
+                  className="rounded-xl p-7 transition-all hover:shadow-lg hover:-translate-y-1"
+                  style={{
+                    backgroundColor: '#fff',
+                    border: '1px solid var(--bg-border)',
+                  }}
+                >
+                  <div
+                    className="inline-flex items-center justify-center w-11 h-11 rounded-lg mb-4"
+                    style={{ backgroundColor: 'var(--brand-primary)', color: '#fff' }}
+                  >
+                    {icon}
+                  </div>
+                  <div
+                    className="text-xs font-semibold uppercase tracking-wider mb-2"
+                    style={{ color: 'var(--brand-accent)' }}
+                  >
+                    {tag}
+                  </div>
+                  <h3 className="text-lg font-bold mb-3" style={{ color: 'var(--text-heading)' }}>
+                    {title}
+                  </h3>
+                  <p className="text-sm mb-4 leading-relaxed" style={{ color: 'var(--text-body)' }}>
+                    {desc}
+                  </p>
+                  <p className="text-xs italic pt-3" style={{ color: 'var(--text-muted)', borderTop: '1px solid var(--bg-border)' }}>
+                    {bullet}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ═══════════════════════════════════════════════════
           SECTION 3 — OUR PRODUCTS & SERVICES (unified)
       ═══════════════════════════════════════════════════ */}
       <section ref={productsRef} className="py-16 px-4" style={{ backgroundColor: '#fff' }}>
