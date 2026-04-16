@@ -124,30 +124,40 @@ export default function ProductLandingPage() {
   const [loadingProduct, setLoadingProduct] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
 
-  // Load matching DB product when tab changes
+  // Load matching DB product when tab changes — try content slug first, then raw URL slug
   useEffect(() => {
     if (!tenant || !activeTab) return;
     setLoadingProduct(true);
     setDbProduct(null);
-    supabase
-      .from('products')
-      .select('*')
-      .eq('tenant_id', tenant.id)
-      .eq('is_active', true)
-      .eq('slug', activeTab.slug)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data) {
-          setDbProduct({
-            ...(data as unknown as Product),
-            available_speeds: Array.isArray((data as any).available_speeds)
-              ? (data as any).available_speeds
-              : [],
-          });
-        }
-        setLoadingProduct(false);
-      });
-  }, [tenant?.id, activeTab?.slug]);
+
+    const trySlug = async (slug: string) => {
+      const { data } = await supabase
+        .from('products')
+        .select('*')
+        .eq('tenant_id', tenant.id)
+        .eq('is_active', true)
+        .eq('slug', slug)
+        .maybeSingle();
+      return data;
+    };
+
+    (async () => {
+      let data = await trySlug(activeTab.slug);
+      // Fallback: try the raw URL slug (e.g. cyprus-structure-report)
+      if (!data && rawSlug && rawSlug !== activeTab.slug) {
+        data = await trySlug(rawSlug);
+      }
+      if (data) {
+        setDbProduct({
+          ...(data as unknown as Product),
+          available_speeds: Array.isArray((data as any).available_speeds)
+            ? (data as any).available_speeds
+            : [],
+        });
+      }
+      setLoadingProduct(false);
+    })();
+  }, [tenant?.id, activeTab?.slug, rawSlug]);
 
   const handleTabClick = (slug: string) => {
     navigate(`/report?type=${slug}`, { replace: true });
