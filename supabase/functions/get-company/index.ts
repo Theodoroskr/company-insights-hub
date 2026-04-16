@@ -1,6 +1,7 @@
 // ============================================================
 // Edge Function: get-company
 // Returns a company by slug with stale-while-revalidate logic.
+// Now also fetches director/secretary names from /information.
 // ============================================================
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
@@ -38,7 +39,6 @@ async function getApiToken(sb: ReturnType<typeof getSupabase>): Promise<string> 
 
   if (tokenRow?.access_token) return tokenRow.access_token;
 
-  // GET /token/{project_code} with Basic Auth
   const credentials = btoa(`${username}:${password}`);
   const res = await fetch(`${API_BASE}/token/${encodeURIComponent(projectCode)}`, {
     method: 'GET',
@@ -58,6 +58,45 @@ async function getApiToken(sb: ReturnType<typeof getSupabase>): Promise<string> 
   });
 
   return token;
+}
+
+// ── Extract directors/secretaries from information response ───
+function extractDirectors(raw: Record<string, unknown>): Array<{ name: string; role: string }> {
+  const directors: Array<{ name: string; role: string }> = [];
+
+  // Try common response shapes from API4ALL information endpoint
+  const tryExtract = (obj: unknown, defaultRole: string) => {
+    if (Array.isArray(obj)) {
+      for (const item of obj) {
+        if (typeof item === 'string') {
+          directors.push({ name: item, role: defaultRole });
+        } else if (item && typeof item === 'object') {
+          const name = (item as Record<string, unknown>).name ?? (item as Record<string, unknown>).full_name ?? '';
+          const role = (item as Record<string, unknown>).role ?? (item as Record<string, unknown>).position ?? defaultRole;
+          if (name) directors.push({ name: String(name), role: String(role) });
+        }
+      }
+    }
+  };
+
+  // Check various possible field names from the API response
+  tryExtract(raw.directors, 'Director');
+  tryExtract(raw.secretaries, 'Secretary');
+  tryExtract(raw.officers, 'Officer');
+
+  // Also check nested data object
+  if (raw.data && typeof raw.data === 'object') {
+    const data = raw.data as Record<string, unknown>;
+    tryExtract(data.directors, 'Director');
+    tryExtract(data.secretaries, 'Secretary');
+    tryExtract(data.officers, 'Officer');
+  }
+
+  // Check for a generic "persons" or "officials" array
+  tryExtract(raw.persons, 'Officer');
+  tryExtract(raw.officials, 'Officer');
+
+  return directors;
 }
 
 serve(async (req) => {
@@ -104,50 +143,81 @@ serve(async (req) => {
     const isStale =
       !cachedAt || Date.now() - cachedAt.getTime() > STALE_HOURS * 60 * 60 * 1000;
 
-    if (!isStale) {
+    // Also check if directors are missing
+    const needsDirectors = !company.directors_json || (Array.isArray(company.directors_json) && company.directors_json.length === 0);
+
+    if (!isStale && !needsDirectors) {
       return new Response(JSON.stringify({ company, source: 'cache' }), {
         headers: { ...CORS, 'Content-Type': 'application/json' },
       });
     }
 
-    // ── 3. Background refresh via icg_code search ─────────
+    // ── 3. Refresh from API ───────────────────────────────
     try {
       const token = await getApiToken(sb);
       const countryCode = (company.country_code ?? 'cy').toLowerCase();
+
+      // Fetch search results + information endpoint in parallel
       const searchUrl = `${API_BASE}/search/${countryCode}/name/${encodeURIComponent(company.name)}`;
+      const regNo = company.reg_no;
+      const infoUrl = regNo
+        ? `${API_BASE}/information/${countryCode}/reg_no/${encodeURIComponent(regNo)}`
+        : null;
 
-      const apiRes = await fetch(searchUrl, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const headers = { Authorization: `Bearer ${token}` };
 
-      if (apiRes.ok) {
-        const apiJson = await apiRes.json();
+      const [searchRes, infoRes] = await Promise.all([
+        fetch(searchUrl, { headers }),
+        infoUrl ? fetch(infoUrl, { headers }) : Promise.resolve(null),
+      ]);
+
+      const updateFields: Record<string, unknown> = {
+        cached_at: new Date().toISOString(),
+      };
+
+      // Process search results
+      if (searchRes.ok) {
+        const apiJson = await searchRes.json();
         const match = (apiJson.results ?? []).find(
           (r: { code: string }) => r.code === company.icg_code
         );
-
         if (match) {
-          const { data: refreshed } = await sb
-            .from('companies')
-            .update({
-              status: match.status ?? company.status,
-              name: match.name ?? company.name,
-              vat_no: match.vat_no ?? company.vat_no,
-              cached_at: new Date().toISOString(),
-            })
-            .eq('id', company.id)
-            .select('*')
-            .maybeSingle();
-
-          if (refreshed) {
-            return new Response(JSON.stringify({ company: refreshed, source: 'refreshed' }), {
-              headers: { ...CORS, 'Content-Type': 'application/json' },
-            });
-          }
+          updateFields.status = match.status ?? company.status;
+          updateFields.name = match.name ?? company.name;
+          updateFields.vat_no = match.vat_no ?? company.vat_no;
         }
       }
+
+      // Process information response for directors
+      if (infoRes && infoRes.ok) {
+        try {
+          const infoJson = await infoRes.json();
+          // Store raw response for future use
+          updateFields.raw_source_json = infoJson;
+
+          const directors = extractDirectors(infoJson);
+          if (directors.length > 0) {
+            updateFields.directors_json = directors;
+          }
+        } catch (_) {
+          // Info parsing failed, skip
+        }
+      }
+
+      const { data: refreshed } = await sb
+        .from('companies')
+        .update(updateFields)
+        .eq('id', company.id)
+        .select('*')
+        .maybeSingle();
+
+      if (refreshed) {
+        return new Response(JSON.stringify({ company: refreshed, source: 'refreshed' }), {
+          headers: { ...CORS, 'Content-Type': 'application/json' },
+        });
+      }
     } catch (_) {
-      // Refresh failed — return stale data rather than erroring
+      // Refresh failed — return stale data
     }
 
     return new Response(JSON.stringify({ company, source: 'cache' }), {
