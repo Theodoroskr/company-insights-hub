@@ -43,8 +43,8 @@ export default function PricingPage() {
   };
 
   const getDelivery = (p: Product) => {
-    const isCertType = p.type === 'certificate' || p.type === 'cert';
-    if (isCertType) return 'Next working day';
+    const type = p.type as string;
+    if (type === 'certificate' || type === 'cert') return 'Next working day';
     if (p.is_instant) return 'Instant';
     if (p.delivery_sla_hours) {
       if (p.delivery_sla_hours <= 24) return '24 hours';
