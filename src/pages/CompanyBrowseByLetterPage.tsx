@@ -335,7 +335,7 @@ export default function CompanyBrowseByLetterPage() {
               </button>
             </div>
           )}
-        )}
+        </>)}
       </div>
     </PageLayout>
   );
