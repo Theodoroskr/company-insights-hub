@@ -318,8 +318,12 @@ export const SLUG_TO_TAB: Record<string, TabDef> = Object.fromEntries(
 // Legacy / alternate slug aliases
 const ALIASES: Record<string, string> = {
   'kyb': 'structure',
+  'cyprus-kyb-report': 'structure',
+  'cyprus-structure-report': 'structure',
   'credit': 'credit-online',
+  'cyprus-credit-report': 'credit-online',
   'certificate': 'certificate_of_director',
+  'cyprus-certificate': 'certificate_of_director',
 };
 
 export function resolveSlug(raw: string): TabDef | null {
