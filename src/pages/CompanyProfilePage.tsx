@@ -11,6 +11,7 @@ import CountryFlag from '../components/ui/CountryFlag';
 import CoverageTierBadge from '../components/ui/CoverageTierBadge';
 import OrderReportModal from '../components/orders/OrderReportModal';
 import UKCompanySections from '../components/company/UKCompanySections';
+import UKRiskSummaryPanel from '../components/company/UKRiskSummaryPanel';
 import { useTenant } from '../lib/tenant.tsx';
 import { useCountries } from '../lib/countries';
 import { useCart } from '../contexts/CartContext';
@@ -397,6 +398,7 @@ export default function CompanyProfilePage() {
   const [structureModalOpen, setStructureModalOpen] = useState(false);
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [reportPsc, setReportPsc] = useState<Array<Record<string, unknown>>>([]);
+  const [reportBundle, setReportBundle] = useState<Record<string, unknown> | null>(null);
 
   const getCountryInfo = (code: string) => {
     return countries.find((c) => c.code.toUpperCase() === code.toUpperCase());
@@ -510,8 +512,10 @@ export default function CompanyProfilePage() {
         }
         const psc = (latest?.api4all_raw_json?.psc ?? []) as Array<Record<string, unknown>>;
         setReportPsc(psc);
+        setReportBundle((latest?.api4all_raw_json ?? null) as Record<string, unknown> | null);
       } else {
         setReportPsc([]);
+        setReportBundle(null);
       }
     }
 
@@ -695,6 +699,11 @@ export default function CompanyProfilePage() {
                 </button>
               </p>
             </div>
+
+            {/* B0 — UK Risk Summary (unlocked only) */}
+            {isUnlocked && company.country_code === 'GB' && reportBundle && (
+              <UKRiskSummaryPanel bundle={reportBundle} />
+            )}
 
             {/* B — Risk Indicator */}
             <SectionCard>
