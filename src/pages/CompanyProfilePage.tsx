@@ -740,6 +740,15 @@ export default function CompanyProfilePage() {
               <UKCompanyFactsPanel bundle={reportBundle} />
             )}
 
+            {/* B0c — Compliance Screening (unlocked UK only) */}
+            {isUnlocked && company.country_code === 'GB' && unlockedOrderItemId && (
+              <UKComplianceScreeningPanel
+                orderItemId={unlockedOrderItemId}
+                isEnhanced={hasEnhancedKyb}
+                onUpgrade={() => setKybModalOpen(true)}
+              />
+            )}
+
             {/* B — Risk Indicator */}
             <SectionCard>
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
