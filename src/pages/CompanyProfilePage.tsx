@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { Check, ShoppingCart } from 'lucide-react';
 import PageLayout from '../components/layout/PageLayout';
 import StatusBadge from '../components/ui/StatusBadge';
 import GatedContent from '../components/ui/GatedContent';
@@ -9,6 +10,7 @@ import RiskTrafficLight from '../components/ui/RiskTrafficLight';
 import OrderReportModal from '../components/orders/OrderReportModal';
 import { useTenant } from '../lib/tenant.tsx';
 import { useCountries } from '../lib/countries';
+import { useCart } from '../contexts/CartContext';
 import { supabase } from '@/integrations/supabase/client';
 import type { Company, Product, ProductSpeed, DirectorEntry } from '../types/database';
 
