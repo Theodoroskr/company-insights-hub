@@ -363,6 +363,39 @@ export default function OrderReportModal({
           />
         </div>
 
+        {/* Compliance screening add-on (KYB / UK / Structure reports only) */}
+        {screeningEligible && !justAdded && (
+          <label
+            className="mt-4 flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors hover:bg-[var(--bg-subtle)]"
+            style={{
+              borderColor: addScreening ? 'var(--brand-accent)' : 'var(--bg-border)',
+              backgroundColor: addScreening ? 'var(--bg-subtle)' : 'transparent',
+            }}
+          >
+            <input
+              type="checkbox"
+              className="mt-0.5 w-4 h-4 accent-blue-600 shrink-0"
+              checked={addScreening}
+              onChange={(e) => setAddScreening(e.target.checked)}
+            />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <ShieldCheck className="w-3.5 h-3.5" style={{ color: 'var(--brand-accent)' }} />
+                <span className="text-sm font-semibold" style={{ color: 'var(--text-heading)' }}>
+                  Add Compliance Screening
+                </span>
+                <span className="text-sm font-semibold ml-auto" style={{ color: 'var(--brand-accent)' }}>
+                  +{fmtFx(SCREENING_ADDON_PRICE_EUR, { decimals: 0 })}
+                </span>
+              </div>
+              <p className="text-xs leading-snug" style={{ color: 'var(--text-muted)' }}>
+                Sanctions, PEP &amp; adverse-media checks on the company, directors and shareholders.
+                Powered by ComplyAdvantage.
+              </p>
+            </div>
+          </label>
+        )}
+
         {/* Footer */}
         {justAdded ? (
           <div className="mt-6 rounded-lg p-4 text-center" style={{ backgroundColor: 'var(--bg-surface)' }}>
@@ -401,7 +434,7 @@ export default function OrderReportModal({
                 className="text-xl font-semibold"
                 style={{ color: 'var(--brand-accent)' }}
               >
-                €{totalPrice.toFixed(0)}
+                {fmtFx(totalEur, { decimals: 0 })}
               </span>
               {isCertificateMode && selectedCertIds.size > 1 && (
                 <span className="text-xs ml-1" style={{ color: 'var(--text-muted)' }}>
