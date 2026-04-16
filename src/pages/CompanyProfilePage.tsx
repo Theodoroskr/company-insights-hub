@@ -242,6 +242,7 @@ export default function CompanyProfilePage() {
   const [affiliated, setAffiliated] = useState<Company[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [kybModalOpen, setKybModalOpen] = useState(false);
 
   const getCountryInfo = (code: string) => {
     return countries.find((c) => c.code.toUpperCase() === code.toUpperCase());
