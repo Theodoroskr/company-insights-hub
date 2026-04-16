@@ -107,7 +107,7 @@ function calcCertOrderTotals(order: CertificateOrder) {
   const certTotal = order.certificates.reduce((s, c) => s + c.price, 0);
   const serviceDeliveryTotal = certCount * SERVICE_DELIVERY_FEE;
   const apostilleTotal = order.certificates.filter((c) => c.apostille).length * APOSTILLE_PRICE;
-  const urgentTotal = order.urgentDelivery ? URGENT_DELIVERY_PRICE : 0;
+  const urgentTotal = order.urgentDelivery ? URGENT_DELIVERY_PRICE * certCount : 0;
   const courierTotal = order.courierDelivery ? COURIER_DELIVERY_PRICE : 0;
   const sub = certTotal + serviceDeliveryTotal + apostilleTotal + urgentTotal + courierTotal;
   const vat = parseFloat((sub * CERT_VAT_RATE).toFixed(2));
