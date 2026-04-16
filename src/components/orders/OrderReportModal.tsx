@@ -228,37 +228,64 @@ export default function OrderReportModal({
         </div>
 
         {/* Footer */}
-        <div className="mt-6 flex items-center justify-between gap-4">
-          <div>
-            <span className="text-sm" style={{ color: 'var(--text-body)' }}>
-              Total Price:{' '}
-            </span>
-            <span
-              className="text-xl font-semibold"
-              style={{ color: 'var(--brand-accent)' }}
-            >
-              €{price.toFixed(0)}
-            </span>
+        {justAdded ? (
+          <div className="mt-6 rounded-lg p-4 text-center" style={{ backgroundColor: 'var(--bg-surface)' }}>
+            <p className="text-sm font-semibold mb-1" style={{ color: 'var(--status-active)' }}>
+              ✓ Added to cart
+            </p>
+            <p className="text-xs mb-4" style={{ color: 'var(--text-muted)' }}>
+              {selectedProduct?.name} for {selectedCompany?.name}
+            </p>
+            <div className="flex items-center justify-center gap-3">
+              <button
+                onClick={handleContinueShopping}
+                className="px-5 py-2 rounded-md text-sm font-medium border transition-all active:scale-95"
+                style={{ borderColor: 'var(--bg-border)', color: 'var(--text-body)' }}
+              >
+                Add Another Report
+              </button>
+              <button
+                onClick={handleGoToCart}
+                className="px-5 py-2 rounded-md text-sm font-semibold text-white transition-all active:scale-95"
+                style={{ backgroundColor: 'var(--brand-primary)' }}
+              >
+                Go to Cart
+              </button>
+            </div>
           </div>
+        ) : (
+          <div className="mt-6 flex items-center justify-between gap-4">
+            <div>
+              <span className="text-sm" style={{ color: 'var(--text-body)' }}>
+                Total Price:{' '}
+              </span>
+              <span
+                className="text-xl font-semibold"
+                style={{ color: 'var(--brand-accent)' }}
+              >
+                €{price.toFixed(0)}
+              </span>
+            </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onClose}
-              className="px-6 py-2 rounded-md text-sm font-medium border transition-all active:scale-95"
-              style={{ borderColor: 'var(--bg-border)', color: 'var(--text-body)' }}
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleAddToCart}
-              disabled={!selectedCompany || !selectedProduct}
-              className="px-6 py-2 rounded-md text-sm font-semibold text-white transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{ backgroundColor: 'var(--brand-primary)' }}
-            >
-              Add to Cart
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={onClose}
+                className="px-6 py-2 rounded-md text-sm font-medium border transition-all active:scale-95"
+                style={{ borderColor: 'var(--bg-border)', color: 'var(--text-body)' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddToCart}
+                disabled={!selectedCompany || !selectedProduct}
+                className="px-6 py-2 rounded-md text-sm font-semibold text-white transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{ backgroundColor: 'var(--brand-primary)' }}
+              >
+                Add to Cart
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </DialogContent>
     </Dialog>
   );
