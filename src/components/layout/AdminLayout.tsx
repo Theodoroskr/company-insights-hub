@@ -13,6 +13,7 @@ import {
   ChevronLeft,
   Menu,
   X,
+  Globe,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/lib/tenant';
