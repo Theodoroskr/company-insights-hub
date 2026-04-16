@@ -10,7 +10,9 @@ import {
 } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/lib/tenant.tsx';
-import { useCart } from '@/contexts/CartContext';
+import { useCart, isScreeningEligible, SCREENING_ADDON_PRICE_EUR } from '@/contexts/CartContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
+import { ShieldCheck } from 'lucide-react';
 import type { Company, Product, ProductSpeed } from '@/types/database';
 
 interface OrderReportModalProps {
@@ -29,6 +31,7 @@ export default function OrderReportModal({
   const navigate = useNavigate();
   const { tenant } = useTenant();
   const { addItem } = useCart();
+  const { format: fmtFx } = useCurrency();
 
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(
     preselectedCompany ?? null
@@ -43,6 +46,7 @@ export default function OrderReportModal({
   const [companyQuery, setCompanyQuery] = useState('');
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+  const [addScreening, setAddScreening] = useState(false);
 
   const isCertificateMode = preselectedProduct?.type === 'certificate' || 
     (!preselectedProduct && selectedProduct?.type === 'certificate');
@@ -136,7 +140,6 @@ export default function OrderReportModal({
     if (!selectedCompany) return;
 
     if (isCertificateMode && selectedCertIds.size > 0) {
-      // Add all selected certificates
       const certsToAdd = certificates.filter((c) => selectedCertIds.has(c.id));
       for (const cert of certsToAdd) {
         const speeds: ProductSpeed[] = Array.isArray(cert.available_speeds)
@@ -150,7 +153,9 @@ export default function OrderReportModal({
         ? (selectedProduct.available_speeds as ProductSpeed[])
         : [];
       const speedCode = speeds[0]?.code ?? 'Normal';
-      addItem(selectedProduct, selectedCompany, speedCode);
+      addItem(selectedProduct, selectedCompany, speedCode, {
+        screeningAddon: addScreening && screeningEligible,
+      });
     }
     setJustAdded(true);
   };
@@ -161,6 +166,7 @@ export default function OrderReportModal({
     setSelectedCertIds(new Set());
     setSelectedCompany(preselectedCompany ?? null);
     setComment('');
+    setAddScreening(false);
   };
 
   const handleGoToCart = () => {
@@ -168,10 +174,18 @@ export default function OrderReportModal({
     navigate('/cart');
   };
 
-  // Calculate total price
-  const totalPrice = isCertificateMode
+  // Eligibility for the +€45 ComplyAdvantage screening add-on
+  const screeningEligible = !isCertificateMode && !!selectedProduct && isScreeningEligible({
+    type: selectedProduct.type as string,
+    slug: selectedProduct.slug,
+  });
+
+  // Calculate total price (in EUR for cart math)
+  const baseTotalEur = isCertificateMode
     ? certificates.filter((c) => selectedCertIds.has(c.id)).reduce((sum, c) => sum + c.base_price, 0)
     : selectedProduct?.base_price ?? 0;
+  const screeningEur = screeningEligible && addScreening ? SCREENING_ADDON_PRICE_EUR : 0;
+  const totalEur = baseTotalEur + screeningEur;
 
   const selectedCount = isCertificateMode ? selectedCertIds.size : 1;
   const canAdd = selectedCompany && (isCertificateMode ? selectedCertIds.size > 0 : !!selectedProduct);
