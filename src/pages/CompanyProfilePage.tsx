@@ -902,15 +902,12 @@ export default function CompanyProfilePage() {
                     />
                   )}
 
-                  {/* Certificates section */}
+                  {/* Certificates section — multi-select */}
                   {certificateProducts.length > 0 && (
-                    <div className={reportProducts.length > 0 ? 'mt-4 pt-4 border-t' : ''} style={{ borderColor: 'var(--bg-border)' }}>
-                      <ProductSection
-                        title="Certificates"
-                        products={certificateProducts}
-                        company={companySidebarShape}
-                      />
-                    </div>
+                    <CertificateMultiSelect
+                      products={certificateProducts}
+                      company={companySidebarShape}
+                    />
                   )}
                 </div>
               )}
