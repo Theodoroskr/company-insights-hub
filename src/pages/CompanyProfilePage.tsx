@@ -485,20 +485,29 @@ export default function CompanyProfilePage() {
                   </p>
                   <RiskTrafficLight band="medium" showLabel />
                 </div>
-                <div className="flex-1 border-l pl-4 hidden sm:block" style={{ borderColor: 'var(--bg-border)' }}>
+                <div className="flex-1 sm:border-l sm:pl-4 mt-3 sm:mt-0" style={{ borderColor: 'var(--bg-border)' }}>
                   <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
                     Full risk analysis including sanctions screening, PEP checks and adverse media is
                     included in the KYB Report
                   </p>
                   <button
-                    className="text-sm mt-2 hover:underline"
+                    className="text-sm mt-2 hover:underline font-semibold"
                     style={{ color: 'var(--brand-accent)' }}
-                    onClick={() => document.getElementById('sidebar-products')?.scrollIntoView({ behavior: 'smooth' })}
+                    onClick={() => kybProduct ? setKybModalOpen(true) : document.getElementById('sidebar-products')?.scrollIntoView({ behavior: 'smooth' })}
                   >
                     Order KYB Report →
                   </button>
                 </div>
               </div>
+
+              {kybProduct && (
+                <OrderReportModal
+                  isOpen={kybModalOpen}
+                  onClose={() => setKybModalOpen(false)}
+                  preselectedProduct={kybProduct}
+                  preselectedCompany={companySidebarShape}
+                />
+              )}
             </SectionCard>
 
             {/* C — Registered Address */}
