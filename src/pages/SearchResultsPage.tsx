@@ -418,6 +418,26 @@ export default function SearchResultsPage() {
                             >
                               View Profile →
                             </button>
+                            {entityType && (
+                              <button
+                                className="px-4 py-2 rounded text-sm font-medium text-white transition-all active:scale-95"
+                                style={{
+                                  backgroundColor: 'var(--brand-accent)',
+                                  borderRadius: '6px',
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const params = new URLSearchParams({
+                                    entity: entityType,
+                                    companyName: company.name,
+                                    ...(company.reg_no ? { regNo: company.reg_no } : {}),
+                                  });
+                                  navigate(`/certificates?${params.toString()}`);
+                                }}
+                              >
+                                Order Certificates
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>

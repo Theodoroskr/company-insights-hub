@@ -12,6 +12,7 @@ import { useTenant } from '../lib/tenant.tsx';
 import { useCountries } from '../lib/countries';
 import { useCart } from '../contexts/CartContext';
 import { supabase } from '@/integrations/supabase/client';
+import { legalFormToEntityType } from '@/data/cyprusCertificates';
 import type { Company, Product, ProductSpeed, DirectorEntry } from '../types/database';
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -1043,7 +1044,41 @@ export default function CompanyProfilePage() {
                 </div>
               )}
 
-              {/* Card 2 — Monitoring */}
+              {/* Card — Order Official Certificates (linked to /certificates) */}
+              {(() => {
+                const entityType = legalFormToEntityType(company.legal_form, company.reg_no);
+                if (!entityType) return null;
+                const params = new URLSearchParams({
+                  entity: entityType,
+                  companyName: company.name,
+                  ...(company.reg_no ? { regNo: company.reg_no } : {}),
+                });
+                return (
+                  <Link
+                    to={`/certificates?${params.toString()}`}
+                    className="block rounded-lg border-2 p-5 transition-all hover:shadow-md"
+                    style={{
+                      borderColor: 'var(--brand-accent)',
+                      backgroundColor: 'rgba(59,130,246,0.04)',
+                      borderRadius: '8px',
+                    }}
+                  >
+                    <div className="text-2xl mb-2">📄</div>
+                    <h2 className="font-semibold" style={{ color: 'var(--text-heading)' }}>
+                      Order Official Certificates
+                    </h2>
+                    <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
+                      Good Standing, Incorporation, Directors, Shareholders & more — delivered next working day
+                    </p>
+                    <span
+                      className="inline-flex items-center gap-1 mt-3 text-sm font-semibold"
+                      style={{ color: 'var(--brand-accent)' }}
+                    >
+                      Browse all certificates →
+                    </span>
+                  </Link>
+                );
+              })()}
               <div
                 className="rounded-lg border-2 border-dashed p-5"
                 style={{
