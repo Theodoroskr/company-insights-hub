@@ -23,6 +23,22 @@ function formatDate(iso: string | null | undefined): string {
   });
 }
 
+/** Partially mask a name: show first word + first letter of subsequent words */
+function maskName(fullName: string): string {
+  const words = fullName.trim().split(/\s+/);
+  if (words.length <= 1) {
+    // Single word: show first 3 chars + mask rest
+    if (fullName.length <= 3) return fullName;
+    return fullName.slice(0, 3) + '████';
+  }
+  // Show first word fully, mask rest (show first letter only)
+  return words.map((w, i) => {
+    if (i === 0) return w;
+    if (w.length <= 1) return w;
+    return w[0] + '████';
+  }).join(' ');
+}
+
 const PRODUCT_ICONS: Record<string, string> = {
   structure: '📋',
   kyb: '🔍',
