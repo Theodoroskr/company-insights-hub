@@ -73,6 +73,11 @@ export interface Profile {
 
 // ── Company ──────────────────────────────────────────────────
 
+export interface DirectorEntry {
+  name: string;
+  role: string;
+}
+
 export interface Company {
   id: string;
   tenant_id: string | null;
@@ -86,6 +91,7 @@ export interface Company {
   registered_address: string | null;
   slug: string | null;
   raw_source_json: Record<string, unknown> | null;
+  directors_json: DirectorEntry[] | null;
   cached_at: string;
   meta_title: string | null;
   meta_description: string | null;

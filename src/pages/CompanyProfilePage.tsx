@@ -10,7 +10,7 @@ import OrderReportModal from '../components/orders/OrderReportModal';
 import { useTenant } from '../lib/tenant.tsx';
 import { useCountries } from '../lib/countries';
 import { supabase } from '@/integrations/supabase/client';
-import type { Company, Product, ProductSpeed } from '../types/database';
+import type { Company, Product, ProductSpeed, DirectorEntry } from '../types/database';
 
 // ── Helpers ──────────────────────────────────────────────────
 
@@ -21,6 +21,22 @@ function formatDate(iso: string | null | undefined): string {
     month: 'short',
     year: 'numeric',
   });
+}
+
+/** Partially mask a name: show first word + first letter of subsequent words */
+function maskName(fullName: string): string {
+  const words = fullName.trim().split(/\s+/);
+  if (words.length <= 1) {
+    // Single word: show first 3 chars + mask rest
+    if (fullName.length <= 3) return fullName;
+    return fullName.slice(0, 3) + '████';
+  }
+  // Show first word fully, mask rest (show first letter only)
+  return words.map((w, i) => {
+    if (i === 0) return w;
+    if (w.length <= 1) return w;
+    return w[0] + '████';
+  }).join(' ');
 }
 
 const PRODUCT_ICONS: Record<string, string> = {
@@ -271,22 +287,13 @@ export default function CompanyProfilePage() {
       const comp = efData.company as Company;
       setCompany(comp);
 
-      // Fetch products and affiliated in parallel
-      const [productsRes, affiliatedRes] = await Promise.all([
-        supabase
-          .from('products')
-          .select('*')
-          .eq('tenant_id', tenant!.id)
-          .eq('is_active', true)
-          .order('display_order', { ascending: true }),
-        supabase
-          .from('companies')
-          .select('id, name, slug, reg_no, status, country_code, icg_code, raw_source_json, tenant_id, vat_no, legal_form, registered_address, cached_at, meta_title, meta_description')
-          .eq('tenant_id', tenant!.id)
-          .neq('id', comp.id)
-          .not('raw_source_json', 'is', null)
-          .limit(3),
-      ]);
+      // Fetch products
+      const productsRes = await supabase
+        .from('products')
+        .select('*')
+        .eq('tenant_id', tenant!.id)
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
 
       if (productsRes.data) {
         setProducts(
@@ -297,8 +304,30 @@ export default function CompanyProfilePage() {
         );
       }
 
-      if (affiliatedRes.data) {
-        setAffiliated(affiliatedRes.data as Company[]);
+      // Find affiliated companies by matching director names
+      const directors: DirectorEntry[] = Array.isArray(comp.directors_json) ? comp.directors_json : [];
+      const directorNames = directors.map(d => d.name.toUpperCase());
+
+      if (directorNames.length > 0) {
+        // Search companies that have directors_json containing any matching name
+        const { data: affData } = await supabase
+          .from('companies')
+          .select('id, name, slug, reg_no, status, country_code, icg_code, directors_json, raw_source_json, tenant_id, vat_no, legal_form, registered_address, cached_at, meta_title, meta_description')
+          .eq('tenant_id', tenant!.id)
+          .neq('id', comp.id)
+          .not('directors_json', 'is', null)
+          .limit(50);
+
+        if (affData) {
+          // Filter to companies sharing at least one director name
+          const matches = (affData as unknown as Company[]).filter(c => {
+            const theirDirectors: DirectorEntry[] = Array.isArray(c.directors_json) ? c.directors_json : [];
+            return theirDirectors.some(d => directorNames.includes(d.name.toUpperCase()));
+          });
+          setAffiliated(matches.slice(0, 10));
+        }
+      } else {
+        setAffiliated([]);
       }
 
       setIsLoading(false);
@@ -539,46 +568,71 @@ export default function CompanyProfilePage() {
 
             {/* D — Directors & Secretaries */}
             <SectionCard>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="font-semibold text-base" style={{ color: 'var(--text-subheading)' }}>
-                  Directors & Secretaries
-                  <RecordBadge count="2 records" />
-                </h2>
-              </div>
+              {(() => {
+                const directors: DirectorEntry[] = Array.isArray(company.directors_json) ? company.directors_json : [];
+                const directorEntries = directors.filter(d => d.role?.toLowerCase() !== 'secretary');
+                const secretaryEntries = directors.filter(d => d.role?.toLowerCase() === 'secretary');
+                const totalCount = directors.length || '2+';
 
-              {/* Free rows */}
-              <PersonRow name="DIRECTOR NAME" role="Director" />
-              <PersonRow name="SECRETARY NAME" role="Secretary" />
-              <p className="text-sm italic mt-3" style={{ color: 'var(--text-muted)' }}>
-                Director names shown. Full details including addresses, appointment dates and history
-                included in Structure Report.
-              </p>
+                return (
+                  <>
+                    <div className="flex items-center justify-between mb-3">
+                      <h2 className="font-semibold text-base" style={{ color: 'var(--text-subheading)' }}>
+                        Directors & Secretaries
+                        <RecordBadge count={`${totalCount} records`} />
+                      </h2>
+                    </div>
 
-              {/* Gated history */}
-              <div className="mt-3">
-                <GatedContent
-                  isUnlocked={false}
-                  message="Order Structure Report to view full appointment history and addresses"
-                  ctaLabel="Order Structure Report"
-                  onCta={openStructureModal}
-                >
-                  <div className="space-y-2 mt-2">
-                    {[
-                      'PREVIOUS DIRECTOR NAME · Director · Resigned 2021',
-                      'SHAREHOLDER COMPANY LTD · Shareholder · 100% shares',
-                      'NOMINEE DIRECTOR NAME · Director · Appointed 2019',
-                    ].map((row, i) => (
-                      <div
-                        key={i}
-                        className="text-sm py-2 border-b last:border-0"
-                        style={{ color: 'var(--text-body)', borderColor: 'var(--bg-border)' }}
+                    {/* Show partially masked names */}
+                    {directors.length > 0 ? (
+                      <>
+                        {directorEntries.map((d, i) => (
+                          <PersonRow key={`dir-${i}`} name={maskName(d.name)} role="Director" />
+                        ))}
+                        {secretaryEntries.map((d, i) => (
+                          <PersonRow key={`sec-${i}`} name={maskName(d.name)} role="Secretary" />
+                        ))}
+                      </>
+                    ) : (
+                      <>
+                        <PersonRow name="D████ N████" role="Director" />
+                        <PersonRow name="S████ N████" role="Secretary" />
+                      </>
+                    )}
+
+                    <p className="text-sm italic mt-3" style={{ color: 'var(--text-muted)' }}>
+                      Partial names shown. Full names, addresses, appointment dates and history
+                      included in Structure Report.
+                    </p>
+
+                    {/* Gated history */}
+                    <div className="mt-3">
+                      <GatedContent
+                        isUnlocked={false}
+                        message="Order Structure Report to view full appointment history and addresses"
+                        ctaLabel="Order Structure Report"
+                        onCta={openStructureModal}
                       >
-                        {row}
-                      </div>
-                    ))}
-                  </div>
-                </GatedContent>
-              </div>
+                        <div className="space-y-2 mt-2">
+                          {[
+                            'PREVIOUS DIRECTOR · Director · Resigned 2021',
+                            'NOMINEE DIRECTOR · Director · Appointed 2019',
+                            'FORMER SECRETARY · Secretary · Resigned 2020',
+                          ].map((row, i) => (
+                            <div
+                              key={i}
+                              className="text-sm py-2 border-b last:border-0"
+                              style={{ color: 'var(--text-body)', borderColor: 'var(--bg-border)' }}
+                            >
+                              {row}
+                            </div>
+                          ))}
+                        </div>
+                      </GatedContent>
+                    </div>
+                  </>
+                );
+              })()}
             </SectionCard>
 
             {/* E — Shareholders */}
@@ -659,36 +713,48 @@ export default function CompanyProfilePage() {
 
               {affiliated.length > 0 ? (
                 <div className="space-y-2">
-                  {affiliated.map((aff) => (
-                    <div
-                      key={aff.id}
-                      className="flex items-center justify-between p-3 rounded border"
-                      style={{ borderColor: 'var(--bg-border)' }}
-                    >
-                      <div>
-                        <Link
-                          to={`/company/${aff.slug ?? aff.id}`}
-                          className="text-sm font-medium hover:underline"
-                          style={{ color: 'var(--brand-accent)' }}
-                        >
-                          {aff.name}
-                        </Link>
-                        {aff.reg_no && (
-                          <span className="ml-2 text-xs" style={{ color: 'var(--text-muted)' }}>
-                            {aff.reg_no}
-                          </span>
-                        )}
-                        <p className="text-xs italic mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                          via shared director
-                        </p>
+                  {affiliated.map((aff) => {
+                    // Find the shared director name(s)
+                    const myDirectors = Array.isArray(company.directors_json) ? company.directors_json : [];
+                    const theirDirectors: DirectorEntry[] = Array.isArray(aff.directors_json) ? aff.directors_json : [];
+                    const myNames = myDirectors.map(d => d.name.toUpperCase());
+                    const sharedNames = theirDirectors
+                      .filter(d => myNames.includes(d.name.toUpperCase()))
+                      .map(d => maskName(d.name));
+
+                    return (
+                      <div
+                        key={aff.id}
+                        className="flex items-center justify-between p-3 rounded border"
+                        style={{ borderColor: 'var(--bg-border)' }}
+                      >
+                        <div>
+                          <Link
+                            to={`/company/${aff.slug ?? aff.id}`}
+                            className="text-sm font-medium hover:underline"
+                            style={{ color: 'var(--brand-accent)' }}
+                          >
+                            {aff.name}
+                          </Link>
+                          {aff.reg_no && (
+                            <span className="ml-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+                              {aff.reg_no}
+                            </span>
+                          )}
+                          <p className="text-xs italic mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                            via {sharedNames.length > 0 ? sharedNames.join(', ') : 'shared director'}
+                          </p>
+                        </div>
+                        {aff.status && <StatusBadge status={aff.status} />}
                       </div>
-                      {aff.status && <StatusBadge status={aff.status} />}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <p className="text-sm italic" style={{ color: 'var(--text-muted)' }}>
-                  Affiliated company data included in Structure Report
+                  {Array.isArray(company.directors_json) && company.directors_json.length > 0
+                    ? 'No affiliated companies found yet. More connections appear as companies are searched.'
+                    : 'Affiliated company data included in Structure Report'}
                 </p>
               )}
 
