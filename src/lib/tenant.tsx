@@ -22,7 +22,7 @@ const TenantContext = createContext<TenantContextValue>({
 
 // Resolves which tenant slug to fall back to on localhost/dev
 function resolveFallbackSlug(): string {
-  return 'cy';
+  return 'icw';
 }
 
 // Injects tenant brand CSS variables onto :root
