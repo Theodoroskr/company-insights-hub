@@ -155,7 +155,7 @@ export default function AccountOrderDetailPage() {
           {/* Items */}
           <div className="space-y-3">
             {order.items.map((item) => {
-              const isComplete = item.fulfillment_status === 'completed' || item.fulfillment_status === 'delivered';
+              const isComplete = ['completed', 'delivered', 'fulfilled'].includes(item.fulfillment_status ?? '');
               return (
                 <div
                   key={item.id}
@@ -218,9 +218,9 @@ export default function AccountOrderDetailPage() {
                         className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded transition-all active:scale-95"
                         style={{ backgroundColor: 'var(--brand-accent)' }}
                         onClick={() => {
-                          if (item.report?.pdf_storage_path) {
-                            supabase.storage.from('reports').download(item.report.pdf_storage_path);
-                          }
+                          if (!item.report?.download_token) return;
+                          const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/download-report?token=${encodeURIComponent(item.report.download_token)}`;
+                          window.open(url, '_blank', 'noopener,noreferrer');
                         }}
                       >
                         <Download className="w-4 h-4" />

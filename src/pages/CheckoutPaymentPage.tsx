@@ -128,19 +128,28 @@ export default function CheckoutPaymentPage() {
       if (orderErr || !orderData) throw new Error('Failed to create order');
 
       // Create order items
-      await Promise.all(
+      const orderItemResults = await Promise.all(
         items.map((item) =>
-          supabase.from('order_items').insert({
-            order_id: orderData.id,
-            product_id: item.product.id,
-            company_id: item.company.id,
-            speed: item.speedCode,
-            unit_price: item.price,
-            vat_amount: item.vatAmount,
-            fulfillment_status: 'pending',
-          })
+          supabase
+            .from('order_items')
+            .insert({
+              order_id: orderData.id,
+              product_id: item.product.id,
+              company_id: item.company.id,
+              speed: item.speedCode,
+              unit_price: item.price,
+              vat_amount: item.vatAmount,
+              fulfillment_status: 'pending',
+            })
+            .select('id')
+            .single()
         )
       );
+
+      const orderItemError = orderItemResults.find((result) => result.error);
+      if (orderItemError?.error) {
+        throw new Error(orderItemError.error.message || 'Failed to create order items');
+      }
 
       // Submit to API4All immediately after order creation
       try {
