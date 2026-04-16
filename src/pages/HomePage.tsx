@@ -545,13 +545,17 @@ function ProductCard({ product, delay }: { product: Product; delay: number }) {
           <PriceDisplay basePrice={product.base_price} className="text-2xl" />
         </div>
         <Link
-          to={`/products/${product.slug}`}
+          to={
+            (product.type as string) === 'certificate' || (product.type as string) === 'cert'
+              ? '/certificates'
+              : `/report?type=${product.slug}`
+          }
           className="text-sm font-semibold transition-colors"
           style={{ color: 'var(--brand-accent)' }}
           onMouseOver={(e) => (e.currentTarget.style.color = 'var(--brand-accent-hover)')}
           onMouseOut={(e) => (e.currentTarget.style.color = 'var(--brand-accent)')}
         >
-          Learn More →
+          {(product.type as string) === 'certificate' || (product.type as string) === 'cert' ? 'Order Now →' : 'Buy Report →'}
         </Link>
       </div>
     </div>
