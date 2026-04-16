@@ -396,6 +396,7 @@ export default function CompanyProfilePage() {
   const [kybModalOpen, setKybModalOpen] = useState(false);
   const [structureModalOpen, setStructureModalOpen] = useState(false);
   const [isUnlocked, setIsUnlocked] = useState(false);
+  const [reportPsc, setReportPsc] = useState<Array<Record<string, unknown>>>([]);
 
   const getCountryInfo = (code: string) => {
     return countries.find((c) => c.code.toUpperCase() === code.toUpperCase());
@@ -490,13 +491,28 @@ export default function CompanyProfilePage() {
 
       const { data, error } = await supabase
         .from('order_items')
-        .select('id, fulfillment_status, orders!inner(user_id, status)')
+        .select('id, fulfillment_status, orders!inner(user_id, status), generated_reports(api4all_raw_json, generated_at)')
         .eq('company_id', company.id)
         .eq('orders.user_id', session.user.id)
         .in('fulfillment_status', ['completed', 'fulfilled', 'delivered']);
 
       if (cancelled) return;
-      setIsUnlocked(!error && (data?.length ?? 0) > 0);
+      const unlocked = !error && (data?.length ?? 0) > 0;
+      setIsUnlocked(unlocked);
+
+      // Pull PSC entries from the most recent generated report bundle
+      if (unlocked && data) {
+        let latest: { generated_at?: string; api4all_raw_json?: { psc?: unknown[] } } | null = null;
+        for (const item of data as Array<{ generated_reports?: Array<{ generated_at?: string; api4all_raw_json?: { psc?: unknown[] } }> }>) {
+          for (const r of item.generated_reports ?? []) {
+            if (!latest || (r.generated_at ?? '') > (latest.generated_at ?? '')) latest = r;
+          }
+        }
+        const psc = (latest?.api4all_raw_json?.psc ?? []) as Array<Record<string, unknown>>;
+        setReportPsc(psc);
+      } else {
+        setReportPsc([]);
+      }
     }
 
     checkUnlock();
