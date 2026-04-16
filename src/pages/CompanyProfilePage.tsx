@@ -320,7 +320,7 @@ export default function CompanyProfilePage() {
 
         if (affData) {
           // Filter to companies sharing at least one director name
-          const matches = (affData as Company[]).filter(c => {
+          const matches = (affData as unknown as Company[]).filter(c => {
             const theirDirectors: DirectorEntry[] = Array.isArray(c.directors_json) ? c.directors_json : [];
             return theirDirectors.some(d => directorNames.includes(d.name.toUpperCase()));
           });
