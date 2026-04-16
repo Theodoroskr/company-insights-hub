@@ -350,6 +350,8 @@ export const PRODUCT_TABS: TabDef[] = [
   { slug: 'certificate_historic',      label: 'Historic Certificates by Date',        content: certificate },
   { slug: 'competitors',               label: 'Competitors Analysis Report',          content: competitors },
   { slug: 'industry',                  label: 'Industry Analysis Report',             content: industry },
+  { slug: 'global-structure-report',   label: 'Global Structure Report',              content: globalStructure },
+  { slug: 'global-kyb-report',         label: 'Global KYB Report',                    content: globalKyb },
 ];
 
 export const SLUG_TO_TAB: Record<string, TabDef> = Object.fromEntries(
