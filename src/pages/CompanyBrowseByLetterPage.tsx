@@ -140,11 +140,6 @@ export default function CompanyBrowseByLetterPage() {
                   · Page {page} of {totalPages}
                 </span>
               )}
-            {dataSource === 'cache' && (
-              <span className="ml-2 text-xs" style={{ color: 'var(--text-muted)' }}>
-                (from cache)
-              </span>
-            )}
           </p>
         )}
 
