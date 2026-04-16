@@ -1,7 +1,7 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState as useStateReact } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { Shield, Database, Zap, Globe } from 'lucide-react';
+import { Shield, Database, Zap, Globe, Lock, FileCheck, BadgeCheck } from 'lucide-react';
 import PageLayout from '../components/layout/PageLayout';
 import SearchWidget from '../components/search/SearchWidget';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
