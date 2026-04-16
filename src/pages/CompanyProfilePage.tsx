@@ -505,7 +505,7 @@ export default function CompanyProfilePage() {
                   isOpen={kybModalOpen}
                   onClose={() => setKybModalOpen(false)}
                   preselectedProduct={kybProduct}
-                  preselectedCompany={companySidebarShape}
+                  preselectedCompany={company as unknown as import('../types/database').Company}
                 />
               )}
             </SectionCard>
