@@ -607,133 +607,200 @@ export default function Navbar() {
 
       {/* ── Mobile slide-in menu ── */}
       {mobileOpen && (
-        <div className="md:hidden fixed inset-0 z-40" onClick={() => setMobileOpen(false)}>
-          <div className="absolute inset-0 bg-black/40" />
-          <div
-            className="absolute right-0 top-0 h-full w-72 bg-white shadow-2xl flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div
-              className="flex items-center justify-between px-5 h-16 border-b"
-              style={{ borderColor: 'var(--bg-border)' }}
-            >
-              <span className="font-bold" style={{ color: 'var(--brand-primary)' }}>
-                {tenant?.brand_name ?? 'Companies House'}
-              </span>
-              <button type="button" onClick={() => setMobileOpen(false)} style={{ color: 'var(--text-muted)' }}>
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto py-4 px-5 space-y-2">
-              {[
-                { to: '/', label: 'Home' },
-                { to: '/company/search', label: 'Search Companies' },
-                { to: '/pricing', label: 'Pricing' },
-                { to: '/about', label: 'About' },
-                { to: '/contact', label: 'Contact' },
-              ].map(({ to, label }) => (
-                <Link
-                  key={to}
-                  to={to}
-                  onClick={() => setMobileOpen(false)}
-                  className="block py-2 text-sm font-medium"
-                  style={{ color: 'var(--text-body)' }}
-                >
-                  {label}
-                </Link>
-              ))}
-
-              {/* Reports */}
-              {reportProducts.length > 0 && (
-                <div>
-                  <p className="py-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
-                    Reports
-                  </p>
-                  {reportProducts.map((p) => (
-                    <Link
-                      key={p.id}
-                      to={`/report?type=${p.slug}`}
-                      onClick={() => setMobileOpen(false)}
-                      className="flex items-center gap-2 py-2 text-sm"
-                      style={{ color: 'var(--text-body)' }}
-                    >
-                      <span>📋</span>
-                      {p.name}
-                    </Link>
-                  ))}
-                </div>
-              )}
-
-              {/* Certificates */}
-              {certProducts.length > 0 && (
-                <div>
-                  <p className="py-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
-                    Certificates
-                  </p>
-                  {certProducts.map((p) => (
-                    <Link
-                      key={p.id}
-                      to={`/report?type=${p.slug}`}
-                      onClick={() => setMobileOpen(false)}
-                      className="flex items-center gap-2 py-2 text-sm"
-                      style={{ color: 'var(--text-body)' }}
-                    >
-                      <span>📄</span>
-                      {p.name}
-                    </Link>
-                  ))}
-                </div>
-              )}
-
-              {/* Register a Company */}
-              <div>
-                <p className="py-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
-                  Register a Company
-                </p>
-                <Link to="/company-set-up" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 py-2 text-sm" style={{ color: 'var(--text-body)' }}>
-                  <span>🏢</span> Company Set Up
-                </Link>
-                <Link to="/business-name-approval" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 py-2 text-sm" style={{ color: 'var(--text-body)' }}>
-                  <span>✅</span> Business Name Approval
-                </Link>
-              </div>
-            </div>
-
-            <div className="p-5 border-t space-y-2" style={{ borderColor: 'var(--bg-border)' }}>
-              {!session ? (
-                <>
-                  <Link
-                    to="/login"
-                    onClick={() => setMobileOpen(false)}
-                    className="block w-full text-center py-2.5 text-sm font-medium border rounded"
-                    style={{ borderColor: 'var(--brand-primary)', color: 'var(--brand-primary)', borderRadius: '6px' }}
-                  >
-                    Sign In
-                  </Link>
-                  <Link
-                    to="/register"
-                    onClick={() => setMobileOpen(false)}
-                    className="block w-full text-center py-2.5 text-sm font-semibold text-white rounded"
-                    style={{ backgroundColor: 'var(--brand-accent)', borderRadius: '6px' }}
-                  >
-                    Register
-                  </Link>
-                </>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleSignOut}
-                  className="block w-full text-center py-2.5 text-sm font-medium border rounded"
-                  style={{ borderColor: 'var(--bg-border)', color: 'var(--status-dissolved)', borderRadius: '6px' }}
-                >
-                  Sign Out
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
+        <MobileMenu
+          tenant={tenant}
+          session={session}
+          reportProducts={reportProducts}
+          certProducts={certProducts}
+          onClose={() => setMobileOpen(false)}
+          onSignOut={handleSignOut}
+        />
       )}
     </>
+  );
+}
+
+// ── Collapsible section for mobile ───────────────────────────
+function MobileAccordion({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border-b" style={{ borderColor: 'var(--bg-border)' }}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center justify-between w-full py-3 text-sm font-medium"
+        style={{ color: 'var(--text-heading)' }}
+      >
+        {title}
+        <ChevronDown
+          className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`}
+          style={{ color: 'var(--text-muted)' }}
+        />
+      </button>
+      {open && <div className="pb-3 space-y-0.5">{children}</div>}
+    </div>
+  );
+}
+
+// ── Mobile menu component ────────────────────────────────────
+function MobileMenu({
+  tenant,
+  session,
+  reportProducts,
+  certProducts,
+  onClose,
+  onSignOut,
+}: {
+  tenant: ReturnType<typeof useTenant>['tenant'];
+  session: { user: { email?: string; id: string } } | null;
+  reportProducts: Product[];
+  certProducts: Product[];
+  onClose: () => void;
+  onSignOut: () => void;
+}) {
+  const mobileLinkClass = 'flex items-center gap-2 py-2 pl-2 text-sm rounded transition-colors';
+
+  return (
+    <div className="md:hidden fixed inset-0 z-40" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/40" />
+      <div
+        className="absolute right-0 top-0 h-full w-72 bg-white shadow-2xl flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div
+          className="flex items-center justify-between px-5 h-16 border-b shrink-0"
+          style={{ borderColor: 'var(--bg-border)' }}
+        >
+          <span className="font-bold" style={{ color: 'var(--brand-primary)' }}>
+            {tenant?.brand_name ?? 'Companies House'}
+          </span>
+          <button type="button" onClick={onClose} style={{ color: 'var(--text-muted)' }}>
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto px-5 pt-3 pb-4">
+          {/* Top links */}
+          {[
+            { to: '/', label: 'Home' },
+            { to: '/company/search', label: 'Search Companies' },
+            { to: '/pricing', label: 'Pricing' },
+          ].map(({ to, label }) => (
+            <Link
+              key={to}
+              to={to}
+              onClick={onClose}
+              className="block py-2.5 text-sm font-medium border-b"
+              style={{ color: 'var(--text-body)', borderColor: 'var(--bg-border)' }}
+            >
+              {label}
+            </Link>
+          ))}
+
+          {/* Reports accordion */}
+          {reportProducts.length > 0 && (
+            <MobileAccordion title={`Reports (${reportProducts.length})`}>
+              {reportProducts.map((p) => (
+                <Link
+                  key={p.id}
+                  to={`/report?type=${p.slug}`}
+                  onClick={onClose}
+                  className={mobileLinkClass}
+                  style={{ color: 'var(--text-body)' }}
+                >
+                  <span className="text-sm">📋</span>
+                  <span className="truncate">{p.name}</span>
+                </Link>
+              ))}
+            </MobileAccordion>
+          )}
+
+          {/* Certificates accordion */}
+          {certProducts.length > 0 && (
+            <MobileAccordion title={`Certificates (${certProducts.length})`}>
+              {certProducts.map((p) => (
+                <Link
+                  key={p.id}
+                  to={`/report?type=${p.slug}`}
+                  onClick={onClose}
+                  className={mobileLinkClass}
+                  style={{ color: 'var(--text-body)' }}
+                >
+                  <span className="text-sm">📄</span>
+                  <span className="truncate">{p.name}</span>
+                </Link>
+              ))}
+            </MobileAccordion>
+          )}
+
+          {/* Register accordion */}
+          <MobileAccordion title="Register a Company">
+            <Link to="/company-set-up" onClick={onClose} className={mobileLinkClass} style={{ color: 'var(--text-body)' }}>
+              <span className="text-sm">🏢</span> Company Set Up
+            </Link>
+            <Link to="/business-name-approval" onClick={onClose} className={mobileLinkClass} style={{ color: 'var(--text-body)' }}>
+              <span className="text-sm">✅</span> Business Name Approval
+            </Link>
+          </MobileAccordion>
+
+          {/* Bottom links */}
+          {[
+            { to: '/about', label: 'About' },
+            { to: '/contact', label: 'Contact' },
+          ].map(({ to, label }) => (
+            <Link
+              key={to}
+              to={to}
+              onClick={onClose}
+              className="block py-2.5 text-sm font-medium border-b"
+              style={{ color: 'var(--text-body)', borderColor: 'var(--bg-border)' }}
+            >
+              {label}
+            </Link>
+          ))}
+        </div>
+
+        {/* Footer auth */}
+        <div className="p-5 border-t space-y-2 shrink-0" style={{ borderColor: 'var(--bg-border)' }}>
+          {!session ? (
+            <>
+              <Link
+                to="/login"
+                onClick={onClose}
+                className="block w-full text-center py-2.5 text-sm font-medium border rounded"
+                style={{ borderColor: 'var(--brand-primary)', color: 'var(--brand-primary)', borderRadius: '6px' }}
+              >
+                Sign In
+              </Link>
+              <Link
+                to="/register"
+                onClick={onClose}
+                className="block w-full text-center py-2.5 text-sm font-semibold text-white rounded"
+                style={{ backgroundColor: 'var(--brand-accent)', borderRadius: '6px' }}
+              >
+                Register
+              </Link>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={onSignOut}
+              className="block w-full text-center py-2.5 text-sm font-medium border rounded"
+              style={{ borderColor: 'var(--bg-border)', color: 'var(--status-dissolved)', borderRadius: '6px' }}
+            >
+              Sign Out
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
