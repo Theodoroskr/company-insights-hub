@@ -287,22 +287,13 @@ export default function CompanyProfilePage() {
       const comp = efData.company as Company;
       setCompany(comp);
 
-      // Fetch products and affiliated in parallel
-      const [productsRes, affiliatedRes] = await Promise.all([
-        supabase
-          .from('products')
-          .select('*')
-          .eq('tenant_id', tenant!.id)
-          .eq('is_active', true)
-          .order('display_order', { ascending: true }),
-        supabase
-          .from('companies')
-          .select('id, name, slug, reg_no, status, country_code, icg_code, raw_source_json, tenant_id, vat_no, legal_form, registered_address, cached_at, meta_title, meta_description')
-          .eq('tenant_id', tenant!.id)
-          .neq('id', comp.id)
-          .not('raw_source_json', 'is', null)
-          .limit(3),
-      ]);
+      // Fetch products
+      const productsRes = await supabase
+        .from('products')
+        .select('*')
+        .eq('tenant_id', tenant!.id)
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
 
       if (productsRes.data) {
         setProducts(
@@ -313,8 +304,30 @@ export default function CompanyProfilePage() {
         );
       }
 
-      if (affiliatedRes.data) {
-        setAffiliated(affiliatedRes.data as Company[]);
+      // Find affiliated companies by matching director names
+      const directors: DirectorEntry[] = Array.isArray(comp.directors_json) ? comp.directors_json : [];
+      const directorNames = directors.map(d => d.name.toUpperCase());
+
+      if (directorNames.length > 0) {
+        // Search companies that have directors_json containing any matching name
+        const { data: affData } = await supabase
+          .from('companies')
+          .select('id, name, slug, reg_no, status, country_code, icg_code, directors_json, raw_source_json, tenant_id, vat_no, legal_form, registered_address, cached_at, meta_title, meta_description')
+          .eq('tenant_id', tenant!.id)
+          .neq('id', comp.id)
+          .not('directors_json', 'is', null)
+          .limit(50);
+
+        if (affData) {
+          // Filter to companies sharing at least one director name
+          const matches = (affData as Company[]).filter(c => {
+            const theirDirectors: DirectorEntry[] = Array.isArray(c.directors_json) ? c.directors_json : [];
+            return theirDirectors.some(d => directorNames.includes(d.name.toUpperCase()));
+          });
+          setAffiliated(matches.slice(0, 10));
+        }
+      } else {
+        setAffiliated([]);
       }
 
       setIsLoading(false);
