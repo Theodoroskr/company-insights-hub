@@ -50,45 +50,19 @@ export default function CompanyBrowseByLetterPage() {
     async function load() {
       setIsLoading(true);
 
-      try {
-        // Call the search-companies edge function with the letter
-        const { data, error } = await supabase.functions.invoke('search-companies', {
-          body: {
-            q: activeLetter,
-            country: tenant!.country_code || 'cy',
-            tenant_id: tenant!.id,
-          },
-        });
-
-        if (!error && data?.results && data.results.length > 0) {
-          // Filter to only companies starting with the active letter
-          const filtered = (data.results as CompanyRow[]).filter((c) =>
-            c.name.toUpperCase().startsWith(activeLetter)
-          );
-          // Sort alphabetically
-          filtered.sort((a, b) => a.name.localeCompare(b.name));
-          setAllCompanies(filtered);
-          setDataSource(data.source ?? 'api4all');
-          setIsLoading(false);
-          return;
-        }
-      } catch {
-        // Fall through to cache
-      }
-
-      // Fallback: query local cache
+      // Query cached companies from the database
       const { data: cached } = await supabase
         .from('companies')
         .select('id, name, slug, reg_no, status, country_code')
         .eq('tenant_id', tenant!.id)
         .ilike('name', `${activeLetter}%`)
         .order('name', { ascending: true })
-        .limit(200);
+        .limit(1000);
 
       if (cached) {
         setAllCompanies(cached as CompanyRow[]);
-        setDataSource('cache');
       }
+      setDataSource(null);
       setIsLoading(false);
     }
 
