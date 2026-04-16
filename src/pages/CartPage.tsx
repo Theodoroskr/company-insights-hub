@@ -30,10 +30,11 @@ function CertOrderBlock({
 }) {
   const apostilleCount = order.certificates.filter((c) => c.apostille).length;
   const certTotal = order.certificates.reduce((s, c) => s + c.price, 0);
+  const serviceDeliveryTotal = order.certificates.length * SERVICE_DELIVERY_FEE;
   const apostilleTotal = apostilleCount * APOSTILLE_PRICE;
   const urgentTotal = order.urgentDelivery ? URGENT_DELIVERY_PRICE : 0;
   const courierTotal = order.courierDelivery ? COURIER_DELIVERY_PRICE : 0;
-  const blockTotal = certTotal + apostilleTotal + urgentTotal + courierTotal;
+  const blockTotal = certTotal + serviceDeliveryTotal + apostilleTotal + urgentTotal + courierTotal;
 
   return (
     <div className="py-5 border-b" style={{ borderColor: 'var(--bg-border)' }}>
