@@ -6,7 +6,181 @@ import { supabase } from '../../lib/supabase';
 import { useCart } from '../../contexts/CartContext';
 import type { Product, Company } from '../../types/database';
 
-type OpenMenu = 'reports' | 'certificates' | 'register' | null;
+// ── Debounce hook ─────────────────────────────────────────────
+function useDebounce<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState<T>(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debounced;
+}
+
+// ── Navbar Search ─────────────────────────────────────────────
+function NavbarSearch({ tenantId }: { tenantId: string }) {
+  const navigate = useNavigate();
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<Company[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const debouncedQuery = useDebounce(query, 300);
+
+  // Close on outside click
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setShowResults(false);
+      }
+    }
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  // Search on debounced query
+  useEffect(() => {
+    if (debouncedQuery.length < 2) {
+      setResults([]);
+      setShowResults(false);
+      return;
+    }
+
+    let cancelled = false;
+    setIsSearching(true);
+
+    supabase.functions
+      .invoke('search-companies', {
+        body: { q: debouncedQuery, tenant_id: tenantId },
+      })
+      .then(({ data }) => {
+        if (cancelled) return;
+        const res = (data?.results ?? []) as Company[];
+        setResults(res.slice(0, 6));
+        setShowResults(true);
+        setIsSearching(false);
+      })
+      .catch(() => {
+        if (!cancelled) setIsSearching(false);
+      });
+
+    return () => { cancelled = true; };
+  }, [debouncedQuery, tenantId]);
+
+  const handleSelect = (company: Company) => {
+    setShowResults(false);
+    setQuery('');
+    navigate(`/company/${company.slug ?? company.id}`);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && query.length >= 2) {
+      setShowResults(false);
+      setQuery('');
+      navigate(`/company/search?q=${encodeURIComponent(query)}`);
+    }
+    if (e.key === 'Escape') {
+      setShowResults(false);
+      inputRef.current?.blur();
+    }
+  };
+
+  return (
+    <div ref={containerRef} className="relative">
+      <div
+        className="flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-all"
+        style={{
+          backgroundColor: 'var(--bg-subtle)',
+          border: '1px solid var(--bg-border)',
+          width: '220px',
+        }}
+      >
+        {isSearching ? (
+          <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: 'var(--text-muted)' }} />
+        ) : (
+          <Search className="w-3.5 h-3.5" style={{ color: 'var(--text-muted)' }} />
+        )}
+        <input
+          ref={inputRef}
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onFocus={() => results.length > 0 && setShowResults(true)}
+          onKeyDown={handleKeyDown}
+          placeholder="Search companies..."
+          className="bg-transparent border-none outline-none text-sm flex-1"
+          style={{ color: 'var(--text-body)' }}
+        />
+        {query && (
+          <button
+            type="button"
+            onClick={() => { setQuery(''); setResults([]); setShowResults(false); }}
+            className="p-0.5"
+            style={{ color: 'var(--text-muted)' }}
+          >
+            <X className="w-3 h-3" />
+          </button>
+        )}
+      </div>
+
+      {/* Dropdown results */}
+      {showResults && results.length > 0 && (
+        <div
+          className="absolute top-full mt-1.5 left-0 right-0 bg-white rounded-lg shadow-xl border z-50 overflow-hidden"
+          style={{ borderColor: 'var(--bg-border)', minWidth: '280px' }}
+        >
+          {results.map((r) => (
+            <button
+              key={r.id}
+              type="button"
+              onClick={() => handleSelect(r)}
+              className="flex items-center gap-3 w-full px-3 py-2.5 text-left text-sm transition-colors"
+              style={{ color: 'var(--text-body)' }}
+              onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
+              onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+            >
+              <span className="text-base">🏢</span>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium truncate" style={{ color: 'var(--text-heading)' }}>
+                  {r.name}
+                </p>
+                {r.reg_no && (
+                  <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>
+                    {r.reg_no}
+                  </p>
+                )}
+              </div>
+              {r.status && (
+                <span
+                  className="text-xs px-1.5 py-0.5 rounded-full shrink-0"
+                  style={{
+                    backgroundColor: r.status.toLowerCase() === 'active' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                    color: r.status.toLowerCase() === 'active' ? 'var(--status-active)' : 'var(--status-dissolved)',
+                  }}
+                >
+                  {r.status}
+                </span>
+              )}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => {
+              setShowResults(false);
+              setQuery('');
+              navigate(`/company/search?q=${encodeURIComponent(query)}`);
+            }}
+            className="w-full px-3 py-2 text-xs font-medium text-center border-t"
+            style={{ color: 'var(--brand-accent)', borderColor: 'var(--bg-border)' }}
+          >
+            View all results →
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 export default function Navbar() {
   const { tenant } = useTenant();
