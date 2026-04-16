@@ -1,0 +1,1 @@
+UPDATE products SET is_active = false WHERE id = '40794cdc-115b-4fd0-8717-3ef5c0d7efcd';
