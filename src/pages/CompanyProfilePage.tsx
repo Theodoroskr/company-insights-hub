@@ -12,6 +12,7 @@ import { useTenant } from '../lib/tenant.tsx';
 import { useCountries } from '../lib/countries';
 import { useCart } from '../contexts/CartContext';
 import { supabase } from '@/integrations/supabase/client';
+import { legalFormToEntityType } from '@/data/cyprusCertificates';
 import type { Company, Product, ProductSpeed, DirectorEntry } from '../types/database';
 
 // ── Helpers ──────────────────────────────────────────────────
