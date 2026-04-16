@@ -706,6 +706,11 @@ export default function CompanyProfilePage() {
               <UKRiskSummaryPanel bundle={reportBundle} />
             )}
 
+            {/* B0b — UK Company Facts (unlocked only) */}
+            {isUnlocked && company.country_code === 'GB' && reportBundle && (
+              <UKCompanyFactsPanel bundle={reportBundle} />
+            )}
+
             {/* B — Risk Indicator */}
             <SectionCard>
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
