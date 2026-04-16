@@ -151,24 +151,73 @@ export default function HomePage() {
       </section>
 
       {/* ═══════════════════════════════════════════════════
-          SECTION 2 — TRUST BADGES
+          SECTION 2 — TRUST SIGNALS & SOCIAL PROOF
       ═══════════════════════════════════════════════════ */}
       <section
         ref={trustRef}
-        className="py-6 px-4"
+        className="py-10 px-4"
         style={{
           backgroundColor: '#fff',
           borderBottom: '1px solid var(--bg-border)',
         }}
       >
         <div className="max-w-5xl mx-auto">
-          <div className="flex flex-wrap items-center justify-center gap-8">
+          {/* Stats row */}
+          <div className="flex flex-wrap items-center justify-center gap-10 md:gap-16 mb-8">
+            {[
+              { value: '10,000+', label: 'Reports Delivered' },
+              { value: '200+', label: 'Countries Covered' },
+              { value: '500+', label: 'Business Clients' },
+              { value: '99.9%', label: 'Uptime SLA' },
+            ].map(({ value, label }) => (
+              <div key={label} className="text-center">
+                <div
+                  className="text-2xl md:text-3xl font-extrabold"
+                  style={{ color: 'var(--brand-primary)' }}
+                >
+                  {value}
+                </div>
+                <div className="text-xs mt-1 uppercase tracking-wider font-medium" style={{ color: 'var(--text-muted)' }}>
+                  {label}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Feature badges */}
+          <div className="flex flex-wrap items-center justify-center gap-6 md:gap-8 mb-6">
             {TRUST_BADGES.map(({ icon, text }) => (
               <div key={text} className="flex items-center gap-2">
                 <span style={{ color: 'var(--brand-accent)' }}>{icon}</span>
                 <span className="text-sm" style={{ color: 'var(--text-muted)' }}>
                   {text}
                 </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Compliance badges */}
+          <div
+            className="flex flex-wrap items-center justify-center gap-4 pt-6"
+            style={{ borderTop: '1px solid var(--bg-border)' }}
+          >
+            {[
+              { icon: <Lock className="w-4 h-4" />, label: 'SSL Encrypted' },
+              { icon: <Shield className="w-4 h-4" />, label: 'GDPR Compliant' },
+              { icon: <FileCheck className="w-4 h-4" />, label: 'Official Registry Data' },
+              { icon: <BadgeCheck className="w-4 h-4" />, label: 'ISO 27001' },
+            ].map(({ icon, label }) => (
+              <div
+                key={label}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium"
+                style={{
+                  backgroundColor: 'var(--bg-subtle)',
+                  color: 'var(--text-muted)',
+                  border: '1px solid var(--bg-border)',
+                }}
+              >
+                {icon}
+                {label}
               </div>
             ))}
           </div>
