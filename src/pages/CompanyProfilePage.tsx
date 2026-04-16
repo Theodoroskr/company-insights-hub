@@ -511,8 +511,10 @@ export default function CompanyProfilePage() {
         }
         const psc = (latest?.api4all_raw_json?.psc ?? []) as Array<Record<string, unknown>>;
         setReportPsc(psc);
+        setReportBundle((latest?.api4all_raw_json ?? null) as Record<string, unknown> | null);
       } else {
         setReportPsc([]);
+        setReportBundle(null);
       }
     }
 
