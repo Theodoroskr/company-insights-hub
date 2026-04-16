@@ -36,6 +36,9 @@ interface ItemDetail {
   company_name: string | null;
   product_name: string | null;
   raw_json: any;
+  verified_at: string | null;
+  verified_by: string | null;
+  verification_note: string | null;
 }
 
 const STATUS_OPTIONS = ['pending', 'paid', 'processing', 'completed', 'failed', 'refunded', 'cancelled'];
@@ -89,6 +92,7 @@ export default function AdminOrderDetailPage() {
         order_items (
           id, unit_price, vat_amount, speed, fulfillment_status, sla_deadline,
           api4all_order_id, api4all_item_code, assigned_to,
+          verified_at, verified_by, verification_note,
           companies ( name ),
           products ( name ),
           generated_reports ( api4all_raw_json )
@@ -118,6 +122,9 @@ export default function AdminOrderDetailPage() {
           company_name: i.companies?.name ?? null,
           product_name: i.products?.name ?? null,
           raw_json: i.generated_reports?.[0]?.api4all_raw_json ?? null,
+          verified_at: i.verified_at ?? null,
+          verified_by: i.verified_by ?? null,
+          verification_note: i.verification_note ?? null,
         })),
       });
       setNotes(o.notes ?? '');
