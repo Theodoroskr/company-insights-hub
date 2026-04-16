@@ -39,7 +39,7 @@ function formatDate(iso?: string | null): string {
 
 function pickProfile(bundle: Record<string, unknown> | null): Record<string, unknown> {
   if (!bundle) return {};
-  return ((bundle.profile ?? bundle.company_profile ?? bundle) as Record<string, unknown>) ?? {};
+  return ((bundle.company ?? bundle.profile ?? bundle.company_profile ?? bundle) as Record<string, unknown>) ?? {};
 }
 
 function asArray<T = unknown>(v: unknown): T[] {
