@@ -15,15 +15,14 @@ const RISK_CONFIG: Record<RiskBand, { color: string; label: string }> = {
   critical:  { color: 'var(--risk-critical)',  label: 'Critical Risk' },
 };
 
-export default function RiskTrafficLight({
-  band,
-  showLabel = true,
-  className = '',
-}: RiskTrafficLightProps) {
+const RiskTrafficLight = React.forwardRef<HTMLSpanElement, RiskTrafficLightProps>(function RiskTrafficLight(
+  { band, showLabel = true, className = '' },
+  ref
+) {
   const config = RISK_CONFIG[band] ?? RISK_CONFIG.medium;
 
   return (
-    <span className={`inline-flex items-center gap-1.5 ${className}`}>
+    <span ref={ref} className={`inline-flex items-center gap-1.5 ${className}`}>
       <span
         className="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0"
         style={{ backgroundColor: config.color }}
@@ -36,4 +35,6 @@ export default function RiskTrafficLight({
       )}
     </span>
   );
-}
+});
+
+export default RiskTrafficLight;
