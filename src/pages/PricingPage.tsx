@@ -31,8 +31,9 @@ export default function PricingPage() {
       });
   }, [tenant?.id]);
 
-  const reports = products.filter((p) => ['extract', 'structure', 'kyb', 'credit'].includes(p.type));
-  const certificates = products.filter((p) => p.type === 'certificate');
+  const isCert = (t: string) => t === 'certificate' || t === 'cert';
+  const reports = products.filter((p) => !isCert(p.type) && p.type !== 'monitoring');
+  const certificates = products.filter((p) => isCert(p.type));
   const services = products.filter((p) => p.type === 'monitoring');
 
   const formatPrice = (p: Product) => {
@@ -42,6 +43,8 @@ export default function PricingPage() {
   };
 
   const getDelivery = (p: Product) => {
+    const type = p.type as string;
+    if (type === 'certificate' || type === 'cert') return 'Next working day';
     if (p.is_instant) return 'Instant';
     if (p.delivery_sla_hours) {
       if (p.delivery_sla_hours <= 24) return '24 hours';
