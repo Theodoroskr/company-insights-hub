@@ -29,6 +29,7 @@ export default function CompanyBrowseByLetterPage() {
 
   const [companies, setCompanies] = useState<CompanyRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [dataSource, setDataSource] = useState<string | null>(null);
 
   const countryName =
     tenant?.country_code
@@ -40,16 +41,45 @@ export default function CompanyBrowseByLetterPage() {
 
     async function load() {
       setIsLoading(true);
-      const { data, error } = await supabase
+
+      try {
+        // Call the search-companies edge function with the letter
+        const { data, error } = await supabase.functions.invoke('search-companies', {
+          body: {
+            q: activeLetter,
+            country: tenant!.country_code || 'cy',
+            tenant_id: tenant!.id,
+          },
+        });
+
+        if (!error && data?.results && data.results.length > 0) {
+          // Filter to only companies starting with the active letter
+          const filtered = (data.results as CompanyRow[]).filter((c) =>
+            c.name.toUpperCase().startsWith(activeLetter)
+          );
+          // Sort alphabetically
+          filtered.sort((a, b) => a.name.localeCompare(b.name));
+          setCompanies(filtered);
+          setDataSource(data.source ?? 'api4all');
+          setIsLoading(false);
+          return;
+        }
+      } catch {
+        // Fall through to cache
+      }
+
+      // Fallback: query local cache
+      const { data: cached } = await supabase
         .from('companies')
         .select('id, name, slug, reg_no, status, country_code')
         .eq('tenant_id', tenant!.id)
         .ilike('name', `${activeLetter}%`)
         .order('name', { ascending: true })
-        .limit(100);
+        .limit(200);
 
-      if (!error && data) {
-        setCompanies(data as CompanyRow[]);
+      if (cached) {
+        setCompanies(cached as CompanyRow[]);
+        setDataSource('cache');
       }
       setIsLoading(false);
     }
@@ -123,6 +153,11 @@ export default function CompanyBrowseByLetterPage() {
           <p className="text-sm mb-4" style={{ color: 'var(--text-muted)' }}>
             {companies.length} {companies.length === 1 ? 'company' : 'companies'} starting with{' '}
             <strong style={{ color: 'var(--text-body)' }}>{activeLetter}</strong>
+            {dataSource === 'cache' && (
+              <span className="ml-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+                (from cache)
+              </span>
+            )}
           </p>
         )}
 
