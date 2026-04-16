@@ -36,12 +36,16 @@ function yearsBetween(iso?: string): number | null {
 
 function pickProfile(bundle: Record<string, unknown> | null): Record<string, unknown> {
   if (!bundle) return {};
-  const p = (bundle.profile ?? bundle.company_profile ?? bundle) as Record<string, unknown>;
+  const p = (bundle.company ?? bundle.profile ?? bundle.company_profile ?? bundle) as Record<string, unknown>;
   return p ?? {};
 }
 
 function asArray(v: unknown): unknown[] {
-  return Array.isArray(v) ? v : [];
+  if (Array.isArray(v)) return v;
+  if (v && typeof v === 'object' && Array.isArray((v as Record<string, unknown>).items)) {
+    return (v as { items: unknown[] }).items;
+  }
+  return [];
 }
 
 function computeMetrics(bundle: Record<string, unknown> | null): { metrics: Metric[]; overall: Tone; overallLabel: string } {
@@ -51,19 +55,16 @@ function computeMetrics(bundle: Record<string, unknown> | null): { metrics: Metr
   const status = (profile.company_status as string | undefined) ?? '';
   const incorporated = profile.date_of_creation as string | undefined;
 
-  // Officers (active = no resigned_on)
-  const officersRaw = bundle?.officers as Record<string, unknown> | undefined;
-  const officerItems = asArray(officersRaw?.items);
+  // Officers — top-level array (or {items})
+  const officerItems = asArray(bundle?.officers);
   const activeOfficers = officerItems.filter((o) => !((o as Record<string, unknown>).resigned_on)).length;
 
-  // PSC
-  const pscRaw = bundle?.psc as Record<string, unknown> | undefined;
-  const pscItems = asArray(pscRaw?.items ?? bundle?.psc);
-  const activePsc = pscItems.filter((p) => !((p as Record<string, unknown>).ceased_on)).length;
+  // PSC — top-level array
+  const pscItems = asArray(bundle?.psc);
+  const activePsc = pscItems.filter((p) => !((p as Record<string, unknown>).ceased_on) && !((p as Record<string, unknown>).ceased)).length;
 
-  // Charges
-  const chargesRaw = bundle?.charges as Record<string, unknown> | undefined;
-  const chargeItems = asArray(chargesRaw?.items);
+  // Charges — top-level array
+  const chargeItems = asArray(bundle?.charges);
   const activeCharges = chargeItems.filter((c) => {
     const s = (c as Record<string, unknown>).status as string | undefined;
     return s === 'outstanding' || s === 'part-satisfied' || (!s && !(c as Record<string, unknown>).satisfied_on);
