@@ -13,8 +13,13 @@ const CH_BASE = "https://api.company-information.service.gov.uk";
 const CACHE_TTL_HOURS = 24;
 
 function authHeader() {
-  const key = Deno.env.get("COMPANIES_HOUSE_UK_API_KEY");
-  if (!key) throw new Error("COMPANIES_HOUSE_UK_API_KEY not configured");
+  const raw = Deno.env.get("COMPANIES_HOUSE_UK_API_KEY");
+  if (!raw) throw new Error("COMPANIES_HOUSE_UK_API_KEY not configured");
+  const key = raw.trim();
+  // Log non-sensitive metadata to help diagnose 401s
+  console.log(
+    `[CH UK] key length=${key.length} starts="${key.slice(0, 4)}..." ends="...${key.slice(-2)}"`,
+  );
   // Companies House uses HTTP Basic with the API key as the username and an empty password.
   return "Basic " + btoa(`${key}:`);
 }
@@ -25,6 +30,7 @@ async function chFetch(path: string) {
   });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
+    console.error(`[CH UK] ${res.status} on ${path}: ${text.slice(0, 200)}`);
     throw new Error(`Companies House API ${res.status}: ${text.slice(0, 200)}`);
   }
   return res.json();
