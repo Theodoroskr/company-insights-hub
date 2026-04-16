@@ -758,13 +758,15 @@ export default function CompanyProfilePage() {
                 </p>
               )}
 
-              <Link
-                to={`/company/search?q=${encodeURIComponent(company.name)}`}
-                className="inline-block text-sm mt-4 hover:underline"
-                style={{ color: 'var(--brand-accent)' }}
-              >
-                Search for more companies with similar directors →
-              </Link>
+              {Array.isArray(company.directors_json) && company.directors_json.length > 0 && (
+                <Link
+                  to={`/company/search?q=${encodeURIComponent(company.directors_json[0].name)}`}
+                  className="inline-block text-sm mt-4 hover:underline"
+                  style={{ color: 'var(--brand-accent)' }}
+                >
+                  Search companies linked to {company.directors_json[0].name} →
+                </Link>
+              )}
             </SectionCard>
 
             {/* H — Disclaimer */}
