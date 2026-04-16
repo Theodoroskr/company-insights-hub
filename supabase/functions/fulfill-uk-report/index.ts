@@ -71,9 +71,11 @@ Deno.serve(async (req) => {
     if (!company || (company.country_code ?? "").toUpperCase() !== "GB" || !company.reg_no) {
       throw new Error("UK report requires a GB company with a reg_no");
     }
-    if (product?.slug !== "uk-company-report") {
-      throw new Error("This function only fulfils uk-company-report items");
+    const allowedSlugs = ["uk-company-report", "enhanced-uk-kyb-report"];
+    if (!product?.slug || !allowedSlugs.includes(product.slug)) {
+      throw new Error("This function only fulfils UK company report items");
     }
+    const isEnhanced = product.slug === "enhanced-uk-kyb-report";
     if (item.fulfillment_status === "fulfilled" || item.fulfillment_status === "completed") {
       return new Response(JSON.stringify({ success: true, alreadyFulfilled: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -134,14 +136,25 @@ Deno.serve(async (req) => {
       action: "fulfill_uk_report",
       entity_type: "order_item",
       entity_id: item.id,
-      payload: { company: company.name, reg_no: num, report_id: report.id },
+      payload: { company: company.name, reg_no: num, report_id: report.id, enhanced: isEnhanced },
     }).then(() => {}, () => {});
+
+    // Auto-trigger ComplyAdvantage screening for the Enhanced tier (fire-and-forget)
+    if (isEnhanced) {
+      supabase.functions.invoke("complyadvantage-screen", {
+        body: { order_item_id: item.id },
+      }).then(
+        (r) => console.log("[fulfill-uk-report] screening triggered:", r),
+        (e) => console.error("[fulfill-uk-report] screening trigger failed:", e),
+      );
+    }
 
     return new Response(
       JSON.stringify({
         success: true,
         report_id: report.id,
         download_token: report.download_token,
+        screening_triggered: isEnhanced,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );

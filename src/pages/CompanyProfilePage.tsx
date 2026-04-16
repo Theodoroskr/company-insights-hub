@@ -13,6 +13,7 @@ import OrderReportModal from '../components/orders/OrderReportModal';
 import UKCompanySections from '../components/company/UKCompanySections';
 import UKRiskSummaryPanel from '../components/company/UKRiskSummaryPanel';
 import UKCompanyFactsPanel from '../components/company/UKCompanyFactsPanel';
+import UKComplianceScreeningPanel from '../components/company/UKComplianceScreeningPanel';
 import { useTenant } from '../lib/tenant.tsx';
 import { useCountries } from '../lib/countries';
 import { useCart } from '../contexts/CartContext';
@@ -400,6 +401,8 @@ export default function CompanyProfilePage() {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [reportPsc, setReportPsc] = useState<Array<Record<string, unknown>>>([]);
   const [reportBundle, setReportBundle] = useState<Record<string, unknown> | null>(null);
+  const [unlockedOrderItemId, setUnlockedOrderItemId] = useState<string | null>(null);
+  const [hasEnhancedKyb, setHasEnhancedKyb] = useState(false);
 
   const getCountryInfo = (code: string) => {
     return countries.find((c) => c.code.toUpperCase() === code.toUpperCase());
@@ -494,7 +497,7 @@ export default function CompanyProfilePage() {
 
       const { data, error } = await supabase
         .from('order_items')
-        .select('id, fulfillment_status, orders!inner(user_id, status), generated_reports(api4all_raw_json, generated_at)')
+        .select('id, fulfillment_status, products:product_id(slug), orders!inner(user_id, status), generated_reports(api4all_raw_json, generated_at)')
         .eq('company_id', company.id)
         .eq('orders.user_id', session.user.id)
         .in('fulfillment_status', ['completed', 'fulfilled', 'delivered']);
@@ -505,18 +508,44 @@ export default function CompanyProfilePage() {
 
       // Pull PSC entries from the most recent generated report bundle
       if (unlocked && data) {
-        let latest: { generated_at?: string; api4all_raw_json?: { psc?: unknown[] } } | null = null;
-        for (const item of data as Array<{ generated_reports?: Array<{ generated_at?: string; api4all_raw_json?: { psc?: unknown[] } }> }>) {
-          for (const r of item.generated_reports ?? []) {
-            if (!latest || (r.generated_at ?? '') > (latest.generated_at ?? '')) latest = r;
+        type Item = {
+          id: string;
+          products?: { slug?: string } | null;
+          generated_reports?: Array<{ generated_at?: string; api4all_raw_json?: { psc?: unknown[] } }>;
+        };
+        const items = data as unknown as Item[];
+
+        // Prefer the enhanced item if user owns it, else most recent
+        const enhanced = items.find((i) => i.products?.slug === 'enhanced-uk-kyb-report');
+        setHasEnhancedKyb(!!enhanced);
+
+        let chosen: Item | null = enhanced ?? null;
+        let latestReport: { generated_at?: string; api4all_raw_json?: { psc?: unknown[] } } | null = null;
+
+        if (chosen) {
+          for (const r of chosen.generated_reports ?? []) {
+            if (!latestReport || (r.generated_at ?? '') > (latestReport.generated_at ?? '')) latestReport = r;
+          }
+        } else {
+          for (const item of items) {
+            for (const r of item.generated_reports ?? []) {
+              if (!latestReport || (r.generated_at ?? '') > (latestReport.generated_at ?? '')) {
+                latestReport = r;
+                chosen = item;
+              }
+            }
           }
         }
-        const psc = (latest?.api4all_raw_json?.psc ?? []) as Array<Record<string, unknown>>;
+
+        setUnlockedOrderItemId(chosen?.id ?? null);
+        const psc = (latestReport?.api4all_raw_json?.psc ?? []) as Array<Record<string, unknown>>;
         setReportPsc(psc);
-        setReportBundle((latest?.api4all_raw_json ?? null) as Record<string, unknown> | null);
+        setReportBundle((latestReport?.api4all_raw_json ?? null) as Record<string, unknown> | null);
       } else {
         setReportPsc([]);
         setReportBundle(null);
+        setUnlockedOrderItemId(null);
+        setHasEnhancedKyb(false);
       }
     }
 
@@ -709,6 +738,15 @@ export default function CompanyProfilePage() {
             {/* B0b — UK Company Facts (unlocked only) */}
             {isUnlocked && company.country_code === 'GB' && reportBundle && (
               <UKCompanyFactsPanel bundle={reportBundle} />
+            )}
+
+            {/* B0c — Compliance Screening (unlocked UK only) */}
+            {isUnlocked && company.country_code === 'GB' && unlockedOrderItemId && (
+              <UKComplianceScreeningPanel
+                orderItemId={unlockedOrderItemId}
+                isEnhanced={hasEnhancedKyb}
+                onUpgrade={() => setKybModalOpen(true)}
+              />
             )}
 
             {/* B — Risk Indicator */}

@@ -587,6 +587,7 @@ export type Database = {
           name: string
           product_image_url: string | null
           sample_pdf_url: string | null
+          screening_enabled: boolean
           service_fee: number | null
           slug: string
           tenant_id: string | null
@@ -609,6 +610,7 @@ export type Database = {
           name: string
           product_image_url?: string | null
           sample_pdf_url?: string | null
+          screening_enabled?: boolean
           service_fee?: number | null
           slug: string
           tenant_id?: string | null
@@ -631,6 +633,7 @@ export type Database = {
           name?: string
           product_image_url?: string | null
           sample_pdf_url?: string | null
+          screening_enabled?: boolean
           service_fee?: number | null
           slug?: string
           tenant_id?: string | null
@@ -719,6 +722,106 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      screening_entity_hits: {
+        Row: {
+          created_at: string
+          entity_name: string
+          entity_role: string | null
+          hit_type: string
+          id: string
+          match_strength: string | null
+          raw_match: Json | null
+          screening_result_id: string
+          share_url: string | null
+          source_lists: string[] | null
+        }
+        Insert: {
+          created_at?: string
+          entity_name: string
+          entity_role?: string | null
+          hit_type: string
+          id?: string
+          match_strength?: string | null
+          raw_match?: Json | null
+          screening_result_id: string
+          share_url?: string | null
+          source_lists?: string[] | null
+        }
+        Update: {
+          created_at?: string
+          entity_name?: string
+          entity_role?: string | null
+          hit_type?: string
+          id?: string
+          match_strength?: string | null
+          raw_match?: Json | null
+          screening_result_id?: string
+          share_url?: string | null
+          source_lists?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "screening_entity_hits_screening_result_id_fkey"
+            columns: ["screening_result_id"]
+            isOneToOne: false
+            referencedRelation: "screening_results"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      screening_results: {
+        Row: {
+          adverse_media_hits: number
+          created_at: string
+          entities_screened: number
+          error: string | null
+          id: string
+          order_item_id: string
+          overall_status: string
+          pep_hits: number
+          raw_response: Json | null
+          sanctions_hits: number
+          screened_at: string
+          total_hits: number
+        }
+        Insert: {
+          adverse_media_hits?: number
+          created_at?: string
+          entities_screened?: number
+          error?: string | null
+          id?: string
+          order_item_id: string
+          overall_status?: string
+          pep_hits?: number
+          raw_response?: Json | null
+          sanctions_hits?: number
+          screened_at?: string
+          total_hits?: number
+        }
+        Update: {
+          adverse_media_hits?: number
+          created_at?: string
+          entities_screened?: number
+          error?: string | null
+          id?: string
+          order_item_id?: string
+          overall_status?: string
+          pep_hits?: number
+          raw_response?: Json | null
+          sanctions_hits?: number
+          screened_at?: string
+          total_hits?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "screening_results_order_item_id_fkey"
+            columns: ["order_item_id"]
+            isOneToOne: false
+            referencedRelation: "order_items"
             referencedColumns: ["id"]
           },
         ]
