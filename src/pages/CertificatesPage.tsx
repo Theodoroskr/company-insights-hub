@@ -382,7 +382,7 @@ export default function CertificatesPage() {
             Order Official Cyprus Certificates
           </h1>
           <p className="mt-3 text-base md:text-lg" style={{ color: 'rgba(255,255,255,0.8)' }}>
-            Official certified certificates from the Cyprus Registrar. All certificates €{CERT_PRICE} each. Next working day delivery.
+            Official certified certificates from the Cyprus Registrar. Next working day delivery.
           </p>
           <p className="mt-2 text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>
             Apostille service available for international use
@@ -621,6 +621,30 @@ export default function CertificatesPage() {
                     <Stamp className="w-3.5 h-3.5" />
                     Apostille service available for international use
                   </p>
+                </div>
+
+                {/* Structure Report upsell */}
+                <div
+                  className="border-t mt-4 pt-4"
+                  style={{ borderColor: 'var(--bg-border)' }}
+                >
+                  <p className="text-xs font-semibold mb-2" style={{ color: 'var(--text-heading)' }}>
+                    Combine with a Report
+                  </p>
+                  <p className="text-[11px] mb-3" style={{ color: 'var(--text-muted)' }}>
+                    Get a full company structure overview alongside your certificates.
+                  </p>
+                  <button
+                    onClick={() => navigate('/report?type=structure')}
+                    className="w-full py-2 rounded-lg text-xs font-semibold border transition-all hover:shadow-sm active:scale-[0.98] flex items-center justify-center gap-1.5"
+                    style={{
+                      borderColor: 'var(--brand-accent)',
+                      color: 'var(--brand-accent)',
+                    }}
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    Add Structure Report — €75
+                  </button>
                 </div>
               </div>
             </div>
