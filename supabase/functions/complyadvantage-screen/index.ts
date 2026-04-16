@@ -1,9 +1,12 @@
 // ============================================================
 // complyadvantage-screen
 // Runs sanctions + PEP + adverse-media screening against
-// ComplyAdvantage for the company, all active officers and all
-// active PSCs of a UK report bundle. Persists results into
-// screening_results + screening_entity_hits.
+// ComplyAdvantage for the company plus all best-effort officers
+// and shareholders/PSCs extracted from either:
+//   - a UK Companies House bundle (officers / psc), or
+//   - an API4ALL global report bundle (directors / shareholders /
+//     representatives / officers — shapes vary by country).
+// Persists results into screening_results + screening_entity_hits.
 // ============================================================
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
@@ -19,7 +22,7 @@ const FILTER_TYPES = ["sanction", "pep", "adverse-media", "warning", "fitness-pr
 
 type Entity = {
   name: string;
-  role: "company" | "officer" | "psc";
+  role: "company" | "officer" | "shareholder" | "psc";
 };
 
 interface CASearchResponse {
@@ -54,33 +57,85 @@ function asArray(v: unknown): unknown[] {
   return [];
 }
 
+function pickName(o: Record<string, unknown>): string | undefined {
+  const candidates = [
+    "name", "full_name", "fullName", "display_name", "displayName",
+    "person_name", "personName", "officer_name", "shareholder_name",
+    "company_name", "companyName",
+  ];
+  for (const k of candidates) {
+    const v = o[k];
+    if (typeof v === "string" && v.trim().length > 1) return v.trim();
+  }
+  // composite first/last
+  const first = (o.first_name ?? o.firstName ?? o.given_name) as string | undefined;
+  const last = (o.last_name ?? o.lastName ?? o.surname ?? o.family_name) as string | undefined;
+  if (first || last) {
+    const composite = [first, last].filter(Boolean).join(" ").trim();
+    if (composite.length > 1) return composite;
+  }
+  return undefined;
+}
+
+function isInactive(o: Record<string, unknown>): boolean {
+  if (o.resigned_on || o.resignedOn) return true;
+  if (o.ceased_on || o.ceasedOn || o.ceased) return true;
+  const status = (o.status ?? o.state) as string | undefined;
+  if (typeof status === "string") {
+    const s = status.toLowerCase();
+    if (s.includes("resigned") || s.includes("ceased") || s.includes("inactive")) return true;
+  }
+  return false;
+}
+
 function extractEntities(bundle: Record<string, unknown>): Entity[] {
   const entities: Entity[] = [];
 
-  // Company
-  const profile = (bundle.company ?? bundle.profile ?? {}) as Record<string, unknown>;
-  const companyName = (profile.company_name ?? profile.name) as string | undefined;
+  // Company name (UK CH shape, API4ALL shape, fallback)
+  const profile = (bundle.company ?? bundle.profile ?? bundle.companyProfile ?? bundle) as Record<string, unknown>;
+  const companyName =
+    (profile.company_name as string | undefined) ??
+    (profile.name as string | undefined) ??
+    (profile.companyName as string | undefined);
   if (companyName) entities.push({ name: companyName, role: "company" });
 
-  // Active officers
-  const officers = asArray(bundle.officers);
-  for (const o of officers) {
-    const oo = o as Record<string, unknown>;
-    if (oo.resigned_on) continue;
-    const name = oo.name as string | undefined;
-    if (name) entities.push({ name, role: "officer" });
+  // Officers (UK CH + generic API4ALL)
+  const officerSources: unknown[] = [
+    bundle.officers, bundle.directors, bundle.directors_json,
+    bundle.representatives, bundle.management,
+  ];
+  for (const src of officerSources) {
+    for (const o of asArray(src)) {
+      const oo = o as Record<string, unknown>;
+      if (isInactive(oo)) continue;
+      const name = pickName(oo);
+      if (name) entities.push({ name, role: "officer" });
+    }
   }
 
-  // Active PSCs
-  const psc = asArray(bundle.psc);
-  for (const p of psc) {
+  // PSC (UK)
+  for (const p of asArray(bundle.psc)) {
     const pp = p as Record<string, unknown>;
-    if (pp.ceased_on || pp.ceased) continue;
-    const name = pp.name as string | undefined;
+    if (isInactive(pp)) continue;
+    const name = pickName(pp);
     if (name) entities.push({ name, role: "psc" });
   }
 
-  // Dedup on name+role
+  // Shareholders / UBOs (API4ALL shapes)
+  const shareholderSources: unknown[] = [
+    bundle.shareholders, bundle.shareholders_json,
+    bundle.ubos, bundle.beneficial_owners, bundle.beneficialOwners,
+  ];
+  for (const src of shareholderSources) {
+    for (const s of asArray(src)) {
+      const ss = s as Record<string, unknown>;
+      if (isInactive(ss)) continue;
+      const name = pickName(ss);
+      if (name) entities.push({ name, role: "shareholder" });
+    }
+  }
+
+  // Dedup on name+role (case-insensitive)
   const seen = new Set<string>();
   return entities.filter((e) => {
     const k = `${e.role}:${e.name.toLowerCase()}`;
@@ -154,14 +209,28 @@ Deno.serve(async (req) => {
     // Load report bundle for this order_item
     const { data: report, error: repErr } = await supabase
       .from("generated_reports")
-      .select("id, api4all_raw_json")
+      .select("id, api4all_raw_json, company_id")
       .eq("order_item_id", order_item_id)
       .order("generated_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (repErr || !report?.api4all_raw_json) throw new Error("No generated report bundle for order_item");
+    if (repErr || !report) throw new Error("No generated report bundle for order_item");
 
-    const entities = extractEntities(report.api4all_raw_json as Record<string, unknown>);
+    let bundle = (report.api4all_raw_json ?? {}) as Record<string, unknown>;
+
+    // Fallback: if bundle has no name at all, try to read company name from companies table
+    if (!bundle || Object.keys(bundle).length === 0) {
+      bundle = {};
+    }
+    let entities = extractEntities(bundle);
+    if (entities.length === 0 && report.company_id) {
+      const { data: c } = await supabase
+        .from("companies")
+        .select("name")
+        .eq("id", report.company_id)
+        .maybeSingle();
+      if (c?.name) entities = [{ name: c.name, role: "company" }];
+    }
     if (entities.length === 0) throw new Error("No entities to screen");
 
     let totalSanctions = 0;
@@ -205,7 +274,6 @@ Deno.serve(async (req) => {
       totalPep > 0 || totalAdverse > 0 ? "review" :
       "clear";
 
-    // Upsert: delete pending row first if any, then insert summary
     if (existing?.id) {
       await supabase.from("screening_results").delete().eq("id", existing.id);
     }
