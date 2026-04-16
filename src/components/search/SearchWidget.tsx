@@ -67,24 +67,71 @@ export default function SearchWidget({
       if (!tenant) return;
       setIsSearching(true);
       try {
-        const { data, error } = await supabase.functions.invoke('search-companies', {
-          body: {
-            q: debouncedQuery,
-            country: selectedCountry || tenant.country_code || 'cy',
-            tenant_id: tenant.id,
-          },
-        });
-        if (!error && data?.results) {
-          setResults((data.results as Company[]).slice(0, 8));
-          setShowResults(true);
+        const primaryCountry = selectedCountry || tenant.country_code || 'cy';
+        // On the global Infocredit World tenant, when no country is explicitly
+        // selected, also query Companies House UK and merge the results so UK
+        // companies surface alongside API4ALL results.
+        const shouldMergeUK =
+          isGlobal && !selectedCountry && primaryCountry !== 'gb';
+
+        const calls: Array<Promise<{ data: any; error: any }>> = [
+          supabase.functions.invoke('search-companies', {
+            body: {
+              q: debouncedQuery,
+              country: primaryCountry,
+              tenant_id: tenant.id,
+            },
+          }),
+        ];
+
+        if (shouldMergeUK) {
+          calls.push(
+            supabase.functions.invoke('search-companies', {
+              body: {
+                q: debouncedQuery,
+                country: 'gb',
+                tenant_id: tenant.id,
+              },
+            }),
+          );
         }
+
+        const responses = await Promise.all(calls);
+        const merged: Company[] = [];
+        for (const r of responses) {
+          if (!r.error && r.data?.results) {
+            merged.push(...(r.data.results as Company[]));
+          }
+        }
+
+        // Re-sort merged results: exact > startsWith > contains, then alpha
+        const qU = debouncedQuery.toUpperCase();
+        merged.sort((a, b) => {
+          const aU = (a.name ?? '').toUpperCase();
+          const bU = (b.name ?? '').toUpperCase();
+          const score = (s: string) => (s === qU ? 0 : s.startsWith(qU) ? 1 : 2);
+          const sa = score(aU);
+          const sb_ = score(bU);
+          return sa !== sb_ ? sa - sb_ : aU.localeCompare(bU);
+        });
+
+        // De-dup by id
+        const seen = new Set<string>();
+        const unique = merged.filter((c) => {
+          if (seen.has(c.id)) return false;
+          seen.add(c.id);
+          return true;
+        });
+
+        setResults(unique.slice(0, 8));
+        setShowResults(true);
       } finally {
         setIsSearching(false);
       }
     }
 
     runSearch();
-  }, [debouncedQuery, selectedCountry, tenant]);
+  }, [debouncedQuery, selectedCountry, tenant, isGlobal]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -308,29 +355,49 @@ export default function SearchWidget({
               className="absolute left-0 right-0 top-full mt-1 bg-white rounded-lg shadow-xl border z-50 overflow-hidden"
               style={{ borderColor: 'var(--bg-border)' }}
             >
-              {results.map((company) => (
-                <button
-                  key={company.id}
-                  type="button"
-                  onClick={() => handleResultClick(company)}
-                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors text-left border-b last:border-b-0"
-                  style={{ borderColor: 'var(--bg-border)' }}
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-heading)' }}>
-                      {company.name}
-                    </p>
-                    {company.reg_no && (
-                      <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>
-                        Reg: {company.reg_no}
+              {results.map((company) => {
+                const cc = (company.country_code ?? '').toUpperCase();
+                const ccMeta = countries.find((x) => x.code === cc);
+                return (
+                  <button
+                    key={company.id}
+                    type="button"
+                    onClick={() => handleResultClick(company)}
+                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors text-left border-b last:border-b-0"
+                    style={{ borderColor: 'var(--bg-border)' }}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-heading)' }}>
+                        {company.name}
                       </p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {cc && (
+                          <span
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border"
+                            style={{
+                              borderColor: 'var(--bg-border)',
+                              backgroundColor: 'var(--bg-subtle)',
+                              color: 'var(--text-body)',
+                            }}
+                            title={ccMeta?.name ?? cc}
+                          >
+                            <span>{ccMeta?.flag_emoji ?? '🌐'}</span>
+                            <span>{cc}</span>
+                          </span>
+                        )}
+                        {company.reg_no && (
+                          <span className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>
+                            Reg: {company.reg_no}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {company.status && (
+                      <StatusBadge status={company.status} className="ml-3 flex-shrink-0" />
                     )}
-                  </div>
-                  {company.status && (
-                    <StatusBadge status={company.status} className="ml-3 flex-shrink-0" />
-                  )}
-                </button>
-              ))}
+                  </button>
+                );
+              })}
               <button
                 type="button"
                 onClick={handleSearch}
