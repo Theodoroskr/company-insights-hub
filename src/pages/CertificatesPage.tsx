@@ -100,24 +100,7 @@ function CertCard({
         </span>
       </div>
 
-      {/* Apostille checkbox */}
-      {cert.apostilleAvailable && selected && (
-        <label className="flex items-center gap-2 mt-3 cursor-pointer group" onClick={(e) => { e.preventDefault(); onToggleApostille(); }}>
-          <div
-            className="w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-all"
-            style={{
-              borderColor: apostille ? 'var(--status-active)' : 'var(--bg-border)',
-              backgroundColor: apostille ? 'var(--status-active)' : 'transparent',
-            }}
-          >
-            {apostille && <Check className="w-3 h-3 text-white" />}
-          </div>
-          <span className="text-xs" style={{ color: 'var(--text-body)' }}>
-            <Stamp className="w-3 h-3 inline mr-1" />
-            Add Apostille (+€{APOSTILLE_PRICE})
-          </span>
-        </label>
-      )}
+      {/* Apostille indicator (selection moved to order summary) */}
 
       <button
         onClick={onToggle}
@@ -341,7 +324,7 @@ export default function CertificatesPage() {
   const serviceDeliveryTotal = certCount * SERVICE_DELIVERY_FEE;
   const apostilleCount = apostilleSlugs.size;
   const apostilleTotal = apostilleCount * APOSTILLE_PRICE;
-  const urgentTotal = urgentDelivery ? URGENT_DELIVERY_PRICE : 0;
+  const urgentTotal = urgentDelivery ? URGENT_DELIVERY_PRICE * certCount : 0;
   const courierTotal = courierDelivery ? COURIER_DELIVERY_PRICE : 0;
   const subtotal = certSubtotal + serviceDeliveryTotal + apostilleTotal + urgentTotal + courierTotal;
   const vat = parseFloat((subtotal * VAT_RATE).toFixed(2));
@@ -501,17 +484,8 @@ export default function CertificatesPage() {
                         .filter((c) => selectedSlugs.has(c.slug))
                         .map((c) => (
                           <div key={c.slug} className="flex justify-between text-xs" style={{ color: 'var(--text-body)' }}>
-                            <span className="truncate pr-2">
-                              {c.name}
-                              {apostilleSlugs.has(c.slug) && (
-                                <span className="ml-1 text-[10px]" style={{ color: 'var(--status-active)' }}>
-                                  + Apostille
-                                </span>
-                              )}
-                            </span>
-                            <span className="font-medium whitespace-nowrap">
-                              €{c.price + (apostilleSlugs.has(c.slug) ? APOSTILLE_PRICE : 0)}
-                            </span>
+                            <span className="truncate pr-2">{c.name}</span>
+                            <span className="font-medium whitespace-nowrap">€{c.price}</span>
                           </div>
                         ))}
                     </div>
@@ -525,16 +499,37 @@ export default function CertificatesPage() {
                         <span>Service & Delivery ({certCount} × €{SERVICE_DELIVERY_FEE})</span>
                         <span>€{serviceDeliveryTotal}</span>
                       </div>
-                      {apostilleCount > 0 && (
-                        <div className="flex justify-between" style={{ color: 'var(--text-body)' }}>
-                          <span>Apostille ({apostilleCount} × €{APOSTILLE_PRICE})</span>
-                          <span>€{apostilleTotal}</span>
-                        </div>
-                      )}
                     </div>
 
                     {/* Add-ons */}
                     <div className="border-t mt-3 pt-3 space-y-3" style={{ borderColor: 'var(--bg-border)' }}>
+                      {/* Apostille — per certificate */}
+                      <label className="flex items-center justify-between cursor-pointer group" onClick={(e) => { e.preventDefault(); /* toggle all certs apostille */ setApostilleSlugs((prev) => prev.size === certCount ? new Set() : new Set(selectedSlugs)); }}>
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-all"
+                            style={{
+                              borderColor: apostilleCount > 0 ? 'var(--status-active)' : 'var(--bg-border)',
+                              backgroundColor: apostilleCount > 0 ? 'var(--status-active)' : 'transparent',
+                            }}
+                          >
+                            {apostilleCount > 0 && <Check className="w-3 h-3 text-white" />}
+                          </div>
+                          <span className="text-xs flex items-center gap-1" style={{ color: 'var(--text-body)' }}>
+                            <Stamp className="w-3 h-3" /> Apostille
+                          </span>
+                        </div>
+                        <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>+€{APOSTILLE_PRICE}/cert</span>
+                      </label>
+
+                      {apostilleCount > 0 && (
+                        <div className="flex justify-between text-xs pl-6" style={{ color: 'var(--text-body)' }}>
+                          <span>Apostille ({apostilleCount} × €{APOSTILLE_PRICE})</span>
+                          <span className="font-medium">€{apostilleTotal}</span>
+                        </div>
+                      )}
+
+                      {/* Urgent Delivery — per certificate */}
                       <label className="flex items-center justify-between cursor-pointer group" onClick={(e) => { e.preventDefault(); setUrgentDelivery(!urgentDelivery); }}>
                         <div className="flex items-center gap-2">
                           <div
@@ -550,8 +545,15 @@ export default function CertificatesPage() {
                             <Zap className="w-3 h-3" /> Urgent Delivery
                           </span>
                         </div>
-                        <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>+€{URGENT_DELIVERY_PRICE}</span>
+                        <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>+€{URGENT_DELIVERY_PRICE}/cert</span>
                       </label>
+
+                      {urgentDelivery && certCount > 1 && (
+                        <div className="flex justify-between text-xs pl-6" style={{ color: 'var(--text-body)' }}>
+                          <span>Urgent ({certCount} × €{URGENT_DELIVERY_PRICE})</span>
+                          <span className="font-medium">€{urgentTotal}</span>
+                        </div>
+                      )}
 
                       <label className="flex items-center justify-between cursor-pointer group" onClick={(e) => { e.preventDefault(); setCourierDelivery(!courierDelivery); }}>
                         <div className="flex items-center gap-2">
@@ -644,7 +646,7 @@ export default function CertificatesPage() {
                     }}
                   >
                     <FileText className="w-3.5 h-3.5" />
-                    Add Structure Report — €75
+                    Add Structure Report — €45
                   </button>
                 </div>
               </div>
