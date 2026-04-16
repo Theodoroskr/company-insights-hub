@@ -87,7 +87,7 @@ function isRegNoSearch(q: string): boolean {
 const CH_BASE = 'https://api.company-information.service.gov.uk';
 
 function chAuthHeader(): string {
-  const key = Deno.env.get('COMPANIES_HOUSE_UK_API_KEY') ?? '';
+  const key = (Deno.env.get('COMPANIES_HOUSE_UK_API_KEY') ?? '').trim();
   return 'Basic ' + btoa(`${key}:`);
 }
 
