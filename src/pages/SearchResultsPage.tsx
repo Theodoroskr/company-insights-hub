@@ -312,7 +312,7 @@ export default function SearchResultsPage() {
             {filtered.length > 0 && (
               <div className="space-y-3">
                   {filtered.map((company) => {
-                    const entityType = legalFormToEntityType(company.legal_form);
+                    const entityType = legalFormToEntityType(company.legal_form, company.reg_no);
                     const topCerts = entityType ? getPrimaryCertificatesForEntity(entityType, 3) : [];
 
                     return (
