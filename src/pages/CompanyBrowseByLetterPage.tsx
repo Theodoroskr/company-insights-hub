@@ -291,48 +291,74 @@ export default function CompanyBrowseByLetterPage() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-6">
-              <button
-                onClick={() => { setPage((p) => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                disabled={page === 1}
-                className="px-4 py-2 rounded-md text-sm font-medium border transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
-                style={{ borderColor: 'var(--bg-border)', color: 'var(--text-body)' }}
-              >
-                ← Previous
-              </button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1)
-                .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
-                .reduce<(number | 'ellipsis')[]>((acc, p, idx, arr) => {
-                  if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push('ellipsis');
-                  acc.push(p);
-                  return acc;
-                }, [])
-                .map((item, idx) =>
-                  item === 'ellipsis' ? (
-                    <span key={`e${idx}`} className="px-1 text-sm" style={{ color: 'var(--text-muted)' }}>…</span>
-                  ) : (
-                    <button
-                      key={item}
-                      onClick={() => { setPage(item as number); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                      className="w-9 h-9 rounded-md text-sm font-medium border transition-all active:scale-95"
-                      style={
-                        page === item
-                          ? { backgroundColor: 'var(--brand-primary)', color: '#fff', borderColor: 'var(--brand-primary)' }
-                          : { borderColor: 'var(--bg-border)', color: 'var(--text-body)' }
-                      }
-                    >
-                      {item}
-                    </button>
-                  )
-                )}
-              <button
-                onClick={() => { setPage((p) => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                disabled={page === totalPages}
-                className="px-4 py-2 rounded-md text-sm font-medium border transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
-                style={{ borderColor: 'var(--bg-border)', color: 'var(--text-body)' }}
-              >
-                Next →
-              </button>
+            <div className="flex flex-col items-center gap-3 mt-6">
+              <div className="flex items-center gap-1.5 flex-wrap justify-center">
+                {/* First */}
+                <button
+                  onClick={() => { setPage(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                  disabled={page === 1}
+                  className="px-3 py-2 rounded-md text-sm font-medium border transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ borderColor: 'var(--bg-border)', color: 'var(--text-body)' }}
+                >
+                  «
+                </button>
+                {/* Previous */}
+                <button
+                  onClick={() => { setPage((p) => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                  disabled={page === 1}
+                  className="px-3 py-2 rounded-md text-sm font-medium border transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ borderColor: 'var(--bg-border)', color: 'var(--text-body)' }}
+                >
+                  ‹ Prev
+                </button>
+                {/* Page numbers */}
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
+                  .reduce<(number | 'ellipsis')[]>((acc, p, idx, arr) => {
+                    if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push('ellipsis');
+                    acc.push(p);
+                    return acc;
+                  }, [])
+                  .map((item, idx) =>
+                    item === 'ellipsis' ? (
+                      <span key={`e${idx}`} className="px-1 text-sm" style={{ color: 'var(--text-muted)' }}>…</span>
+                    ) : (
+                      <button
+                        key={item}
+                        onClick={() => { setPage(item as number); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                        className="w-9 h-9 rounded-md text-sm font-medium border transition-all active:scale-95"
+                        style={
+                          page === item
+                            ? { backgroundColor: 'var(--brand-primary)', color: '#fff', borderColor: 'var(--brand-primary)' }
+                            : { borderColor: 'var(--bg-border)', color: 'var(--text-body)' }
+                        }
+                      >
+                        {item}
+                      </button>
+                    )
+                  )}
+                {/* Next */}
+                <button
+                  onClick={() => { setPage((p) => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                  disabled={page === totalPages}
+                  className="px-3 py-2 rounded-md text-sm font-medium border transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ borderColor: 'var(--bg-border)', color: 'var(--text-body)' }}
+                >
+                  Next ›
+                </button>
+                {/* Last */}
+                <button
+                  onClick={() => { setPage(totalPages); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                  disabled={page === totalPages}
+                  className="px-3 py-2 rounded-md text-sm font-medium border transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ borderColor: 'var(--bg-border)', color: 'var(--text-body)' }}
+                >
+                  »
+                </button>
+              </div>
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                Page {page} of {totalPages} · {allCompanies.length} companies total
+              </p>
             </div>
           )}
         </>)}
