@@ -243,6 +243,7 @@ export default function CompanyProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [kybModalOpen, setKybModalOpen] = useState(false);
+  const [structureModalOpen, setStructureModalOpen] = useState(false);
 
   const getCountryInfo = (code: string) => {
     return countries.find((c) => c.code.toUpperCase() === code.toUpperCase());
@@ -379,7 +380,12 @@ export default function CompanyProfilePage() {
   const certificateProducts = products.filter((p) => p.type === 'certificate');
   const monitoringProduct = products.find((p) => p.type === 'monitoring');
   const kybProduct = products.find((p) => p.type === 'kyb' || p.slug === 'cyprus-kyb-report');
+  const structureProduct = products.find((p) => p.slug?.includes('structure') || p.name?.toLowerCase().includes('structure'));
   const samplePdfUrl = products[0]?.sample_pdf_url ?? null;
+
+  const openStructureModal = () => {
+    if (structureProduct) setStructureModalOpen(true);
+  };
 
   const companySidebarShape = {
     id: company.id,
@@ -508,6 +514,14 @@ export default function CompanyProfilePage() {
                   preselectedCompany={company as unknown as import('../types/database').Company}
                 />
               )}
+              {structureProduct && (
+                <OrderReportModal
+                  isOpen={structureModalOpen}
+                  onClose={() => setStructureModalOpen(false)}
+                  preselectedProduct={structureProduct}
+                  preselectedCompany={company as unknown as import('../types/database').Company}
+                />
+              )}
             </SectionCard>
 
             {/* C — Registered Address */}
@@ -545,6 +559,8 @@ export default function CompanyProfilePage() {
                 <GatedContent
                   isUnlocked={false}
                   message="Order Structure Report to view full appointment history and addresses"
+                  ctaLabel="Order Structure Report"
+                  onCta={openStructureModal}
                 >
                   <div className="space-y-2 mt-2">
                     {[
@@ -576,6 +592,8 @@ export default function CompanyProfilePage() {
               <GatedContent
                 isUnlocked={false}
                 message="Order Structure Report to view full shareholder history, share percentages and addresses"
+                ctaLabel="Order Structure Report"
+                onCta={openStructureModal}
               >
                 <div className="space-y-2">
                   {[
@@ -607,6 +625,8 @@ export default function CompanyProfilePage() {
               <GatedContent
                 isUnlocked={false}
                 message="Order Structure Report to view all filings and download documents"
+                ctaLabel="Order Structure Report"
+                onCta={openStructureModal}
               >
                 <table className="w-full text-sm">
                   <tbody>
