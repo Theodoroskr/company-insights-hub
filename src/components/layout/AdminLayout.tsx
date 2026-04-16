@@ -58,7 +58,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   }, []);
 
   const visibleNav = NAV_ITEMS.filter(item => !item.superAdminOnly || adminRole === 'super_admin');
-  }, []);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
