@@ -395,6 +395,7 @@ export default function CompanyProfilePage() {
   const [notFound, setNotFound] = useState(false);
   const [kybModalOpen, setKybModalOpen] = useState(false);
   const [structureModalOpen, setStructureModalOpen] = useState(false);
+  const [isUnlocked, setIsUnlocked] = useState(false);
 
   const getCountryInfo = (code: string) => {
     return countries.find((c) => c.code.toUpperCase() === code.toUpperCase());
@@ -470,6 +471,39 @@ export default function CompanyProfilePage() {
 
     load();
   }, [slug, tenant]);
+
+  // Unlock the profile if the signed-in user has any completed report for this company
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkUnlock() {
+      if (!company?.id) {
+        setIsUnlocked(false);
+        return;
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        if (!cancelled) setIsUnlocked(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('order_items')
+        .select('id, fulfillment_status, orders!inner(user_id, status)')
+        .eq('company_id', company.id)
+        .eq('orders.user_id', session.user.id)
+        .in('fulfillment_status', ['completed', 'fulfilled', 'delivered']);
+
+      if (cancelled) return;
+      setIsUnlocked(!error && (data?.length ?? 0) > 0);
+    }
+
+    checkUnlock();
+    return () => {
+      cancelled = true;
+    };
+  }, [company?.id]);
 
   const handleFreshDataRequest = async () => {
     if (!company || !tenant || isRefreshing) return;
@@ -692,11 +726,11 @@ export default function CompanyProfilePage() {
             <SectionCard>
               <SectionTitle>Registered Address</SectionTitle>
               <GatedContent
-                isUnlocked={false}
+                isUnlocked={isUnlocked}
                 message="Included in all paid reports"
               >
                 <p className="text-sm" style={{ color: 'var(--text-body)' }}>
-                  123 Example Street, Nicosia 1234, Cyprus
+                  {company.registered_address ?? '—'}
                 </p>
               </GatedContent>
             </SectionCard>
@@ -722,10 +756,10 @@ export default function CompanyProfilePage() {
                     {directors.length > 0 ? (
                       <>
                         {directorEntries.map((d, i) => (
-                          <PersonRow key={`dir-${i}`} name={maskName(d.name)} role="Director" />
+                          <PersonRow key={`dir-${i}`} name={isUnlocked ? d.name : maskName(d.name)} role="Director" />
                         ))}
                         {secretaryEntries.map((d, i) => (
-                          <PersonRow key={`sec-${i}`} name={maskName(d.name)} role="Secretary" />
+                          <PersonRow key={`sec-${i}`} name={isUnlocked ? d.name : maskName(d.name)} role="Secretary" />
                         ))}
                       </>
                     ) : (
@@ -743,7 +777,7 @@ export default function CompanyProfilePage() {
                     {/* Gated history */}
                     <div className="mt-3">
                       <GatedContent
-                        isUnlocked={false}
+                        isUnlocked={isUnlocked}
                         message="Order Structure Report to view full appointment history and addresses"
                         ctaLabel="Order Structure Report"
                         onCta={openStructureModal}
@@ -779,7 +813,7 @@ export default function CompanyProfilePage() {
                 </h2>
               </div>
               <GatedContent
-                isUnlocked={false}
+                isUnlocked={isUnlocked}
                 message="Order Structure Report to view full shareholder history, share percentages and addresses"
                 ctaLabel="Order Structure Report"
                 onCta={openStructureModal}
@@ -805,7 +839,7 @@ export default function CompanyProfilePage() {
             {company.country_code?.toUpperCase() === 'GB' && company.reg_no ? (
               <UKCompanySections
                 companyNumber={company.reg_no}
-                isUnlocked={false}
+                isUnlocked={isUnlocked}
                 onOrderReport={openStructureModal}
               />
             ) : (
@@ -819,7 +853,7 @@ export default function CompanyProfilePage() {
                   </span>
                 </p>
                 <GatedContent
-                  isUnlocked={false}
+                  isUnlocked={isUnlocked}
                   message="Order Structure Report to view all filings and download documents"
                   ctaLabel="Order Structure Report"
                   onCta={openStructureModal}
