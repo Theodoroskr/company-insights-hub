@@ -397,6 +397,7 @@ export default function CompanyProfilePage() {
   const [structureModalOpen, setStructureModalOpen] = useState(false);
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [reportPsc, setReportPsc] = useState<Array<Record<string, unknown>>>([]);
+  const [reportBundle, setReportBundle] = useState<Record<string, unknown> | null>(null);
 
   const getCountryInfo = (code: string) => {
     return countries.find((c) => c.code.toUpperCase() === code.toUpperCase());
