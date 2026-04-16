@@ -284,8 +284,8 @@ export default function CertificatesPage() {
   const [apostilleSlugs, setApostilleSlugs] = useState<Set<string>>(new Set());
   const [urgentDelivery, setUrgentDelivery] = useState(false);
   const [courierDelivery, setCourierDelivery] = useState(false);
-  const [companyName, setCompanyName] = useState('');
-  const [regNo, setRegNo] = useState('');
+  const [companyName, setCompanyName] = useState(searchParams.get('companyName') ?? '');
+  const [regNo, setRegNo] = useState(searchParams.get('regNo') ?? '');
 
   const groups = certificatesByEntity[entityType];
   const allCerts = useMemo(() => getAllCertificatesForEntity(entityType), [entityType]);
