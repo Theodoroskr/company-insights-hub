@@ -11,6 +11,7 @@ import CountryFlag from '../components/ui/CountryFlag';
 import CoverageTierBadge from '../components/ui/CoverageTierBadge';
 import OrderReportModal from '../components/orders/OrderReportModal';
 import UKCompanySections from '../components/company/UKCompanySections';
+import UKRiskSummaryPanel from '../components/company/UKRiskSummaryPanel';
 import { useTenant } from '../lib/tenant.tsx';
 import { useCountries } from '../lib/countries';
 import { useCart } from '../contexts/CartContext';
@@ -698,6 +699,11 @@ export default function CompanyProfilePage() {
                 </button>
               </p>
             </div>
+
+            {/* B0 — UK Risk Summary (unlocked only) */}
+            {isUnlocked && company.country_code === 'GB' && reportBundle && (
+              <UKRiskSummaryPanel bundle={reportBundle} />
+            )}
 
             {/* B — Risk Indicator */}
             <SectionCard>
