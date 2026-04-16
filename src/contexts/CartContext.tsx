@@ -18,6 +18,24 @@ import {
 
 const VAT_RATE = 0.19;
 
+/** Compliance screening add-on price (EUR), shown alongside eligible reports */
+export const SCREENING_ADDON_PRICE_EUR = 45;
+
+/** Product slugs / types eligible for the compliance screening add-on */
+export const SCREENING_ELIGIBLE_TYPES = new Set(['kyb']);
+export const SCREENING_ELIGIBLE_SLUGS = new Set([
+  'uk-company-report',
+  'company-structure-report',
+  'structure-report',
+  'enhanced-uk-kyb-report',
+]);
+
+export function isScreeningEligible(p: { type?: string; slug?: string }): boolean {
+  if (p.type && SCREENING_ELIGIBLE_TYPES.has(p.type)) return true;
+  if (p.slug && SCREENING_ELIGIBLE_SLUGS.has(p.slug)) return true;
+  return false;
+}
+
 export interface CartItem {
   id: string; // local uuid: product.id + company.icg_code + speed
   product: Product;
@@ -32,6 +50,8 @@ export interface CartItem {
   speedCode: string;
   price: number;
   vatAmount: number;
+  /** True when customer ticked the +€45 ComplyAdvantage screening add-on */
+  screeningAddon: boolean;
 }
 
 export interface CertificateCartItem {
