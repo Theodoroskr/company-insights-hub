@@ -568,46 +568,71 @@ export default function CompanyProfilePage() {
 
             {/* D — Directors & Secretaries */}
             <SectionCard>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="font-semibold text-base" style={{ color: 'var(--text-subheading)' }}>
-                  Directors & Secretaries
-                  <RecordBadge count="2 records" />
-                </h2>
-              </div>
+              {(() => {
+                const directors: DirectorEntry[] = Array.isArray(company.directors_json) ? company.directors_json : [];
+                const directorEntries = directors.filter(d => d.role?.toLowerCase() !== 'secretary');
+                const secretaryEntries = directors.filter(d => d.role?.toLowerCase() === 'secretary');
+                const totalCount = directors.length || '2+';
 
-              {/* Free rows */}
-              <PersonRow name="DIRECTOR NAME" role="Director" />
-              <PersonRow name="SECRETARY NAME" role="Secretary" />
-              <p className="text-sm italic mt-3" style={{ color: 'var(--text-muted)' }}>
-                Director names shown. Full details including addresses, appointment dates and history
-                included in Structure Report.
-              </p>
+                return (
+                  <>
+                    <div className="flex items-center justify-between mb-3">
+                      <h2 className="font-semibold text-base" style={{ color: 'var(--text-subheading)' }}>
+                        Directors & Secretaries
+                        <RecordBadge count={`${totalCount} records`} />
+                      </h2>
+                    </div>
 
-              {/* Gated history */}
-              <div className="mt-3">
-                <GatedContent
-                  isUnlocked={false}
-                  message="Order Structure Report to view full appointment history and addresses"
-                  ctaLabel="Order Structure Report"
-                  onCta={openStructureModal}
-                >
-                  <div className="space-y-2 mt-2">
-                    {[
-                      'PREVIOUS DIRECTOR NAME · Director · Resigned 2021',
-                      'SHAREHOLDER COMPANY LTD · Shareholder · 100% shares',
-                      'NOMINEE DIRECTOR NAME · Director · Appointed 2019',
-                    ].map((row, i) => (
-                      <div
-                        key={i}
-                        className="text-sm py-2 border-b last:border-0"
-                        style={{ color: 'var(--text-body)', borderColor: 'var(--bg-border)' }}
+                    {/* Show partially masked names */}
+                    {directors.length > 0 ? (
+                      <>
+                        {directorEntries.map((d, i) => (
+                          <PersonRow key={`dir-${i}`} name={maskName(d.name)} role="Director" />
+                        ))}
+                        {secretaryEntries.map((d, i) => (
+                          <PersonRow key={`sec-${i}`} name={maskName(d.name)} role="Secretary" />
+                        ))}
+                      </>
+                    ) : (
+                      <>
+                        <PersonRow name="D████ N████" role="Director" />
+                        <PersonRow name="S████ N████" role="Secretary" />
+                      </>
+                    )}
+
+                    <p className="text-sm italic mt-3" style={{ color: 'var(--text-muted)' }}>
+                      Partial names shown. Full names, addresses, appointment dates and history
+                      included in Structure Report.
+                    </p>
+
+                    {/* Gated history */}
+                    <div className="mt-3">
+                      <GatedContent
+                        isUnlocked={false}
+                        message="Order Structure Report to view full appointment history and addresses"
+                        ctaLabel="Order Structure Report"
+                        onCta={openStructureModal}
                       >
-                        {row}
-                      </div>
-                    ))}
-                  </div>
-                </GatedContent>
-              </div>
+                        <div className="space-y-2 mt-2">
+                          {[
+                            'PREVIOUS DIRECTOR · Director · Resigned 2021',
+                            'NOMINEE DIRECTOR · Director · Appointed 2019',
+                            'FORMER SECRETARY · Secretary · Resigned 2020',
+                          ].map((row, i) => (
+                            <div
+                              key={i}
+                              className="text-sm py-2 border-b last:border-0"
+                              style={{ color: 'var(--text-body)', borderColor: 'var(--bg-border)' }}
+                            >
+                              {row}
+                            </div>
+                          ))}
+                        </div>
+                      </GatedContent>
+                    </div>
+                  </>
+                );
+              })()}
             </SectionCard>
 
             {/* E — Shareholders */}
