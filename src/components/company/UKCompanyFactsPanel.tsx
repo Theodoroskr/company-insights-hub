@@ -180,6 +180,12 @@ export default function UKCompanyFactsPanel({ bundle }: UKCompanyFactsPanelProps
           <SectionTitle icon={<Building2 className="w-4 h-4" />} count={sicCodes.length}>
             Nature of Business (SIC)
           </SectionTitle>
+          <p className="text-xs mb-3 leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+            Standard Industrial Classification (SIC) codes describe the company's principal business
+            activities as filed with Companies House. Each company may report up to four codes; they
+            are used by regulators, banks and analysts to classify the nature of the business and
+            benchmark it against its sector.
+          </p>
           <div className="space-y-2">
             {sicCodes.map((code) => {
               const desc = sicDescriptions?.[code];
