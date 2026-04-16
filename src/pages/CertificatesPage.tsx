@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
   ShieldCheck,
@@ -263,9 +263,22 @@ export default function CertificatesPage() {
   const { tenant } = useTenant();
   const { addCertificateOrder } = useCart();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const brand = tenant?.brand_name ?? 'Companies House Cyprus';
 
-  const [entityType, setEntityType] = useState<EntityType>('company');
+  const entityParam = searchParams.get('entity') as EntityType | null;
+  const [entityType, setEntityType] = useState<EntityType>(
+    entityParam && ['company', 'business_name', 'partnership'].includes(entityParam)
+      ? entityParam
+      : 'company'
+  );
+
+  // Sync entity type from URL param
+  useEffect(() => {
+    if (entityParam && ['company', 'business_name', 'partnership'].includes(entityParam)) {
+      setEntityType(entityParam);
+    }
+  }, [entityParam]);
   const [selectedSlugs, setSelectedSlugs] = useState<Set<string>>(new Set());
   const [apostilleSlugs, setApostilleSlugs] = useState<Set<string>>(new Set());
   const [urgentDelivery, setUrgentDelivery] = useState(false);

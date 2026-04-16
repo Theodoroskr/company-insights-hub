@@ -340,24 +340,39 @@ export default function Navbar() {
                         <p className="px-4 pb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
                           Certificates
                         </p>
-                        {certProducts.length === 0 ? (
-                          <p className="px-4 py-2 text-sm" style={{ color: 'var(--text-muted)' }}>No certificates available</p>
-                        ) : (
-                          certProducts.map((p) => (
-                            <Link
-                              key={p.id}
-                              to={`/report?type=${p.slug}`}
-                              onClick={() => setOpenMenu(null)}
-                              className="block px-4 py-2 text-sm transition-colors"
-                              style={{ color: 'var(--text-body)' }}
-                              onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
-                              onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                            >
-                              <span className="mr-2">📄</span>
-                              {p.name}
-                            </Link>
-                          ))
-                        )}
+                        <Link
+                          to="/certificates"
+                          onClick={() => setOpenMenu(null)}
+                          className="block px-4 py-2.5 transition-colors"
+                          style={{ color: 'var(--text-body)' }}
+                          onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
+                          onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                        >
+                          <p className="font-semibold text-sm" style={{ color: 'var(--text-heading)' }}>🏢 Company Certificates</p>
+                          <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Good Standing, Incorporation & more</p>
+                        </Link>
+                        <Link
+                          to="/certificates?entity=business_name"
+                          onClick={() => setOpenMenu(null)}
+                          className="block px-4 py-2.5 transition-colors"
+                          style={{ color: 'var(--text-body)' }}
+                          onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
+                          onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                        >
+                          <p className="font-semibold text-sm" style={{ color: 'var(--text-heading)' }}>💼 Business Name Certificates</p>
+                          <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Registration, Good Standing & more</p>
+                        </Link>
+                        <Link
+                          to="/certificates?entity=partnership"
+                          onClick={() => setOpenMenu(null)}
+                          className="block px-4 py-2.5 transition-colors"
+                          style={{ color: 'var(--text-body)' }}
+                          onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
+                          onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                        >
+                          <p className="font-semibold text-sm" style={{ color: 'var(--text-heading)' }}>👥 Partnership Certificates</p>
+                          <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Partners, Registration & more</p>
+                        </Link>
                       </div>
 
                       {/* Register column */}
@@ -733,22 +748,17 @@ function MobileMenu({
           )}
 
           {/* Certificates accordion */}
-          {certProducts.length > 0 && (
-            <MobileAccordion title={`Certificates (${certProducts.length})`}>
-              {certProducts.map((p) => (
-                <Link
-                  key={p.id}
-                  to={`/report?type=${p.slug}`}
-                  onClick={onClose}
-                  className={mobileLinkClass}
-                  style={{ color: 'var(--text-body)' }}
-                >
-                  <span className="text-sm">📄</span>
-                  <span className="truncate">{p.name}</span>
-                </Link>
-              ))}
-            </MobileAccordion>
-          )}
+          <MobileAccordion title="Certificates">
+            <Link to="/certificates" onClick={onClose} className={mobileLinkClass} style={{ color: 'var(--text-body)' }}>
+              <span className="text-sm">🏢</span> Company Certificates
+            </Link>
+            <Link to="/certificates?entity=business_name" onClick={onClose} className={mobileLinkClass} style={{ color: 'var(--text-body)' }}>
+              <span className="text-sm">💼</span> Business Name Certificates
+            </Link>
+            <Link to="/certificates?entity=partnership" onClick={onClose} className={mobileLinkClass} style={{ color: 'var(--text-body)' }}>
+              <span className="text-sm">👥</span> Partnership Certificates
+            </Link>
+          </MobileAccordion>
 
           {/* Register accordion */}
           <MobileAccordion title="Register a Company">
