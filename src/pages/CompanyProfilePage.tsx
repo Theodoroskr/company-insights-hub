@@ -551,6 +551,8 @@ export default function CompanyProfilePage() {
                 <GatedContent
                   isUnlocked={false}
                   message="Order Structure Report to view full appointment history and addresses"
+                  ctaLabel="Order Structure Report"
+                  onCta={openStructureModal}
                 >
                   <div className="space-y-2 mt-2">
                     {[
@@ -582,6 +584,8 @@ export default function CompanyProfilePage() {
               <GatedContent
                 isUnlocked={false}
                 message="Order Structure Report to view full shareholder history, share percentages and addresses"
+                ctaLabel="Order Structure Report"
+                onCta={openStructureModal}
               >
                 <div className="space-y-2">
                   {[
@@ -613,6 +617,8 @@ export default function CompanyProfilePage() {
               <GatedContent
                 isUnlocked={false}
                 message="Order Structure Report to view all filings and download documents"
+                ctaLabel="Order Structure Report"
+                onCta={openStructureModal}
               >
                 <table className="w-full text-sm">
                   <tbody>
