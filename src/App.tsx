@@ -5,8 +5,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { HelmetProvider } from "react-helmet-async";
 
-// Cart context
+// Cart + currency context
 import { CartProvider } from "./contexts/CartContext";
+import { CurrencyProvider } from "./contexts/CurrencyContext";
 
 // Route Guards
 import { ProtectedRoute, AdminRoute } from "./components/auth/RouteGuards";
@@ -62,6 +63,7 @@ const queryClient = new QueryClient();
 const App = () => (
   <HelmetProvider>
     <QueryClientProvider client={queryClient}>
+      <CurrencyProvider>
       <CartProvider>
         <TooltipProvider>
           <Toaster />
@@ -131,6 +133,7 @@ const App = () => (
           </BrowserRouter>
         </TooltipProvider>
       </CartProvider>
+      </CurrencyProvider>
     </QueryClientProvider>
   </HelmetProvider>
 );

@@ -139,8 +139,15 @@ Deno.serve(async (req) => {
       payload: { company: company.name, reg_no: num, report_id: report.id, enhanced: isEnhanced },
     }).then(() => {}, () => {});
 
-    // Auto-trigger ComplyAdvantage screening for the Enhanced tier (fire-and-forget)
-    if (isEnhanced) {
+    // Auto-trigger ComplyAdvantage screening if the Enhanced tier OR
+    // the customer added the screening add-on at checkout (fire-and-forget)
+    const { data: addonRow } = await supabase
+      .from("order_items")
+      .select("screening_addon")
+      .eq("id", item.id)
+      .maybeSingle();
+    const screeningWanted = isEnhanced || !!addonRow?.screening_addon;
+    if (screeningWanted) {
       supabase.functions.invoke("complyadvantage-screen", {
         body: { order_item_id: item.id },
       }).then(
