@@ -326,6 +326,33 @@ export default function HomePage() {
       )}
 
       {/* ═══════════════════════════════════════════════════
+          SECTION 2.6 — INTERACTIVE WORLD COVERAGE MAP (ICW only)
+      ═══════════════════════════════════════════════════ */}
+      {isGlobal && countries.length > 0 && (
+        <section className="py-20 px-4" style={{ backgroundColor: '#fff' }}>
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-10">
+              <div
+                className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-4"
+                style={{ backgroundColor: 'var(--tier-premium-bg)', color: 'var(--tier-premium)' }}
+              >
+                <MapIcon className="w-3.5 h-3.5" />
+                Live Global Coverage
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: 'var(--text-heading)' }}>
+                The world, color-coded by data depth
+              </h2>
+              <p className="text-base max-w-2xl mx-auto" style={{ color: 'var(--text-muted)' }}>
+                Hover any country for instant coverage, risk band and SLA. Click for the full country dashboard.
+              </p>
+            </div>
+            <WorldCoverageMap countries={countries} />
+          </div>
+        </section>
+      )}
+
+
+      {/* ═══════════════════════════════════════════════════
           SECTION 3 — OUR PRODUCTS & SERVICES (unified)
       ═══════════════════════════════════════════════════ */}
       <section ref={productsRef} className="py-16 px-4" style={{ backgroundColor: '#fff' }}>
