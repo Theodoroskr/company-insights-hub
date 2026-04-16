@@ -338,6 +338,7 @@ export const APOSTILLE_PRICE = 150;
 export const URGENT_DELIVERY_PRICE = 20;
 export const COURIER_DELIVERY_PRICE = 25;
 export const CERT_PRICE = 40;
+export const SERVICE_DELIVERY_FEE = 40;
 export const VAT_RATE = 0.19;
 
 /**
