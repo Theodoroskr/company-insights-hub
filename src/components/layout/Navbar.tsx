@@ -446,6 +446,13 @@ export default function Navbar() {
               </Link>
             </div>
 
+            {/* ── Navbar Search ── */}
+            {tenant?.id && (
+              <div className="hidden md:block">
+                <NavbarSearch tenantId={tenant.id} />
+              </div>
+            )}
+
             {/* ── Auth / User ── */}
             <div className="hidden md:flex items-center gap-3">
               {/* Cart icon */}
