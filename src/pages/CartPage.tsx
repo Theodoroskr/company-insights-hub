@@ -10,6 +10,7 @@ import {
   APOSTILLE_PRICE,
   URGENT_DELIVERY_PRICE,
   COURIER_DELIVERY_PRICE,
+  SERVICE_DELIVERY_FEE,
   entityTypeLabels,
 } from '../data/cyprusCertificates';
 

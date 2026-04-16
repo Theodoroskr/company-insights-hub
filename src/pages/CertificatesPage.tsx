@@ -520,6 +520,10 @@ export default function CertificatesPage() {
                         <span>Certificates ({certCount} × €{CERT_PRICE})</span>
                         <span>€{certSubtotal}</span>
                       </div>
+                      <div className="flex justify-between" style={{ color: 'var(--text-body)' }}>
+                        <span>Service & Delivery ({certCount} × €{SERVICE_DELIVERY_FEE})</span>
+                        <span>€{serviceDeliveryTotal}</span>
+                      </div>
                       {apostilleCount > 0 && (
                         <div className="flex justify-between" style={{ color: 'var(--text-body)' }}>
                           <span>Apostille ({apostilleCount} × €{APOSTILLE_PRICE})</span>
