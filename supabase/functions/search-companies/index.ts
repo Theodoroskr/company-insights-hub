@@ -241,8 +241,7 @@ serve(async (req) => {
       );
     }
 
-    // ── 3. Call API4All ─────────────────────────────────────
-    const countryCode = country || 'cy';
+    // ── 4. Call API4All ─────────────────────────────────────
     const searchType = isRegNoSearch(q) ? 'reg_no' : 'name';
     const apiUrl = `${API_BASE}/search/${encodeURIComponent(countryCode)}/${searchType}/${encodeURIComponent(q)}`;
 
