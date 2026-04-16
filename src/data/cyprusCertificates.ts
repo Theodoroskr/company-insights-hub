@@ -342,14 +342,27 @@ export const VAT_RATE = 0.19;
 
 /**
  * Map the legal_form string from API4ALL / company record to our EntityType.
+ * Falls back to inferring from the Cyprus registration number prefix
+ * (B = Business Name, C = Limited Company, P = Partnership).
  * Returns null when no mapping applies (e.g. Overseas Company).
  */
-export function legalFormToEntityType(legalForm: string | null | undefined): EntityType | null {
-  if (!legalForm) return null;
-  const lf = legalForm.trim().toLowerCase();
-  if (lf === 'business name') return 'business_name';
-  if (lf === 'partnership' || lf === 'old partnership') return 'partnership';
-  if (lf === 'limited company' || lf.includes('company')) return 'company';
+export function legalFormToEntityType(
+  legalForm: string | null | undefined,
+  regNo?: string | null,
+): EntityType | null {
+  if (legalForm) {
+    const lf = legalForm.trim().toLowerCase();
+    if (lf === 'business name') return 'business_name';
+    if (lf === 'partnership' || lf === 'old partnership') return 'partnership';
+    if (lf === 'limited company' || lf.includes('company')) return 'company';
+  }
+  // Infer from Cyprus registration number prefix
+  if (regNo) {
+    const prefix = regNo.trim().charAt(0).toUpperCase();
+    if (prefix === 'B') return 'business_name';
+    if (prefix === 'C') return 'company';
+    if (prefix === 'P') return 'partnership';
+  }
   return null;
 }
 
