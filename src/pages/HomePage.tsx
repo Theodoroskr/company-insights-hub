@@ -546,7 +546,7 @@ function ProductCard({ product, delay }: { product: Product; delay: number }) {
         </div>
         <Link
           to={
-            product.type === 'certificate' || product.type === 'cert'
+            (product.type as string) === 'certificate' || (product.type as string) === 'cert'
               ? '/certificates'
               : `/report?type=${product.slug}`
           }
@@ -555,7 +555,7 @@ function ProductCard({ product, delay }: { product: Product; delay: number }) {
           onMouseOver={(e) => (e.currentTarget.style.color = 'var(--brand-accent-hover)')}
           onMouseOut={(e) => (e.currentTarget.style.color = 'var(--brand-accent)')}
         >
-          {product.type === 'certificate' || product.type === 'cert' ? 'Order Now →' : 'Buy Report →'}
+          {(product.type as string) === 'certificate' || (product.type as string) === 'cert' ? 'Order Now →' : 'Buy Report →'}
         </Link>
       </div>
     </div>
