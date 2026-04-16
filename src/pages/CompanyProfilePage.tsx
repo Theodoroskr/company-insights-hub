@@ -395,6 +395,7 @@ export default function CompanyProfilePage() {
   const [notFound, setNotFound] = useState(false);
   const [kybModalOpen, setKybModalOpen] = useState(false);
   const [structureModalOpen, setStructureModalOpen] = useState(false);
+  const [isUnlocked, setIsUnlocked] = useState(false);
 
   const getCountryInfo = (code: string) => {
     return countries.find((c) => c.code.toUpperCase() === code.toUpperCase());
@@ -470,6 +471,39 @@ export default function CompanyProfilePage() {
 
     load();
   }, [slug, tenant]);
+
+  // Unlock the profile if the signed-in user has any completed report for this company
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkUnlock() {
+      if (!company?.id) {
+        setIsUnlocked(false);
+        return;
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        if (!cancelled) setIsUnlocked(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('order_items')
+        .select('id, fulfillment_status, orders!inner(user_id, status)')
+        .eq('company_id', company.id)
+        .eq('orders.user_id', session.user.id)
+        .in('fulfillment_status', ['completed', 'fulfilled', 'delivered']);
+
+      if (cancelled) return;
+      setIsUnlocked(!error && (data?.length ?? 0) > 0);
+    }
+
+    checkUnlock();
+    return () => {
+      cancelled = true;
+    };
+  }, [company?.id]);
 
   const handleFreshDataRequest = async () => {
     if (!company || !tenant || isRefreshing) return;
