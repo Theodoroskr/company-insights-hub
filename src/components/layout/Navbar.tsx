@@ -748,22 +748,17 @@ function MobileMenu({
           )}
 
           {/* Certificates accordion */}
-          {certProducts.length > 0 && (
-            <MobileAccordion title={`Certificates (${certProducts.length})`}>
-              {certProducts.map((p) => (
-                <Link
-                  key={p.id}
-                  to={`/report?type=${p.slug}`}
-                  onClick={onClose}
-                  className={mobileLinkClass}
-                  style={{ color: 'var(--text-body)' }}
-                >
-                  <span className="text-sm">📄</span>
-                  <span className="truncate">{p.name}</span>
-                </Link>
-              ))}
-            </MobileAccordion>
-          )}
+          <MobileAccordion title="Certificates">
+            <Link to="/certificates" onClick={onClose} className={mobileLinkClass} style={{ color: 'var(--text-body)' }}>
+              <span className="text-sm">🏢</span> Company Certificates
+            </Link>
+            <Link to="/certificates?entity=business_name" onClick={onClose} className={mobileLinkClass} style={{ color: 'var(--text-body)' }}>
+              <span className="text-sm">💼</span> Business Name Certificates
+            </Link>
+            <Link to="/certificates?entity=partnership" onClick={onClose} className={mobileLinkClass} style={{ color: 'var(--text-body)' }}>
+              <span className="text-sm">👥</span> Partnership Certificates
+            </Link>
+          </MobileAccordion>
 
           {/* Register accordion */}
           <MobileAccordion title="Register a Company">
