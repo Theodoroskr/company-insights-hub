@@ -396,6 +396,7 @@ export default function CompanyProfilePage() {
   const [kybModalOpen, setKybModalOpen] = useState(false);
   const [structureModalOpen, setStructureModalOpen] = useState(false);
   const [isUnlocked, setIsUnlocked] = useState(false);
+  const [reportPsc, setReportPsc] = useState<Array<Record<string, unknown>>>([]);
 
   const getCountryInfo = (code: string) => {
     return countries.find((c) => c.code.toUpperCase() === code.toUpperCase());
@@ -490,13 +491,28 @@ export default function CompanyProfilePage() {
 
       const { data, error } = await supabase
         .from('order_items')
-        .select('id, fulfillment_status, orders!inner(user_id, status)')
+        .select('id, fulfillment_status, orders!inner(user_id, status), generated_reports(api4all_raw_json, generated_at)')
         .eq('company_id', company.id)
         .eq('orders.user_id', session.user.id)
         .in('fulfillment_status', ['completed', 'fulfilled', 'delivered']);
 
       if (cancelled) return;
-      setIsUnlocked(!error && (data?.length ?? 0) > 0);
+      const unlocked = !error && (data?.length ?? 0) > 0;
+      setIsUnlocked(unlocked);
+
+      // Pull PSC entries from the most recent generated report bundle
+      if (unlocked && data) {
+        let latest: { generated_at?: string; api4all_raw_json?: { psc?: unknown[] } } | null = null;
+        for (const item of data as Array<{ generated_reports?: Array<{ generated_at?: string; api4all_raw_json?: { psc?: unknown[] } }> }>) {
+          for (const r of item.generated_reports ?? []) {
+            if (!latest || (r.generated_at ?? '') > (latest.generated_at ?? '')) latest = r;
+          }
+        }
+        const psc = (latest?.api4all_raw_json?.psc ?? []) as Array<Record<string, unknown>>;
+        setReportPsc(psc);
+      } else {
+        setReportPsc([]);
+      }
     }
 
     checkUnlock();
@@ -834,6 +850,75 @@ export default function CompanyProfilePage() {
                     ))}
                   </div>
                 </GatedContent>
+              </SectionCard>
+            )}
+
+            {/* E (unlocked) — Real Shareholders/PSC from generated report bundle */}
+            {isUnlocked && reportPsc.length > 0 && (
+              <SectionCard>
+                <div className="flex items-center mb-3">
+                  <h2 className="font-semibold text-base" style={{ color: 'var(--text-subheading)' }}>
+                    Shareholders &amp; Beneficial Owners
+                    <RecordBadge count={`${reportPsc.length} record${reportPsc.length === 1 ? '' : 's'}`} />
+                  </h2>
+                </div>
+                <div className="space-y-3">
+                  {reportPsc.map((p, i) => {
+                    const name = (p.name as string) ?? '—';
+                    const kind = ((p.kind as string) ?? '').replace(/-/g, ' ');
+                    const natures = (p.natures_of_control as string[] | undefined) ?? [];
+                    const ceasedOn = p.ceased_on as string | undefined;
+                    const notifiedOn = p.notified_on as string | undefined;
+                    const addr = p.address as Record<string, string> | undefined;
+                    const addressLine = addr
+                      ? [addr.premises, addr.address_line_1, addr.locality, addr.postal_code, addr.country]
+                          .filter(Boolean)
+                          .join(', ')
+                      : '';
+                    const nationality = (p.nationality as string) ?? '';
+                    const isCeased = !!ceasedOn;
+                    return (
+                      <div
+                        key={i}
+                        className="text-sm py-2 border-b last:border-0"
+                        style={{ borderColor: 'var(--bg-border)', opacity: isCeased ? 0.6 : 1 }}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-medium" style={{ color: 'var(--text-body)' }}>{name}</span>
+                          {kind && (
+                            <span
+                              className="text-xs px-2 py-0.5 rounded-full"
+                              style={{ backgroundColor: 'var(--bg-subtle)', color: 'var(--text-muted)' }}
+                            >
+                              {kind}
+                            </span>
+                          )}
+                        </div>
+                        {natures.length > 0 && (
+                          <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                            {natures.map((n) => n.replace(/-/g, ' ')).join(' · ')}
+                          </p>
+                        )}
+                        {addressLine && (
+                          <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                            Address: {addressLine}
+                          </p>
+                        )}
+                        {nationality && (
+                          <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                            Nationality: {nationality}
+                          </p>
+                        )}
+                        <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                          {isCeased ? `Ceased ${formatDate(ceasedOn)}` : `Notified ${formatDate(notifiedOn)}`}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="text-xs mt-3" style={{ color: 'var(--text-muted)' }}>
+                  Source: Companies House UK · From your purchased report
+                </p>
               </SectionCard>
             )}
 
