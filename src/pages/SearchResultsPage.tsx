@@ -404,20 +404,6 @@ export default function SearchResultsPage() {
                                 {entityTypeLabels[entityType]}
                               </span>
                             )}
-                            <button
-                              className="px-4 py-2 rounded text-sm font-medium border transition-all group-hover:bg-opacity-10"
-                              style={{
-                                borderColor: 'var(--brand-accent)',
-                                color: 'var(--brand-accent)',
-                                borderRadius: '6px',
-                              }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/company/${company.slug ?? company.id}`);
-                              }}
-                            >
-                              View Profile →
-                            </button>
                             {entityType && (
                               <button
                                 className="px-4 py-2 rounded text-sm font-medium text-white transition-all active:scale-95"
@@ -438,12 +424,8 @@ export default function SearchResultsPage() {
                                 Order Certificates
                               </button>
                             )}
-                          </div>
-
-                          {/* Mobile buttons */}
-                          <div className="flex sm:hidden items-center gap-2 mt-3">
                             <button
-                              className="flex-1 px-3 py-2 rounded text-xs font-medium border transition-all"
+                              className="px-4 py-2 rounded text-sm font-medium border transition-all group-hover:bg-opacity-10"
                               style={{
                                 borderColor: 'var(--brand-accent)',
                                 color: 'var(--brand-accent)',
@@ -454,8 +436,12 @@ export default function SearchResultsPage() {
                                 navigate(`/company/${company.slug ?? company.id}`);
                               }}
                             >
-                              View Profile
+                              View Profile →
                             </button>
+                          </div>
+
+                          {/* Mobile buttons */}
+                          <div className="flex sm:hidden items-center gap-2 mt-3">
                             {entityType && (
                               <button
                                 className="flex-1 px-3 py-2 rounded text-xs font-medium text-white transition-all active:scale-95"
@@ -476,6 +462,20 @@ export default function SearchResultsPage() {
                                 Order Certificates
                               </button>
                             )}
+                            <button
+                              className="flex-1 px-3 py-2 rounded text-xs font-medium border transition-all"
+                              style={{
+                                borderColor: 'var(--brand-accent)',
+                                color: 'var(--brand-accent)',
+                                borderRadius: '6px',
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/company/${company.slug ?? company.id}`);
+                              }}
+                            >
+                              View Profile
+                            </button>
                           </div>
                         </div>
                       </div>
