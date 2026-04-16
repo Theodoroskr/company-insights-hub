@@ -3,7 +3,8 @@
 // Mirrors all Supabase tables exactly.
 // ============================================================
 
-export type RiskBand = 'low' | 'medium' | 'high' | 'critical';
+export type RiskBand = 'low' | 'medium' | 'high' | 'very_high' | 'critical';
+export type CoverageTier = 'premium' | 'standard' | 'on_request';
 
 export type OrderStatus =
   | 'pending'
@@ -52,12 +53,23 @@ export interface Tenant {
 
 export interface Country {
   code: string;
+  iso2: string | null;
   name: string;
   flag_emoji: string | null;
   region: string | null;
+  subregion: string | null;
   is_featured: boolean;
   api4all_supported: boolean;
   display_order: number;
+  risk_band: RiskBand | null;
+  risk_score: number | null;
+  political_risk: RiskBand | null;
+  economic_risk: RiskBand | null;
+  sanctions_risk: RiskBand | null;
+  aml_risk: RiskBand | null;
+  coverage_tier: CoverageTier | null;
+  business_climate_score: number | null;
+  currency_code: string | null;
 }
 
 // ── Profile ──────────────────────────────────────────────────

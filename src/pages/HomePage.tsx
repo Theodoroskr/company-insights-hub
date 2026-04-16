@@ -6,6 +6,8 @@ import PageLayout from '../components/layout/PageLayout';
 import SearchWidget from '../components/search/SearchWidget';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import PriceDisplay from '../components/ui/PriceDisplay';
+import WorldCoverageMap from '../components/global/WorldCoverageMap';
+import LiveActivityTicker from '../components/global/LiveActivityTicker';
 import { useTenant } from '../lib/tenant';
 import { useCountries } from '../lib/countries';
 import { supabase } from '../lib/supabase';
@@ -163,9 +165,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════════
-          SECTION 2 — TRUST SIGNALS & SOCIAL PROOF
-      ═══════════════════════════════════════════════════ */}
+      {/* Live activity ticker — ICW only */}
+      {isGlobal && countries.length > 0 && <LiveActivityTicker countries={countries} />}
       <section
         ref={trustRef}
         className="py-10 px-4"
@@ -244,17 +245,13 @@ export default function HomePage() {
           className="py-20 px-4 relative overflow-hidden"
           style={{ backgroundColor: 'var(--bg-subtle)' }}
         >
+          {/* Decorative dot grid backdrop */}
           <div
             aria-hidden
             className="absolute inset-0 pointer-events-none"
             style={{
-              backgroundImage: `url("data:image/svg+xml;utf8,${encodeURIComponent(
-                `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 500'><defs><pattern id='d' x='0' y='0' width='8' height='8' patternUnits='userSpaceOnUse'><circle cx='2' cy='2' r='1.2' fill='%23334155' opacity='0.4'/></pattern><mask id='m'><rect width='1000' height='500' fill='black'/><path fill='white' d='M150,140 Q180,100 230,110 T320,130 L340,170 Q330,200 290,210 T200,220 Q160,210 140,180 Z M380,90 Q450,70 520,90 T640,110 Q680,130 670,180 T580,220 Q500,230 430,200 T370,150 Z M700,120 Q780,110 850,140 T910,200 Q900,240 830,250 T720,230 Q680,200 690,160 Z M250,260 Q300,250 340,280 T380,360 Q360,420 300,430 T230,400 Q210,350 230,300 Z M460,260 Q540,260 600,290 T640,370 Q620,420 550,430 T470,410 Q440,370 450,310 Z M740,290 Q800,280 840,310 T850,380 Q820,420 770,420 T720,380 Q710,330 730,300 Z'/></mask></defs><rect width='1000' height='500' fill='url(%23d)' mask='url(%23m)'/></svg>`
-              )}")`,
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'center',
-              backgroundSize: 'min(1200px, 110%) auto',
-              opacity: 0.5,
+              backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(15,36,68,0.08) 1px, transparent 0)',
+              backgroundSize: '24px 24px',
             }}
           />
 
@@ -327,6 +324,33 @@ export default function HomePage() {
           </div>
         </section>
       )}
+
+      {/* ═══════════════════════════════════════════════════
+          SECTION 2.6 — INTERACTIVE WORLD COVERAGE MAP (ICW only)
+      ═══════════════════════════════════════════════════ */}
+      {isGlobal && countries.length > 0 && (
+        <section className="py-20 px-4" style={{ backgroundColor: '#fff' }}>
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-10">
+              <div
+                className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-4"
+                style={{ backgroundColor: 'var(--tier-premium-bg)', color: 'var(--tier-premium)' }}
+              >
+                <MapIcon className="w-3.5 h-3.5" />
+                Live Global Coverage
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: 'var(--text-heading)' }}>
+                The world, color-coded by data depth
+              </h2>
+              <p className="text-base max-w-2xl mx-auto" style={{ color: 'var(--text-muted)' }}>
+                Hover any country for instant coverage, risk band and SLA. Click for the full country dashboard.
+              </p>
+            </div>
+            <WorldCoverageMap countries={countries} />
+          </div>
+        </section>
+      )}
+
 
       {/* ═══════════════════════════════════════════════════
           SECTION 3 — OUR PRODUCTS & SERVICES (unified)

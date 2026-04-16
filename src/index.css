@@ -76,11 +76,24 @@
     --status-dissolved:   #DC2626;
     --status-inactive:    #6B7280;
 
-    /* ── Risk ── */
+    /* ── Risk traffic light ── */
     --risk-low:           #16A34A;
     --risk-medium:        #D97706;
     --risk-high:          #DC2626;
+    --risk-very-high:     #991B1B;
     --risk-critical:      #7F1D1D;
+    --risk-low-bg:        #DCFCE7;
+    --risk-medium-bg:     #FEF3C7;
+    --risk-high-bg:       #FEE2E2;
+    --risk-very-high-bg:  #FECACA;
+
+    /* ── Coverage tier ── */
+    --tier-premium:       #B8860B;
+    --tier-premium-bg:    #FEF3C7;
+    --tier-standard:      #2563EB;
+    --tier-standard-bg:   #DBEAFE;
+    --tier-onrequest:     #64748B;
+    --tier-onrequest-bg:  #F1F5F9;
   }
 
   .dark {
