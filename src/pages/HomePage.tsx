@@ -224,7 +224,7 @@ export default function HomePage() {
       </section>
 
       {/* ═══════════════════════════════════════════════════
-          SECTION 3 — PRODUCTS
+          SECTION 3 — OUR PRODUCTS & SERVICES (unified)
       ═══════════════════════════════════════════════════ */}
       <section ref={productsRef} className="py-16 px-4" style={{ backgroundColor: '#fff' }}>
         <div className="max-w-6xl mx-auto">
@@ -233,15 +233,20 @@ export default function HomePage() {
               className="text-3xl font-bold mb-3"
               style={{ color: 'var(--text-heading)' }}
             >
-              Our Products
+              Our Products & Services
             </h2>
             <p className="text-base" style={{ color: 'var(--text-muted)' }}>
-              Professional company intelligence delivered digitally
+              Company intelligence reports, official certificates and professional services
             </p>
           </div>
 
+          {/* ── Reports sub-section ── */}
+          <h3 className="text-xl font-bold mb-5 flex items-center gap-2" style={{ color: 'var(--text-heading)' }}>
+            <span>📊</span> Company Reports
+          </h3>
+
           {productsLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-14">
               {[1, 2, 3, 4].map((i) => (
                 <div
                   key={i}
@@ -253,102 +258,91 @@ export default function HomePage() {
               ))}
             </div>
           ) : products.length === 0 ? (
-            <div className="text-center py-16">
+            <div className="text-center py-10 mb-14">
               <p style={{ color: 'var(--text-muted)' }}>
                 Products are loading — please connect Supabase and seed data.
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-14">
               {products.map((product, i) => (
                 <ProductCard key={product.id} product={product} delay={i * 80} />
               ))}
             </div>
           )}
+
+          {/* ── Certificates sub-section ── */}
+          {!isGlobal && (
+            <>
+              <h3 className="text-xl font-bold mb-5 flex items-center gap-2" style={{ color: 'var(--text-heading)' }}>
+                <span>📄</span> Official Certificates
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                {[
+                  {
+                    icon: '🏢',
+                    title: 'Company Certificates',
+                    desc: 'Good Standing, Incorporation, Directors & Secretary, Shareholders, and 12+ more for Cyprus limited companies.',
+                    count: '17 certificates',
+                    link: '/certificates?entity=company',
+                  },
+                  {
+                    icon: '💼',
+                    title: 'Business Name Certificates',
+                    desc: 'Registration, Good Standing, Address, Owner/Proprietor, and more for registered business names.',
+                    count: '6 certificates',
+                    link: '/certificates?entity=business_name',
+                  },
+                  {
+                    icon: '👥',
+                    title: 'Partnership Certificates',
+                    desc: 'Registration, Good Standing, Partners, Address, and more for registered partnerships.',
+                    count: '6 certificates',
+                    link: '/certificates?entity=partnership',
+                  },
+                ].map(({ icon, title, desc, count, link }) => (
+                  <Link
+                    key={title}
+                    to={link}
+                    className="rounded-xl border p-6 transition-all hover:shadow-md group"
+                    style={{
+                      backgroundColor: 'var(--bg-subtle)',
+                      borderColor: 'var(--bg-border)',
+                    }}
+                  >
+                    <div className="text-3xl mb-3">{icon}</div>
+                    <h4 className="text-lg font-bold mb-2" style={{ color: 'var(--text-heading)' }}>
+                      {title}
+                    </h4>
+                    <p className="text-sm mb-4" style={{ color: 'var(--text-body)' }}>
+                      {desc}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <span
+                        className="text-xs font-medium px-2.5 py-1 rounded-full"
+                        style={{ backgroundColor: '#fff', color: 'var(--text-muted)', border: '1px solid var(--bg-border)' }}
+                      >
+                        {count}
+                      </span>
+                      <span
+                        className="text-sm font-semibold group-hover:gap-2 flex items-center gap-1 transition-all"
+                        style={{ color: 'var(--brand-accent)' }}
+                      >
+                        View & Order →
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+              <div className="text-center mb-4">
+                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                  All certificates: <strong>€40 + €40 service & delivery + VAT</strong> · Apostille available · Next working day delivery
+                </p>
+              </div>
+            </>
+          )}
         </div>
       </section>
-
-      {/* ═══════════════════════════════════════════════════
-          SECTION 3b — CERTIFICATES
-      ═══════════════════════════════════════════════════ */}
-      {!isGlobal && (
-        <section className="py-16 px-4" style={{ backgroundColor: 'var(--bg-subtle)' }}>
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-10">
-              <h2 className="text-3xl font-bold mb-3" style={{ color: 'var(--text-heading)' }}>
-                Official Cyprus Certificates
-              </h2>
-              <p className="text-base max-w-2xl mx-auto" style={{ color: 'var(--text-muted)' }}>
-                Order certified documents from the Cyprus Registrar. All certificates €40 each, delivered next working day.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[
-                {
-                  icon: '🏢',
-                  title: 'Company Certificates',
-                  desc: 'Good Standing, Incorporation, Directors & Secretary, Shareholders, and 12+ more certificates for Cyprus limited companies.',
-                  count: '17 certificates',
-                  link: '/certificates?entity=company',
-                },
-                {
-                  icon: '💼',
-                  title: 'Business Name Certificates',
-                  desc: 'Registration, Good Standing, Address, Owner/Proprietor, and more for registered business names.',
-                  count: '6 certificates',
-                  link: '/certificates?entity=business_name',
-                },
-                {
-                  icon: '👥',
-                  title: 'Partnership Certificates',
-                  desc: 'Registration, Good Standing, Partners, Address, and more for registered partnerships.',
-                  count: '6 certificates',
-                  link: '/certificates?entity=partnership',
-                },
-              ].map(({ icon, title, desc, count, link }) => (
-                <Link
-                  key={title}
-                  to={link}
-                  className="rounded-xl border p-6 transition-all hover:shadow-md group"
-                  style={{
-                    backgroundColor: '#fff',
-                    borderColor: 'var(--bg-border)',
-                  }}
-                >
-                  <div className="text-3xl mb-3">{icon}</div>
-                  <h3 className="text-lg font-bold mb-2" style={{ color: 'var(--text-heading)' }}>
-                    {title}
-                  </h3>
-                  <p className="text-sm mb-4" style={{ color: 'var(--text-body)' }}>
-                    {desc}
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <span
-                      className="text-xs font-medium px-2.5 py-1 rounded-full"
-                      style={{ backgroundColor: 'var(--bg-subtle)', color: 'var(--text-muted)' }}
-                    >
-                      {count}
-                    </span>
-                    <span
-                      className="text-sm font-semibold group-hover:gap-2 flex items-center gap-1 transition-all"
-                      style={{ color: 'var(--brand-accent)' }}
-                    >
-                      View & Order →
-                    </span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-
-            <div className="text-center mt-8">
-              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-                All certificates: <strong>€40 + VAT</strong> · Apostille service available · Sourced directly from the Department of Registrar
-              </p>
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* ═══════════════════════════════════════════════════
           SECTION 4 — HOW IT WORKS
