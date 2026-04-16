@@ -7,6 +7,13 @@ import React, {
   ReactNode,
 } from 'react';
 import type { Product, Company, ProductSpeed } from '../types/database';
+import type { EntityType } from '../data/cyprusCertificates';
+import {
+  APOSTILLE_PRICE,
+  URGENT_DELIVERY_PRICE,
+  COURIER_DELIVERY_PRICE,
+  VAT_RATE as CERT_VAT_RATE,
+} from '../data/cyprusCertificates';
 
 const VAT_RATE = 0.19;
 
@@ -26,8 +33,26 @@ export interface CartItem {
   vatAmount: number;
 }
 
+export interface CertificateCartItem {
+  slug: string;
+  name: string;
+  price: number;
+  apostille: boolean;
+}
+
+export interface CertificateOrder {
+  id: string;
+  entityType: EntityType;
+  companyName: string;
+  regNo: string | null;
+  certificates: CertificateCartItem[];
+  urgentDelivery: boolean;
+  courierDelivery: boolean;
+}
+
 interface CartContextValue {
   items: CartItem[];
+  certificateOrders: CertificateOrder[];
   addItem: (
     product: Product,
     company: CartItem['company'],
@@ -35,6 +60,8 @@ interface CartContextValue {
   ) => void;
   removeItem: (id: string) => void;
   updateSpeed: (id: string, speedCode: string) => void;
+  addCertificateOrder: (order: Omit<CertificateOrder, 'id'>) => void;
+  removeCertificateOrder: (id: string) => void;
   clearCart: () => void;
   totalItems: number;
   subtotal: number;
@@ -44,9 +71,12 @@ interface CartContextValue {
 
 const CartContext = createContext<CartContextValue>({
   items: [],
+  certificateOrders: [],
   addItem: () => {},
   removeItem: () => {},
   updateSpeed: () => {},
+  addCertificateOrder: () => {},
+  removeCertificateOrder: () => {},
   clearCart: () => {},
   totalItems: 0,
   subtotal: 0,
@@ -55,6 +85,7 @@ const CartContext = createContext<CartContextValue>({
 });
 
 const STORAGE_KEY = 'ch_cart_v1';
+const CERT_STORAGE_KEY = 'ch_cert_cart_v1';
 
 function calcPrice(product: Product, speedCode: string): { price: number; vatAmount: number } {
   const speeds: ProductSpeed[] = Array.isArray(product.available_speeds)
@@ -70,6 +101,16 @@ function makeId(productId: string, icgCode: string, speedCode: string) {
   return `${productId}__${icgCode}__${speedCode}`;
 }
 
+function calcCertOrderTotals(order: CertificateOrder) {
+  const certTotal = order.certificates.reduce((s, c) => s + c.price, 0);
+  const apostilleTotal = order.certificates.filter((c) => c.apostille).length * APOSTILLE_PRICE;
+  const urgentTotal = order.urgentDelivery ? URGENT_DELIVERY_PRICE : 0;
+  const courierTotal = order.courierDelivery ? COURIER_DELIVERY_PRICE : 0;
+  const sub = certTotal + apostilleTotal + urgentTotal + courierTotal;
+  const vat = parseFloat((sub * CERT_VAT_RATE).toFixed(2));
+  return { subtotal: sub, vat };
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>(() => {
     try {
@@ -80,11 +121,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   });
 
-  useEffect(() => {
+  const [certificateOrders, setCertificateOrders] = useState<CertificateOrder[]>(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-    } catch {}
+      const raw = localStorage.getItem(CERT_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); } catch {}
   }, [items]);
+
+  useEffect(() => {
+    try { localStorage.setItem(CERT_STORAGE_KEY, JSON.stringify(certificateOrders)); } catch {}
+  }, [certificateOrders]);
 
   const addItem = useCallback(
     (product: Product, company: CartItem['company'], speedCode?: string) => {
@@ -96,7 +148,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const { price, vatAmount } = calcPrice(product, resolvedSpeed);
 
       setItems((prev) => {
-        // Replace if same combo already exists
         if (prev.find((i) => i.id === id)) return prev;
         return [...prev, { id, product, company, speedCode: resolvedSpeed, price, vatAmount }];
       });
@@ -119,21 +170,52 @@ export function CartProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
-  const clearCart = useCallback(() => setItems([]), []);
+  const addCertificateOrder = useCallback((order: Omit<CertificateOrder, 'id'>) => {
+    const id = `cert_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    setCertificateOrders((prev) => [...prev, { ...order, id }]);
+  }, []);
 
-  const subtotal = items.reduce((s, i) => s + i.price, 0);
-  const totalVat = items.reduce((s, i) => s + i.vatAmount, 0);
+  const removeCertificateOrder = useCallback((id: string) => {
+    setCertificateOrders((prev) => prev.filter((o) => o.id !== id));
+  }, []);
+
+  const clearCart = useCallback(() => {
+    setItems([]);
+    setCertificateOrders([]);
+  }, []);
+
+  // Combined totals
+  const reportSubtotal = items.reduce((s, i) => s + i.price, 0);
+  const reportVat = items.reduce((s, i) => s + i.vatAmount, 0);
+
+  const certTotals = certificateOrders.reduce(
+    (acc, order) => {
+      const t = calcCertOrderTotals(order);
+      return { subtotal: acc.subtotal + t.subtotal, vat: acc.vat + t.vat };
+    },
+    { subtotal: 0, vat: 0 }
+  );
+
+  const subtotal = reportSubtotal + certTotals.subtotal;
+  const totalVat = reportVat + certTotals.vat;
   const grandTotal = subtotal + totalVat;
+
+  const totalItems =
+    items.length +
+    certificateOrders.reduce((s, o) => s + o.certificates.length, 0);
 
   return (
     <CartContext.Provider
       value={{
         items,
+        certificateOrders,
         addItem,
         removeItem,
         updateSpeed,
+        addCertificateOrder,
+        removeCertificateOrder,
         clearCart,
-        totalItems: items.length,
+        totalItems,
         subtotal,
         totalVat,
         grandTotal,
