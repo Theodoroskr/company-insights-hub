@@ -100,7 +100,43 @@ Deno.serve(async (req) => {
         .update({ status: 'paid', updated_at: new Date().toISOString() })
         .eq('id', order.id);
 
-      // Trigger API4All order creation
+      // ── Instant UK Company Report fulfilment ────────────────
+      // Pick up any items in this order whose product is the UK
+      // Companies House product (no API4ALL involvement) and fulfil
+      // them straight away.
+      const { data: ukItems } = await supabase
+        .from('order_items')
+        .select('id, products:product_id(slug)')
+        .eq('order_id', order.id);
+
+      const ukReportItemIds = (ukItems ?? [])
+        .filter((it) => (it.products as { slug?: string } | null)?.slug === 'uk-company-report')
+        .map((it) => it.id);
+
+      if (ukReportItemIds.length > 0) {
+        const fulfillUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/fulfill-uk-report`;
+        await Promise.all(
+          ukReportItemIds.map(async (id) => {
+            try {
+              const r = await fetch(fulfillUrl, {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ order_item_id: id }),
+              });
+              if (!r.ok) {
+                console.error(`fulfill-uk-report failed for ${id}:`, await r.text());
+              }
+            } catch (e) {
+              console.error(`fulfill-uk-report exception for ${id}:`, e);
+            }
+          }),
+        );
+      }
+
+      // Trigger API4All order creation (skips items without api4all_product_code)
       const createOrderUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/create-api4all-order`;
       const createRes = await fetch(createOrderUrl, {
         method: 'POST',
