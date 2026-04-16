@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState as useStateReact } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { Shield, Database, Zap, Globe, Lock, FileCheck, BadgeCheck } from 'lucide-react';
+import { Shield, Database, Zap, Globe, Lock, FileCheck, BadgeCheck, Briefcase, FileText, Map as MapIcon } from 'lucide-react';
 import PageLayout from '../components/layout/PageLayout';
 import SearchWidget from '../components/search/SearchWidget';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
@@ -118,12 +118,25 @@ export default function HomePage() {
             </div>
           ) : (
             <>
+              {isGlobal && (
+                <div
+                  className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-6 text-xs font-semibold uppercase tracking-wider"
+                  style={{
+                    backgroundColor: 'rgba(255,255,255,0.1)',
+                    color: 'rgba(255,255,255,0.9)',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                  }}
+                >
+                  <Globe className="w-3.5 h-3.5" />
+                  200+ Countries · Instant · Pay-Per-Report
+                </div>
+              )}
               <h1
-                className="text-4xl md:text-5xl font-extrabold mb-4 leading-tight"
-                style={{ color: '#ffffff', lineHeight: 1.1 }}
+                className="text-4xl md:text-6xl font-extrabold mb-4 leading-tight"
+                style={{ color: '#ffffff', lineHeight: 1.05 }}
               >
                 {isGlobal
-                  ? 'Search Companies Worldwide'
+                  ? 'Global company intelligence, on demand.'
                   : `Search and Verify ${countryName} Companies`}
               </h1>
               <p
@@ -131,7 +144,7 @@ export default function HomePage() {
                 style={{ color: 'rgba(255,255,255,0.8)' }}
               >
                 {isGlobal
-                  ? 'Access company intelligence and KYB reports for 200+ countries via the Infocredit global network'
+                  ? 'Instant KYB and company reports across 200+ jurisdictions. No subscription, no sales call — pay only for the report you need.'
                   : 'Instant access to official registry data, structure reports, KYB intelligence and official certificates'}
               </p>
             </>
