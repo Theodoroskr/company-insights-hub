@@ -37,6 +37,7 @@ export default function OrderReportModal({
     preselectedProduct ?? null
   );
   const [comment, setComment] = useState('');
+  const [justAdded, setJustAdded] = useState(false);
   const [companyQuery, setCompanyQuery] = useState('');
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
