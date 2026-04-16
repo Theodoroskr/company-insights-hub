@@ -18,7 +18,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/lib/tenant';
 
-const NAV_ITEMS = [
+const NAV_ITEMS: { label: string; icon: any; to: string; superAdminOnly?: boolean }[] = [
   { label: 'Dashboard',     icon: LayoutDashboard, to: '/admin' },
   { label: 'Orders',        icon: ClipboardList,    to: '/admin/orders' },
   { label: 'Fulfillment',   icon: Settings2,        to: '/admin/fulfillment' },
@@ -29,7 +29,7 @@ const NAV_ITEMS = [
   { label: 'Audit Logs',    icon: ScrollText,       to: '/admin/audit-logs' },
   { label: 'Settings',      icon: Settings,         to: '/admin/settings' },
   { label: 'Tenants',       icon: Globe,            to: '/admin/tenants', superAdminOnly: true },
-] as const;
+];
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -40,6 +40,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const navigate = useNavigate();
   const { tenant } = useTenant();
   const [adminName, setAdminName] = useState('');
+  const [adminRole, setAdminRole] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
@@ -47,12 +48,16 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       if (data.session?.user?.id) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('full_name, email')
+          .select('full_name, email, role')
           .eq('id', data.session.user.id)
           .maybeSingle();
         setAdminName(profile?.full_name || profile?.email || 'Admin');
+        setAdminRole(profile?.role || '');
       }
     });
+  }, []);
+
+  const visibleNav = NAV_ITEMS.filter(item => !item.superAdminOnly || adminRole === 'super_admin');
   }, []);
 
   const handleSignOut = async () => {
