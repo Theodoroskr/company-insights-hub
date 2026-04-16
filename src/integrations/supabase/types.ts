@@ -204,31 +204,64 @@ export type Database = {
       }
       countries: {
         Row: {
+          aml_risk: string | null
           api4all_supported: boolean | null
+          business_climate_score: number | null
           code: string
+          coverage_tier: string | null
+          currency_code: string | null
           display_order: number | null
+          economic_risk: string | null
           flag_emoji: string | null
           is_featured: boolean | null
+          iso2: string | null
           name: string
+          political_risk: string | null
           region: string | null
+          risk_band: string | null
+          risk_score: number | null
+          sanctions_risk: string | null
+          subregion: string | null
         }
         Insert: {
+          aml_risk?: string | null
           api4all_supported?: boolean | null
+          business_climate_score?: number | null
           code: string
+          coverage_tier?: string | null
+          currency_code?: string | null
           display_order?: number | null
+          economic_risk?: string | null
           flag_emoji?: string | null
           is_featured?: boolean | null
+          iso2?: string | null
           name: string
+          political_risk?: string | null
           region?: string | null
+          risk_band?: string | null
+          risk_score?: number | null
+          sanctions_risk?: string | null
+          subregion?: string | null
         }
         Update: {
+          aml_risk?: string | null
           api4all_supported?: boolean | null
+          business_climate_score?: number | null
           code?: string
+          coverage_tier?: string | null
+          currency_code?: string | null
           display_order?: number | null
+          economic_risk?: string | null
           flag_emoji?: string | null
           is_featured?: boolean | null
+          iso2?: string | null
           name?: string
+          political_risk?: string | null
           region?: string | null
+          risk_band?: string | null
+          risk_score?: number | null
+          sanctions_risk?: string | null
+          subregion?: string | null
         }
         Relationships: []
       }
