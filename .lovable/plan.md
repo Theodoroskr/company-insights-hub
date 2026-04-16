@@ -1,79 +1,52 @@
 
-## Plan: Correct Search Route + Layout + OrderReportModal
 
-### Summary of changes
-1. **`App.tsx`** — add `/company/search` route pointing to `SearchResultsPage`, keep `/search` as a redirect to `/company/search` for backwards compatibility
-2. **`SearchResultsPage.tsx`** — rebuild the left sidebar to exactly match the spec (radio buttons for Legal Type, "Dicover" international CTA, RESET link) and update the right column title to "Companies" with the correct empty state
-3. **`OrderReportModal.tsx`** — create the modal; the search button navigates to `/company/search?q={query}` instead of searching inline
+## Assessment: Using Lead & Contact Hub as Super Admin for Tenants
 
----
+### The Short Answer: No — they are separate projects with separate backends
 
-### 1. App.tsx changes (lines 62 area)
+The [Lead & Contact Hub](/projects/d05456da-e86d-4685-b971-61ddeb125387) and this Infocredit project run on **completely independent backends**. They have different databases, different auth systems, and different user tables. The Hub has no knowledge of your tenants, orders, or products.
 
-- Change `/search` route to `/company/search`  
-- Add `/search` as `<Navigate to="/company/search" replace />` for backwards compat
-- Keep `/company/:slug` — note: the new `/company/search` route must come BEFORE `/company/:slug` to avoid React Router treating "search" as a slug
+### What the Hub Does Today
 
-```
-<Route path="/company/search" element={<SearchResultsPage />} />
-<Route path="/company/:slug" element={<CompanyProfilePage />} />
-```
+- Manages **leads** and **contacts** received via webhook from any website
+- Has a **websites** concept (each website gets an API key) — this is similar to tenants but not the same thing
+- Dashboard with stats filtered by website
+- Settings page to manage websites and API keys
 
----
+### Why It Won't Work Directly
 
-### 2. SearchResultsPage.tsx — sidebar rebuild
+| Requirement | Hub has it? |
+|---|---|
+| Access to `tenants` table | No — different database |
+| Access to `orders`, `products` | No |
+| Shared login (SSO) | No — separate auth |
+| Tenant branding management | No |
+| Revenue/order KPIs per tenant | No |
 
-The current sidebar has: search input + Search button, Status radio (all/active/dissolved), Legal Type checkboxes, Country checkboxes (ICW only).
+### Two Realistic Paths Forward
 
-The spec wants:
-- Section "Search Company": input pre-filled with `q` param + dark square search button
-- Section "Filters": radio group for Legal Type (Business Name, Limited Company, Partnership, Old Partnership, Overseas Company) — **fixed options**, not dynamic from results
-- "Looking for similar companies internationally?" card with "Dicover ↗" button (exact spelling) → `https://www.infocreditworld.com/#{q}/blank&c`
-- "RESET" link in teal, clears filters and search
+**Path A — Build Super Admin here (recommended, fastest)**
+Add `/admin/tenants` to this project. You already have the `super_admin` role, the `tenants` table, and all the order/product data. This is 1-2 hours of work.
 
-Right column: title changes from `"{N} companies found"` to just `"Companies"` (H2), empty state uses `<EmptyState message="No Companies yet" />`.
+**Path B — Make the Hub the central admin (complex, slower)**
+This requires:
+1. Pointing the Hub at this project's backend (same database URL + anon key)
+2. Migrating the Hub's `leads`/`contacts`/`websites` tables into this database
+3. Adding tenant management pages to the Hub
+4. Merging auth so one login works for both
 
-**Key change**: Legal Type filter switches from dynamic checkboxes (derived from results) to **fixed radio buttons** with the 5 preset options. Selected radio filters `filtered` array by `company.legal_form`.
+This is a multi-day effort and risks breaking both projects.
 
-State changes:
-- Remove `selectedLegalTypes`, `legalTypes` (dynamic arrays)
-- Add `legalTypeFilter: string | null` — null = all
-- Keep `statusFilter` (but remove it from sidebar UI per spec — spec shows only Legal Type radios)
-- Keep `selectedCountries` for ICW
+### Recommendation
 
----
+Build the Super Admin Tenants page **inside this project** now. Later, connect the Hub via webhook (it already supports this) so leads from all tenants flow into the Hub automatically. That gives you:
 
-### 3. OrderReportModal.tsx — create new
+- **This project** = admin for tenants, orders, products, fulfillment
+- **Hub** = CRM for leads and contacts from all tenants
 
-Props: `isOpen`, `onClose`, `preselectedProduct?: Product`, `preselectedCompany?: Company`
-
-**Company search behavior per spec**: "The modal search button navigates to `/company/search?q={modalQuery}` when clicked — it does NOT search inline in the modal."
-
-So the modal has:
-- A text input for company name search
-- A search button (dark square, search icon) that `navigate('/company/search?q=${query}')`
-- If `preselectedCompany` is passed: show the company chip (teal bg, white text, name + reg_no, X to clear)
-- No live dropdown results in modal
-
-Products dropdown: load from Supabase `products WHERE tenant_id = tenant.id AND is_active = true ORDER BY display_order`
-
-Add to Cart logic:
-```ts
-cartContext.addItem(selectedProduct, selectedCompany, selectedProduct.available_speeds?.[0]?.code ?? 'Normal')
-onClose()
-navigate('/cart')
-```
-
-Footer: Total price left, "Add to Cart" (disabled if no company) + "Cancel" right.
+Each project does what it's best at, connected via API keys.
 
 ---
 
-### Files to edit/create
+Want me to proceed with building the `/admin/tenants` Super Admin page in this project?
 
-```
-EDIT    src/App.tsx                          (route fix: /company/search, redirect /search)
-EDIT    src/pages/SearchResultsPage.tsx      (sidebar rebuild, right column title + empty state)
-CREATE  src/components/orders/OrderReportModal.tsx
-```
-
-No DB changes. No migration needed.
