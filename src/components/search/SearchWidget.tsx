@@ -355,29 +355,49 @@ export default function SearchWidget({
               className="absolute left-0 right-0 top-full mt-1 bg-white rounded-lg shadow-xl border z-50 overflow-hidden"
               style={{ borderColor: 'var(--bg-border)' }}
             >
-              {results.map((company) => (
-                <button
-                  key={company.id}
-                  type="button"
-                  onClick={() => handleResultClick(company)}
-                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors text-left border-b last:border-b-0"
-                  style={{ borderColor: 'var(--bg-border)' }}
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-heading)' }}>
-                      {company.name}
-                    </p>
-                    {company.reg_no && (
-                      <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>
-                        Reg: {company.reg_no}
+              {results.map((company) => {
+                const cc = (company.country_code ?? '').toUpperCase();
+                const ccMeta = countries.find((x) => x.code === cc);
+                return (
+                  <button
+                    key={company.id}
+                    type="button"
+                    onClick={() => handleResultClick(company)}
+                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors text-left border-b last:border-b-0"
+                    style={{ borderColor: 'var(--bg-border)' }}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-heading)' }}>
+                        {company.name}
                       </p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {cc && (
+                          <span
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border"
+                            style={{
+                              borderColor: 'var(--bg-border)',
+                              backgroundColor: 'var(--bg-subtle)',
+                              color: 'var(--text-body)',
+                            }}
+                            title={ccMeta?.name ?? cc}
+                          >
+                            <span>{ccMeta?.flag_emoji ?? '🌐'}</span>
+                            <span>{cc}</span>
+                          </span>
+                        )}
+                        {company.reg_no && (
+                          <span className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>
+                            Reg: {company.reg_no}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {company.status && (
+                      <StatusBadge status={company.status} className="ml-3 flex-shrink-0" />
                     )}
-                  </div>
-                  {company.status && (
-                    <StatusBadge status={company.status} className="ml-3 flex-shrink-0" />
-                  )}
-                </button>
-              ))}
+                  </button>
+                );
+              })}
               <button
                 type="button"
                 onClick={handleSearch}
