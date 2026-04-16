@@ -152,6 +152,28 @@ export default function CheckoutPaymentPage() {
         console.warn('API4All submission failed (will retry):', fulfillmentErr);
       }
 
+      // Instant fulfillment for UK Company Report items (no Stripe/API4All needed)
+      try {
+        const { data: ukItems } = await supabase
+          .from('order_items')
+          .select('id, products:product_id(slug)')
+          .eq('order_id', orderData.id);
+
+        const ukReportItemIds = (ukItems ?? [])
+          .filter((it) => (it.products as { slug?: string } | null)?.slug === 'uk-company-report')
+          .map((it) => it.id);
+
+        await Promise.all(
+          ukReportItemIds.map((id) =>
+            supabase.functions.invoke('fulfill-uk-report', {
+              body: { order_item_id: id },
+            })
+          )
+        );
+      } catch (ukErr) {
+        console.warn('UK report fulfillment failed (will retry):', ukErr);
+      }
+
       // Store success info for confirmation page
       sessionStorage.setItem(
         'checkout_success',
