@@ -33,18 +33,17 @@ const TIER_CONFIG: Record<CoverageTier, { label: string; sla: string; color: str
   },
 };
 
-export default function CoverageTierBadge({
-  tier,
-  size = 'md',
-  showIcon = true,
-  className = '',
-}: CoverageTierBadgeProps) {
+const CoverageTierBadge = React.forwardRef<HTMLSpanElement, CoverageTierBadgeProps>(function CoverageTierBadge(
+  { tier, size = 'md', showIcon = true, className = '' },
+  ref
+) {
   if (!tier) return null;
   const cfg = TIER_CONFIG[tier];
   const padding = size === 'sm' ? 'px-2 py-0.5 text-[10px]' : 'px-2.5 py-1 text-xs';
 
   return (
     <span
+      ref={ref}
       className={`inline-flex items-center gap-1 font-semibold uppercase tracking-wider rounded-full ${padding} ${className}`}
       style={{ color: cfg.color, backgroundColor: cfg.bg, border: `1px solid ${cfg.color}33` }}
       title={cfg.sla}
@@ -53,4 +52,6 @@ export default function CoverageTierBadge({
       {cfg.label}
     </span>
   );
-}
+});
+
+export default CoverageTierBadge;

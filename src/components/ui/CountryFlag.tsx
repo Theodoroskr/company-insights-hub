@@ -32,12 +32,17 @@ export default function CountryFlag({
   const { px, text } = SIZE_MAP[size];
   const code = iso2?.toLowerCase();
 
+  // flagcdn supported widths — snap requested width up to nearest valid one
+  const VALID_WIDTHS = [20, 40, 80, 160, 320, 640, 1280, 2560];
+  const snap = (w: number) => VALID_WIDTHS.find((v) => v >= w) ?? 2560;
+
   if (code) {
-    // flagcdn — public CDN, retina-ready
+    const w1 = snap(px);
+    const w2 = snap(px * 2);
     return (
       <img
-        src={`https://flagcdn.com/w${px * 2}/${code}.png`}
-        srcSet={`https://flagcdn.com/w${px * 2}/${code}.png 1x, https://flagcdn.com/w${px * 4}/${code}.png 2x`}
+        src={`https://flagcdn.com/w${w1}/${code}.png`}
+        srcSet={`https://flagcdn.com/w${w1}/${code}.png 1x, https://flagcdn.com/w${w2}/${code}.png 2x`}
         width={px}
         height={Math.round(px * 0.66)}
         alt={title ?? `${iso2} flag`}
