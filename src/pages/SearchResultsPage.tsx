@@ -311,72 +311,118 @@ export default function SearchResultsPage() {
             {/* Results list */}
             {filtered.length > 0 && (
               <div className="space-y-3">
-                {filtered.map((company) => (
-                  <div
-                    key={company.id}
-                    className="rounded-lg border p-4 cursor-pointer transition-all hover:shadow-sm group"
-                    style={{ borderColor: 'var(--bg-border)', backgroundColor: '#fff' }}
-                    onClick={() => navigate(`/company/${company.slug ?? company.id}`)}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.borderColor = 'var(--brand-accent)')
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.borderColor = 'var(--bg-border)')
-                    }
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <h3
-                          className="text-base font-semibold truncate"
-                          style={{ color: 'var(--text-heading)' }}
-                        >
-                          {company.name}
-                        </h3>
-                        <div
-                          className="flex flex-wrap items-center gap-1.5 mt-1 text-sm"
-                          style={{ color: 'var(--text-muted)' }}
-                        >
-                          <span>{getCountryName(company.country_code)}</span>
-                          {company.reg_no && (
-                            <>
-                              <span>·</span>
-                              <span>Reg: {company.reg_no}</span>
-                            </>
-                          )}
-                          {company.legal_form && (
-                            <>
-                              <span>·</span>
-                              <span>{company.legal_form}</span>
-                            </>
-                          )}
-                          {company.status && (
-                            <>
-                              <span>·</span>
-                              <StatusBadge status={company.status} />
-                            </>
-                          )}
+                  {filtered.map((company) => {
+                    const entityType = legalFormToEntityType(company.legal_form);
+                    const topCerts = entityType ? getPrimaryCertificatesForEntity(entityType, 3) : [];
+
+                    return (
+                      <div
+                        key={company.id}
+                        className="rounded-lg border p-4 cursor-pointer transition-all hover:shadow-sm group"
+                        style={{ borderColor: 'var(--bg-border)', backgroundColor: '#fff' }}
+                        onClick={() => navigate(`/company/${company.slug ?? company.id}`)}
+                        onMouseEnter={(e) =>
+                          (e.currentTarget.style.borderColor = 'var(--brand-accent)')
+                        }
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.borderColor = 'var(--bg-border)')
+                        }
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <h3
+                              className="text-base font-semibold truncate"
+                              style={{ color: 'var(--text-heading)' }}
+                            >
+                              {company.name}
+                            </h3>
+                            <div
+                              className="flex flex-wrap items-center gap-1.5 mt-1 text-sm"
+                              style={{ color: 'var(--text-muted)' }}
+                            >
+                              <span>{getCountryName(company.country_code)}</span>
+                              {company.reg_no && (
+                                <>
+                                  <span>·</span>
+                                  <span>Reg: {company.reg_no}</span>
+                                </>
+                              )}
+                              {company.legal_form && (
+                                <>
+                                  <span>·</span>
+                                  <span>{company.legal_form}</span>
+                                </>
+                              )}
+                              {company.status && (
+                                <>
+                                  <span>·</span>
+                                  <StatusBadge status={company.status} />
+                                </>
+                              )}
+                            </div>
+
+                            {/* Available certificates for this entity type */}
+                            {topCerts.length > 0 && (
+                              <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                                <span className="text-xs font-medium flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
+                                  <Award className="w-3 h-3" />
+                                  Available:
+                                </span>
+                                {topCerts.map((cert) => (
+                                  <span
+                                    key={cert.slug}
+                                    className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border"
+                                    style={{
+                                      borderColor: 'var(--brand-accent)',
+                                      color: 'var(--brand-accent)',
+                                      backgroundColor: 'rgba(59,130,246,0.06)',
+                                    }}
+                                  >
+                                    <FileText className="w-3 h-3" />
+                                    {cert.name.replace('Certificate of ', '')}
+                                  </span>
+                                ))}
+                                <span
+                                  className="text-xs font-medium"
+                                  style={{ color: 'var(--brand-accent)' }}
+                                >
+                                  +more
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="hidden sm:flex flex-col items-end gap-2 shrink-0">
+                            {entityType && (
+                              <span
+                                className="text-xs px-2 py-0.5 rounded-full font-medium"
+                                style={{
+                                  backgroundColor: 'var(--bg-subtle)',
+                                  color: 'var(--text-muted)',
+                                }}
+                              >
+                                {entityTypeLabels[entityType]}
+                              </span>
+                            )}
+                            <button
+                              className="px-4 py-2 rounded text-sm font-medium border transition-all group-hover:bg-opacity-10"
+                              style={{
+                                borderColor: 'var(--brand-accent)',
+                                color: 'var(--brand-accent)',
+                                borderRadius: '6px',
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/company/${company.slug ?? company.id}`);
+                              }}
+                            >
+                              View Profile →
+                            </button>
+                          </div>
                         </div>
                       </div>
-
-                      <div className="hidden sm:block shrink-0">
-                        <button
-                          className="px-4 py-2 rounded text-sm font-medium border transition-all group-hover:bg-opacity-10"
-                          style={{
-                            borderColor: 'var(--brand-accent)',
-                            color: 'var(--brand-accent)',
-                            borderRadius: '6px',
-                          }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/company/${company.slug ?? company.id}`);
-                          }}
-                        >
-                          View Profile →
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                    );
+                  })}
               </div>
             )}
 
