@@ -430,6 +430,8 @@ export type Database = {
           id: string
           order_id: string | null
           product_id: string | null
+          screening_addon: boolean
+          screening_price_eur: number
           sla_deadline: string | null
           speed: string | null
           unit_price: number
@@ -449,6 +451,8 @@ export type Database = {
           id?: string
           order_id?: string | null
           product_id?: string | null
+          screening_addon?: boolean
+          screening_price_eur?: number
           sla_deadline?: string | null
           speed?: string | null
           unit_price: number
@@ -468,6 +472,8 @@ export type Database = {
           id?: string
           order_id?: string | null
           product_id?: string | null
+          screening_addon?: boolean
+          screening_price_eur?: number
           sla_deadline?: string | null
           speed?: string | null
           unit_price?: number
@@ -505,6 +511,8 @@ export type Database = {
           created_at: string | null
           currency: string | null
           discount_amount: number | null
+          display_currency: string
+          fx_rate_to_eur: number
           guest_details: Json | null
           guest_email: string | null
           id: string
@@ -523,6 +531,8 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           discount_amount?: number | null
+          display_currency?: string
+          fx_rate_to_eur?: number
           guest_details?: Json | null
           guest_email?: string | null
           id?: string
@@ -541,6 +551,8 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           discount_amount?: number | null
+          display_currency?: string
+          fx_rate_to_eur?: number
           guest_details?: Json | null
           guest_email?: string | null
           id?: string
