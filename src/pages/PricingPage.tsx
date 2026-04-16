@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { Check, Clock, Zap, Star, ArrowRight } from 'lucide-react';
+import { Check, Clock, Zap, Star, ArrowRight, Award } from 'lucide-react';
 import PageLayout from '../components/layout/PageLayout';
 import OrderReportModal from '../components/orders/OrderReportModal';
 import { supabase } from '@/integrations/supabase/client';
@@ -43,8 +43,6 @@ export default function PricingPage() {
   };
 
   const getDelivery = (p: Product) => {
-    const type = p.type as string;
-    if (type === 'certificate' || type === 'cert') return 'Next working day';
     if (p.is_instant) return 'Instant';
     if (p.delivery_sla_hours) {
       if (p.delivery_sla_hours <= 24) return '24 hours';
@@ -193,14 +191,44 @@ export default function PricingPage() {
           ) : (
             <>
               <Section title="Reports" items={reports} />
-              <Section title="Certificates" items={certificates} />
+
+              {/* Certificates CTA Banner */}
+              <div className="mb-16">
+                <div
+                  className="rounded-xl border-2 p-8 md:p-10 flex flex-col md:flex-row items-center gap-6"
+                  style={{
+                    borderColor: 'var(--brand-accent)',
+                    background: 'linear-gradient(135deg, rgba(37,99,235,0.04) 0%, rgba(37,99,235,0.08) 100%)',
+                  }}
+                >
+                  <div className="flex items-center justify-center w-14 h-14 rounded-full shrink-0" style={{ backgroundColor: 'rgba(37,99,235,0.1)' }}>
+                    <Award className="w-7 h-7" style={{ color: 'var(--brand-accent)' }} />
+                  </div>
+                  <div className="flex-1 text-center md:text-left">
+                    <h2 className="text-xl font-bold" style={{ color: 'var(--text-heading)' }}>
+                      Official Certificates — €40 each
+                    </h2>
+                    <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
+                      Order certified certificates from the Cyprus Registrar for Companies, Business Names and Partnerships. Apostille and urgent delivery available.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => navigate('/certificates')}
+                    className="px-6 py-3 rounded-lg text-sm font-bold text-white transition-all hover:opacity-90 active:scale-[0.98] flex items-center gap-2 shrink-0"
+                    style={{ backgroundColor: 'var(--brand-accent)' }}
+                  >
+                    Browse Certificates <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
               <Section title="Services" items={services} />
             </>
           )}
         </div>
       </section>
 
-      {/* FAQ-like trust strip */}
+      {/* Trust strip */}
       <section className="py-10 px-4" style={{ borderTop: '1px solid var(--bg-border)' }}>
         <div className="max-w-4xl mx-auto grid sm:grid-cols-3 gap-8 text-center">
           {[
