@@ -49,6 +49,7 @@ export default function OrderReportModal({
       setSelectedProduct(preselectedProduct ?? null);
       setCompanyQuery('');
       setComment('');
+      setJustAdded(false);
     }
   }, [isOpen, preselectedCompany, preselectedProduct]);
 
