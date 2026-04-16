@@ -10,6 +10,7 @@ import RiskTrafficLight from '../components/ui/RiskTrafficLight';
 import CountryFlag from '../components/ui/CountryFlag';
 import CoverageTierBadge from '../components/ui/CoverageTierBadge';
 import OrderReportModal from '../components/orders/OrderReportModal';
+import UKCompanySections from '../components/company/UKCompanySections';
 import { useTenant } from '../lib/tenant.tsx';
 import { useCountries } from '../lib/countries';
 import { useCart } from '../contexts/CartContext';
