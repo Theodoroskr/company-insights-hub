@@ -44,7 +44,7 @@ async function getApiToken(sb: ReturnType<typeof getSupabase>): Promise<string> 
   const credentials = btoa(`${username}:${password}`);
   const res = await fetch(`${API_BASE}/token/${encodeURIComponent(projectCode)}`, {
     method: 'GET',
-    headers: { Authorization: `Basic ${credentials}` },
+    headers: { Authorization: `Basic ${credentials}`, Accept: 'application/json' },
   });
 
   if (!res.ok) {
@@ -163,7 +163,7 @@ serve(async (req) => {
     const apiUrl = `${API_BASE}/search/${encodeURIComponent(countryCode)}/${searchType}/${encodeURIComponent(q)}`;
 
     const apiRes = await fetch(apiUrl, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
     });
 
     if (!apiRes.ok) {
@@ -180,7 +180,19 @@ serve(async (req) => {
       );
     }
 
-    const apiJson = await apiRes.json();
+    // API4ALL sometimes returns PHP print_r ("Array(...)") instead of JSON.
+    // Read as text first, then parse defensively to avoid crashing.
+    const rawText = await apiRes.text();
+    let apiJson: { results?: unknown[] } = {};
+    try {
+      apiJson = JSON.parse(rawText);
+    } catch {
+      console.error('[search-companies] Non-JSON response from API4ALL:', rawText.slice(0, 200));
+      return new Response(
+        JSON.stringify({ results: [], count: 0, source: 'api4all', warning: 'Upstream returned non-JSON' }),
+        { headers: { ...CORS, 'Content-Type': 'application/json' } }
+      );
+    }
     const rawResults: Array<{
       id?: string;
       code: string;
