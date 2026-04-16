@@ -6,6 +6,8 @@ import PageLayout from '../components/layout/PageLayout';
 import SearchWidget from '../components/search/SearchWidget';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import PriceDisplay from '../components/ui/PriceDisplay';
+import WorldCoverageMap from '../components/global/WorldCoverageMap';
+import LiveActivityTicker from '../components/global/LiveActivityTicker';
 import { useTenant } from '../lib/tenant';
 import { useCountries } from '../lib/countries';
 import { supabase } from '../lib/supabase';
