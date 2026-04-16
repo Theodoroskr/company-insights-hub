@@ -426,6 +426,16 @@ export default function Navbar() {
               </div>
 
               <Link
+                to="/pricing"
+                className="px-3 py-2 text-sm font-medium rounded transition-colors"
+                style={{ color: 'var(--text-body)' }}
+                onMouseOver={(e) => (e.currentTarget.style.color = 'var(--brand-accent)')}
+                onMouseOut={(e) => (e.currentTarget.style.color = 'var(--text-body)')}
+              >
+                Pricing
+              </Link>
+
+              <Link
                 to="/about"
                 className="px-3 py-2 text-sm font-medium rounded transition-colors"
                 style={{ color: 'var(--text-body)' }}
@@ -619,6 +629,7 @@ export default function Navbar() {
               {[
                 { to: '/', label: 'Home' },
                 { to: '/company/search', label: 'Search Companies' },
+                { to: '/pricing', label: 'Pricing' },
                 { to: '/about', label: 'About' },
                 { to: '/contact', label: 'Contact' },
               ].map(({ to, label }) => (
