@@ -101,11 +101,20 @@ Deno.serve(async (req) => {
       `)
       .eq('order_id', order_id);
 
-    if (itemsErr || !orderItems?.length) {
-      return new Response(JSON.stringify({ error: 'Order items not found' }), {
-        status: 404,
+    if (itemsErr) {
+      console.error('Failed to fetch order items:', itemsErr);
+      return new Response(JSON.stringify({ error: 'Failed to fetch order items', details: itemsErr.message }), {
+        status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    }
+
+    if (!orderItems?.length) {
+      // Nothing to submit (e.g. UK-only order, manual services, or items inserted later)
+      return new Response(
+        JSON.stringify({ success: true, message: 'No order items to submit', submitted: 0 }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const token = await getApi4AllToken(supabase);
