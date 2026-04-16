@@ -44,7 +44,7 @@ async function getApiToken(sb: ReturnType<typeof getSupabase>): Promise<string> 
   const credentials = btoa(`${username}:${password}`);
   const res = await fetch(`${API_BASE}/token/${encodeURIComponent(projectCode)}`, {
     method: 'GET',
-    headers: { Authorization: `Basic ${credentials}` },
+    headers: { Authorization: `Basic ${credentials}`, Accept: 'application/json' },
   });
 
   if (!res.ok) {
