@@ -13,11 +13,12 @@ import {
   ChevronLeft,
   Menu,
   X,
+  Globe,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/lib/tenant';
 
-const NAV_ITEMS = [
+const NAV_ITEMS: { label: string; icon: any; to: string; superAdminOnly?: boolean }[] = [
   { label: 'Dashboard',     icon: LayoutDashboard, to: '/admin' },
   { label: 'Orders',        icon: ClipboardList,    to: '/admin/orders' },
   { label: 'Fulfillment',   icon: Settings2,        to: '/admin/fulfillment' },
@@ -27,6 +28,7 @@ const NAV_ITEMS = [
   { label: 'Source Health', icon: Activity,         to: '/admin/source-health' },
   { label: 'Audit Logs',    icon: ScrollText,       to: '/admin/audit-logs' },
   { label: 'Settings',      icon: Settings,         to: '/admin/settings' },
+  { label: 'Tenants',       icon: Globe,            to: '/admin/tenants', superAdminOnly: true },
 ];
 
 interface AdminLayoutProps {
@@ -38,6 +40,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const navigate = useNavigate();
   const { tenant } = useTenant();
   const [adminName, setAdminName] = useState('');
+  const [adminRole, setAdminRole] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
@@ -45,13 +48,16 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       if (data.session?.user?.id) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('full_name, email')
+          .select('full_name, email, role')
           .eq('id', data.session.user.id)
           .maybeSingle();
         setAdminName(profile?.full_name || profile?.email || 'Admin');
+        setAdminRole(profile?.role || '');
       }
     });
   }, []);
+
+  const visibleNav = NAV_ITEMS.filter(item => !item.superAdminOnly || adminRole === 'super_admin');
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -88,7 +94,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
         {/* Nav links */}
         <nav className="flex-1 py-4 overflow-y-auto">
-          {NAV_ITEMS.map(({ label, icon: Icon, to }) => (
+          {visibleNav.map(({ label, icon: Icon, to }) => (
             <Link
               key={to}
               to={to}

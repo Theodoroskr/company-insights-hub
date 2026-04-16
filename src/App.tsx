@@ -48,6 +48,7 @@ import AdminPromoCodesPage from "./pages/admin/AdminPromoCodesPage";
 import AdminSourceHealthPage from "./pages/admin/AdminSourceHealthPage";
 import AdminAuditLogsPage from "./pages/admin/AdminAuditLogsPage";
 import AdminSettingsPage from "./pages/admin/AdminSettingsPage";
+import AdminTenantsPage from "./pages/admin/AdminTenantsPage";
 
 const queryClient = new QueryClient();
 
@@ -106,6 +107,7 @@ const App = () => (
               <Route path="/admin/source-health" element={<AdminRoute><AdminSourceHealthPage /></AdminRoute>} />
               <Route path="/admin/audit-logs" element={<AdminRoute><AdminAuditLogsPage /></AdminRoute>} />
               <Route path="/admin/settings" element={<AdminRoute><AdminSettingsPage /></AdminRoute>} />
+              <Route path="/admin/tenants" element={<AdminRoute><AdminTenantsPage /></AdminRoute>} />
 
               {/* ── Catch-all ── */}
               <Route path="*" element={<NotFound />} />
