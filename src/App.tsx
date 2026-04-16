@@ -75,6 +75,12 @@ const App = () => (
               <Route path="/company/:slug" element={<CompanyProfilePage />} />
               <Route path="/companies/:letter" element={<CompanyBrowseByLetterPage />} />
 
+              {/* ── Static pages ── */}
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/contact" element={<ContactPage />} />
+              <Route path="/terms" element={<TermsPage />} />
+              <Route path="/privacy" element={<PrivacyPage />} />
+
               {/* ── Cart & Checkout ── */}
               <Route path="/cart" element={<CartPage />} />
               <Route path="/checkout" element={<Navigate to="/cart" replace />} />
