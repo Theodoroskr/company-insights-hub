@@ -292,7 +292,7 @@ export default function Navbar() {
             {/* ── Desktop nav ── */}
             <div className="hidden md:flex items-center gap-1">
 
-              {/* Reports */}
+              {/* Products mega menu */}
               <div className="relative">
                 <button
                   type="button"
@@ -300,125 +300,108 @@ export default function Navbar() {
                   className="flex items-center gap-1 px-3 py-2 text-sm font-medium rounded transition-colors"
                   style={menuBtnStyle('reports')}
                 >
-                  Reports
+                  Products
                   <ChevronDown className={`w-3.5 h-3.5 transition-transform ${openMenu === 'reports' ? 'rotate-180' : ''}`} />
                 </button>
 
                 {openMenu === 'reports' && (
                   <div
-                    className="absolute left-0 top-full mt-1 bg-white rounded-lg shadow-xl border z-50 overflow-hidden"
-                    style={{ borderColor: 'var(--bg-border)', minWidth: '260px' }}
+                    className="absolute left-0 top-full mt-1 bg-white rounded-xl shadow-2xl border z-50 overflow-hidden"
+                    style={{ borderColor: 'var(--bg-border)', width: '720px' }}
                   >
-                    <div className="py-1.5">
-                      {reportProducts.length === 0 ? (
-                        <p className="px-4 py-3 text-sm" style={{ color: 'var(--text-muted)' }}>No reports available</p>
-                      ) : (
-                        reportProducts.map((p) => (
-                          <Link
-                            key={p.id}
-                            to={`/report?type=${p.slug}`}
-                            onClick={() => setOpenMenu(null)}
-                            className={dropdownLinkClass}
-                            style={{ color: 'var(--text-body)' }}
-                            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
-                            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                          >
-                            <span className="text-base">📋</span>
-                            <span>{p.name}</span>
-                          </Link>
-                        ))
-                      )}
+                    <div className="grid grid-cols-3 divide-x" style={{ borderColor: 'var(--bg-border)' }}>
+                      {/* Reports column */}
+                      <div className="py-3">
+                        <p className="px-4 pb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
+                          Reports
+                        </p>
+                        {reportProducts.length === 0 ? (
+                          <p className="px-4 py-2 text-sm" style={{ color: 'var(--text-muted)' }}>No reports available</p>
+                        ) : (
+                          reportProducts.map((p) => (
+                            <Link
+                              key={p.id}
+                              to={`/report?type=${p.slug}`}
+                              onClick={() => setOpenMenu(null)}
+                              className="block px-4 py-2 text-sm transition-colors"
+                              style={{ color: 'var(--text-body)' }}
+                              onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
+                              onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                            >
+                              <span className="mr-2">📋</span>
+                              {p.name}
+                            </Link>
+                          ))
+                        )}
+                      </div>
+
+                      {/* Certificates column */}
+                      <div className="py-3">
+                        <p className="px-4 pb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
+                          Certificates
+                        </p>
+                        {certProducts.length === 0 ? (
+                          <p className="px-4 py-2 text-sm" style={{ color: 'var(--text-muted)' }}>No certificates available</p>
+                        ) : (
+                          certProducts.map((p) => (
+                            <Link
+                              key={p.id}
+                              to={`/report?type=${p.slug}`}
+                              onClick={() => setOpenMenu(null)}
+                              className="block px-4 py-2 text-sm transition-colors"
+                              style={{ color: 'var(--text-body)' }}
+                              onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
+                              onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                            >
+                              <span className="mr-2">📄</span>
+                              {p.name}
+                            </Link>
+                          ))
+                        )}
+                      </div>
+
+                      {/* Register column */}
+                      <div className="py-3">
+                        <p className="px-4 pb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
+                          Register a Company
+                        </p>
+                        <Link
+                          to="/company-set-up"
+                          onClick={() => setOpenMenu(null)}
+                          className="block px-4 py-2.5 transition-colors"
+                          style={{ color: 'var(--text-body)' }}
+                          onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
+                          onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                        >
+                          <p className="font-semibold text-sm" style={{ color: 'var(--text-heading)' }}>🏢 Company Set Up</p>
+                          <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Register a new company</p>
+                        </Link>
+                        <Link
+                          to="/business-name-approval"
+                          onClick={() => setOpenMenu(null)}
+                          className="block px-4 py-2.5 transition-colors"
+                          style={{ color: 'var(--text-body)' }}
+                          onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
+                          onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                        >
+                          <p className="font-semibold text-sm" style={{ color: 'var(--text-heading)' }}>✅ Business Name Approval</p>
+                          <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Check and reserve your name</p>
+                        </Link>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
 
-              {/* Certificates */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => toggleMenu('certificates')}
-                  className="flex items-center gap-1 px-3 py-2 text-sm font-medium rounded transition-colors"
-                  style={menuBtnStyle('certificates')}
-                >
-                  Certificates
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${openMenu === 'certificates' ? 'rotate-180' : ''}`} />
-                </button>
-
-                {openMenu === 'certificates' && (
-                  <div
-                    className="absolute left-0 top-full mt-1 bg-white rounded-lg shadow-xl border z-50 overflow-hidden"
-                    style={{ borderColor: 'var(--bg-border)', minWidth: '280px' }}
-                  >
-                    <div className="py-1.5">
-                      {certProducts.length === 0 ? (
-                        <p className="px-4 py-3 text-sm" style={{ color: 'var(--text-muted)' }}>No certificates available</p>
-                      ) : (
-                        certProducts.map((p) => (
-                          <Link
-                            key={p.id}
-                            to={`/report?type=${p.slug}`}
-                            onClick={() => setOpenMenu(null)}
-                            className={dropdownLinkClass}
-                            style={{ color: 'var(--text-body)' }}
-                            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
-                            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                          >
-                            <span className="text-base">📄</span>
-                            <span>{p.name}</span>
-                          </Link>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Register a Company */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => toggleMenu('register')}
-                  className="flex items-center gap-1 px-3 py-2 text-sm font-medium rounded transition-colors"
-                  style={menuBtnStyle('register')}
-                >
-                  Register a Company
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${openMenu === 'register' ? 'rotate-180' : ''}`} />
-                </button>
-
-                {openMenu === 'register' && (
-                  <div
-                    className="absolute left-0 top-full mt-1 bg-white rounded-lg shadow-xl border z-50 overflow-hidden"
-                    style={{ borderColor: 'var(--bg-border)', minWidth: '280px' }}
-                  >
-                    <div className="py-1.5">
+                    {/* Footer CTA */}
+                    <div
+                      className="px-4 py-2.5 text-center border-t"
+                      style={{ borderColor: 'var(--bg-border)', backgroundColor: 'var(--bg-subtle)' }}
+                    >
                       <Link
-                        to="/company-set-up"
+                        to="/pricing"
                         onClick={() => setOpenMenu(null)}
-                        className={dropdownLinkClass}
-                        style={{ color: 'var(--text-body)' }}
-                        onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
-                        onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                        className="text-xs font-medium"
+                        style={{ color: 'var(--brand-accent)' }}
                       >
-                        <span className="text-base">🏢</span>
-                        <div>
-                          <p className="font-semibold text-sm" style={{ color: 'var(--text-heading)' }}>Company Set Up</p>
-                          <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Register a new company in Cyprus</p>
-                        </div>
-                      </Link>
-                      <Link
-                        to="/business-name-approval"
-                        onClick={() => setOpenMenu(null)}
-                        className={dropdownLinkClass}
-                        style={{ color: 'var(--text-body)' }}
-                        onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
-                        onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                      >
-                        <span className="text-base">✅</span>
-                        <div>
-                          <p className="font-semibold text-sm" style={{ color: 'var(--text-heading)' }}>Business Name Approval</p>
-                          <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Check and reserve your trade or company name</p>
-                        </div>
+                        View all products & pricing →
                       </Link>
                     </div>
                   </div>
