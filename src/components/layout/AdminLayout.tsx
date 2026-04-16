@@ -94,7 +94,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
         {/* Nav links */}
         <nav className="flex-1 py-4 overflow-y-auto">
-          {NAV_ITEMS.map(({ label, icon: Icon, to }) => (
+          {visibleNav.map(({ label, icon: Icon, to }) => (
             <Link
               key={to}
               to={to}
