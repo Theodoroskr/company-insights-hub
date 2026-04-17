@@ -5,6 +5,7 @@ import { Check } from 'lucide-react';
 import PageLayout from '../components/layout/PageLayout';
 import { useCart } from '../contexts/CartContext';
 import { useTenant } from '../lib/tenant';
+import { useCurrency } from '../contexts/CurrencyContext';
 import { supabase } from '@/integrations/supabase/client';
 
 const EU_COUNTRY_CODES = new Set([
@@ -51,6 +52,7 @@ function StepBar({ current }: { current: number }) {
 
 function OrderSummary({ compact = false }: { compact?: boolean }) {
   const { items, subtotal, totalVat, grandTotal } = useCart();
+  const { format } = useCurrency();
   return (
     <div
       className="rounded-lg border p-5"
@@ -66,7 +68,7 @@ function OrderSummary({ compact = false }: { compact?: boolean }) {
               {item.product.name} — {item.company.name}
             </span>
             <span className="shrink-0 font-medium" style={{ color: 'var(--text-heading)' }}>
-              €{item.price.toFixed(2)}
+              {format(item.price)}
             </span>
           </div>
         ))}
@@ -74,15 +76,15 @@ function OrderSummary({ compact = false }: { compact?: boolean }) {
       <div className="border-t pt-3 space-y-1.5" style={{ borderColor: 'var(--bg-border)' }}>
         <div className="flex justify-between text-sm">
           <span style={{ color: 'var(--text-muted)' }}>Subtotal</span>
-          <span style={{ color: 'var(--text-body)' }}>€{subtotal.toFixed(2)}</span>
+          <span style={{ color: 'var(--text-body)' }}>{format(subtotal)}</span>
         </div>
         <div className="flex justify-between text-sm">
           <span style={{ color: 'var(--text-muted)' }}>VAT</span>
-          <span style={{ color: 'var(--text-muted)' }}>+€{totalVat.toFixed(2)}</span>
+          <span style={{ color: 'var(--text-muted)' }}>+{format(totalVat)}</span>
         </div>
         <div className="flex justify-between font-bold text-base pt-1">
           <span style={{ color: 'var(--text-heading)' }}>Total</span>
-          <span style={{ color: 'var(--brand-accent)' }}>€{grandTotal.toFixed(2)}</span>
+          <span style={{ color: 'var(--brand-accent)' }}>{format(grandTotal)}</span>
         </div>
       </div>
     </div>
