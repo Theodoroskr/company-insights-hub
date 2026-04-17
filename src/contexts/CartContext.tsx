@@ -157,6 +157,9 @@ function calcCertOrderTotals(order: CertificateOrder, vatRate: number) {
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
+  const { tenant } = useTenant();
+  const vatRate = getVatRate(tenant?.slug);
+
   const [items, setItems] = useState<CartItem[]>(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
