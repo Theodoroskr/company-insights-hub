@@ -4,6 +4,7 @@ import { Menu, X, ChevronDown, User, LogOut, Settings, Package, Download, Shoppi
 import { useTenant } from '../../lib/tenant';
 import { supabase } from '../../lib/supabase';
 import { useCart } from '../../contexts/CartContext';
+import CurrencySwitcher from './CurrencySwitcher';
 import type { Product, Company } from '../../types/database';
 
 // ── Debounce hook ─────────────────────────────────────────────
@@ -462,7 +463,10 @@ export default function Navbar() {
             )}
 
             {/* ── Auth / User ── */}
-            <div className="hidden md:flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-2">
+              {/* Currency switcher */}
+              <CurrencySwitcher />
+
               {/* Cart icon */}
               <Link
                 to="/cart"
@@ -591,6 +595,7 @@ export default function Navbar() {
 
             {/* ── Mobile cart + hamburger ── */}
             <div className="md:hidden flex items-center gap-1">
+              <CurrencySwitcher compact />
               <Link
                 to="/cart"
                 className="relative p-2 rounded transition-colors"

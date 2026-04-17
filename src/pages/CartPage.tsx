@@ -3,8 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { X, ShoppingCart, FileX, Stamp, Zap, Truck, ShieldCheck } from 'lucide-react';
 import PageLayout from '../components/layout/PageLayout';
-import { useCart, type CertificateOrder } from '../contexts/CartContext';
+import { useCart, type CertificateOrder, SCREENING_ADDON_PRICE_EUR } from '../contexts/CartContext';
 import { useTenant } from '../lib/tenant';
+import { useCurrency } from '../contexts/CurrencyContext';
 import type { ProductSpeed } from '../types/database';
 import {
   APOSTILLE_PRICE,
@@ -28,6 +29,7 @@ function CertOrderBlock({
   order: CertificateOrder;
   onRemove: () => void;
 }) {
+  const { format } = useCurrency();
   const apostilleCount = order.certificates.filter((c) => c.apostille).length;
   const certTotal = order.certificates.reduce((s, c) => s + c.price, 0);
   const serviceDeliveryTotal = order.certificates.length * SERVICE_DELIVERY_FEE;
@@ -70,7 +72,7 @@ function CertOrderBlock({
                 </span>
               )}
             </span>
-            <span className="font-medium whitespace-nowrap">€{c.price + (c.apostille ? APOSTILLE_PRICE : 0)}</span>
+            <span className="font-medium whitespace-nowrap">{format(c.price + (c.apostille ? APOSTILLE_PRICE : 0))}</span>
           </div>
         ))}
       </div>
@@ -78,26 +80,26 @@ function CertOrderBlock({
       {/* Service & Delivery + Add-ons */}
       <div className="space-y-1 mb-2 pt-2 border-t" style={{ borderColor: 'var(--bg-border)' }}>
         <div className="flex justify-between text-xs" style={{ color: 'var(--text-muted)' }}>
-          <span className="flex items-center gap-1"><ShieldCheck className="w-3 h-3" /> Service & Delivery ({order.certificates.length} × €{SERVICE_DELIVERY_FEE})</span>
-          <span>€{serviceDeliveryTotal}</span>
+          <span className="flex items-center gap-1"><ShieldCheck className="w-3 h-3" /> Service & Delivery ({order.certificates.length} × {format(SERVICE_DELIVERY_FEE)})</span>
+          <span>{format(serviceDeliveryTotal)}</span>
         </div>
         {order.urgentDelivery && (
           <div className="flex justify-between text-xs" style={{ color: 'var(--text-muted)' }}>
             <span className="flex items-center gap-1"><Zap className="w-3 h-3" /> Urgent Delivery</span>
-            <span>€{URGENT_DELIVERY_PRICE}</span>
+            <span>{format(URGENT_DELIVERY_PRICE)}</span>
           </div>
         )}
         {order.courierDelivery && (
           <div className="flex justify-between text-xs" style={{ color: 'var(--text-muted)' }}>
             <span className="flex items-center gap-1"><Truck className="w-3 h-3" /> Courier Delivery</span>
-            <span>€{COURIER_DELIVERY_PRICE}</span>
+            <span>{format(COURIER_DELIVERY_PRICE)}</span>
           </div>
         )}
       </div>
 
       <div className="flex justify-between text-sm font-bold pt-2" style={{ color: 'var(--text-heading)' }}>
         <span>Order subtotal</span>
-        <span>€{blockTotal.toFixed(2)}</span>
+        <span>{format(blockTotal)}</span>
       </div>
     </div>
   );
@@ -111,11 +113,14 @@ export default function CartPage() {
     removeItem,
     removeCertificateOrder,
     updateSpeed,
+    toggleScreeningAddon,
     subtotal,
     totalVat,
     grandTotal,
+    screeningTotal,
     totalItems,
   } = useCart();
+  const { format, currency } = useCurrency();
   const navigate = useNavigate();
 
   const handleCheckout = () => {
@@ -240,19 +245,52 @@ export default function CartPage() {
                           >
                             {speeds.map((s) => (
                               <option key={s.code} value={s.code}>
-                                {s.label} — €{(item.product.base_price + s.price_delta).toFixed(0)}
+                                {s.label} — {format(item.product.base_price + s.price_delta, { decimals: 0 })}
                               </option>
                             ))}
                           </select>
                         </div>
                       )}
 
+                      {/* Screening add-on toggle */}
+                      {(() => {
+                        const eligible =
+                          item.product.type === 'kyb' ||
+                          ['uk-company-report','company-structure-report','structure-report','enhanced-uk-kyb-report'].includes(item.product.slug);
+                        if (!eligible) return null;
+                        return (
+                          <label className="mt-3 flex items-start gap-2 cursor-pointer select-none p-2.5 rounded border"
+                            style={{
+                              borderColor: item.screeningAddon ? 'var(--brand-accent)' : 'var(--bg-border)',
+                              backgroundColor: item.screeningAddon ? 'var(--bg-subtle)' : 'transparent',
+                            }}>
+                            <input
+                              type="checkbox"
+                              className="mt-0.5 w-4 h-4 rounded accent-blue-600"
+                              checked={item.screeningAddon}
+                              onChange={() => toggleScreeningAddon(item.id)}
+                            />
+                            <span className="text-xs flex-1" style={{ color: 'var(--text-body)' }}>
+                              <span className="font-semibold inline-flex items-center gap-1">
+                                <ShieldCheck className="w-3 h-3" /> Add Compliance Screening
+                                <span className="font-bold ml-1" style={{ color: 'var(--brand-accent)' }}>
+                                  +{format(SCREENING_ADDON_PRICE_EUR, { decimals: 0 })}
+                                </span>
+                              </span>
+                              <span className="block text-[11px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                                Sanctions, PEP &amp; adverse media on the company, directors and shareholders.
+                              </span>
+                            </span>
+                          </label>
+                        );
+                      })()}
+
                       <div className="mt-3 flex items-center gap-4 text-sm" style={{ color: 'var(--text-muted)' }}>
                         <span className="font-bold text-base" style={{ color: 'var(--text-heading)' }}>
-                          €{item.price.toFixed(2)}
+                          {format(item.price)}
                         </span>
                         {item.vatAmount > 0 && (
-                          <span className="text-xs">+ €{item.vatAmount.toFixed(2)} VAT</span>
+                          <span className="text-xs">+ {format(item.vatAmount)} VAT</span>
                         )}
                       </div>
                     </div>
@@ -274,12 +312,21 @@ export default function CartPage() {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span style={{ color: 'var(--text-body)' }}>Subtotal</span>
-                    <span style={{ color: 'var(--text-body)' }}>€{subtotal.toFixed(2)}</span>
+                    <span style={{ color: 'var(--text-body)' }}>{format(subtotal)}</span>
                   </div>
+                  {screeningTotal > 0 && (
+                    <div className="flex justify-between">
+                      <span style={{ color: 'var(--text-muted)' }}>incl. Compliance Screening</span>
+                      <span style={{ color: 'var(--text-muted)' }}>{format(screeningTotal)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span style={{ color: 'var(--text-muted)' }}>VAT</span>
-                    <span style={{ color: 'var(--text-muted)' }}>+€{totalVat.toFixed(2)}</span>
+                    <span style={{ color: 'var(--text-muted)' }}>+{format(totalVat)}</span>
                   </div>
+                  <p className="text-[10px] pt-1" style={{ color: 'var(--text-muted)' }}>
+                    Charged in {currency}. Base prices in EUR.
+                  </p>
                 </div>
 
                 <div className="my-4 border-t" style={{ borderColor: 'var(--bg-border)' }} />
@@ -289,7 +336,7 @@ export default function CartPage() {
                     Grand Total
                   </span>
                   <span className="text-xl font-bold" style={{ color: 'var(--brand-accent)' }}>
-                    €{grandTotal.toFixed(2)}
+                    {format(grandTotal)}
                   </span>
                 </div>
 

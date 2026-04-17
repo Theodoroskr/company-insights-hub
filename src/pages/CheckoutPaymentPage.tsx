@@ -3,8 +3,9 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { Lock, Check } from 'lucide-react';
 import PageLayout from '../components/layout/PageLayout';
-import { useCart } from '../contexts/CartContext';
+import { useCart, SCREENING_ADDON_PRICE_EUR } from '../contexts/CartContext';
 import { useTenant } from '../lib/tenant';
+import { useCurrency } from '../contexts/CurrencyContext';
 import { supabase } from '@/integrations/supabase/client';
 
 const CHECKOUT_STEPS = ['Cart', 'Details', 'Payment', 'Confirmation'];
@@ -45,7 +46,8 @@ function StepBar({ current }: { current: number }) {
 
 export default function CheckoutPaymentPage() {
   const { tenant } = useTenant();
-  const { items, clearCart } = useCart();
+  const { items, screeningTotal, clearCart } = useCart();
+  const { currency, rate, format } = useCurrency();
   const navigate = useNavigate();
 
   const [details, setDetails] = useState<Record<string, unknown> | null>(null);
@@ -74,7 +76,7 @@ export default function CheckoutPaymentPage() {
     );
   }
 
-  const effectiveTotal = (details?.effectiveTotal as number) ?? items.reduce((s, i) => s + i.price + i.vatAmount, 0);
+  const effectiveTotalEur = ((details?.effectiveTotal as number) ?? items.reduce((s, i) => s + i.price + i.vatAmount, 0)) + screeningTotal;
   const customerEmail = (details?.email as string) ?? '';
 
   const formatCardNumber = (val: string) =>
@@ -100,8 +102,8 @@ export default function CheckoutPaymentPage() {
       // Generate order reference
       const orderRef = `ICG-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
-      // Create order record
-      const subtotal = items.reduce((s, i) => s + i.price, 0);
+      // Create order record (canonical EUR amounts; display currency snapshotted)
+      const subtotal = items.reduce((s, i) => s + i.price, 0) + screeningTotal;
       const vatAmount = (details?.effectiveVat as number) ?? 0;
       const total = subtotal + vatAmount;
 
@@ -115,6 +117,8 @@ export default function CheckoutPaymentPage() {
         vat_amount: vatAmount,
         total,
         currency: 'EUR',
+        display_currency: currency,
+        fx_rate_to_eur: rate,
         guest_email: session ? null : customerEmail,
         guest_details: session ? null : details,
       };
@@ -127,7 +131,7 @@ export default function CheckoutPaymentPage() {
 
       if (orderErr || !orderData) throw new Error('Failed to create order');
 
-      // Create order items
+      // Create order items (with screening flag + price snapshot)
       const orderItemResults = await Promise.all(
         items.map((item) =>
           supabase
@@ -140,6 +144,8 @@ export default function CheckoutPaymentPage() {
               unit_price: item.price,
               vat_amount: item.vatAmount,
               fulfillment_status: 'pending',
+              screening_addon: item.screeningAddon,
+              screening_price_eur: item.screeningAddon ? SCREENING_ADDON_PRICE_EUR : 0,
             })
             .select('id')
             .single()
@@ -329,12 +335,18 @@ export default function CheckoutPaymentPage() {
                         {item.product.name}
                       </span>
                       <span className="shrink-0" style={{ color: 'var(--text-heading)' }}>
-                        €{item.price.toFixed(2)}
+                        {format(item.price)}
                       </span>
                     </div>
                     <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
                       {item.company.name}
                     </span>
+                    {item.screeningAddon && (
+                      <div className="flex justify-between gap-2 mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
+                        <span>+ Compliance Screening</span>
+                        <span>{format(SCREENING_ADDON_PRICE_EUR)}</span>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -354,8 +366,11 @@ export default function CheckoutPaymentPage() {
               >
                 <div className="flex justify-between font-bold text-lg">
                   <span style={{ color: 'var(--text-heading)' }}>Total</span>
-                  <span style={{ color: 'var(--brand-accent)' }}>€{effectiveTotal.toFixed(2)}</span>
+                  <span style={{ color: 'var(--brand-accent)' }}>{format(effectiveTotalEur)}</span>
                 </div>
+                <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                  Charged in {currency} via Stripe.
+                </p>
               </div>
 
               <button
@@ -371,7 +386,7 @@ export default function CheckoutPaymentPage() {
                   e.currentTarget.style.backgroundColor = 'var(--brand-accent)';
                 }}
               >
-                {isPlacing ? 'Processing…' : `Place Order — €${effectiveTotal.toFixed(2)}`}
+                {isPlacing ? 'Processing…' : `Place Order — ${format(effectiveTotalEur)}`}
               </button>
             </div>
           </div>
