@@ -143,7 +143,7 @@ export default function CompanySetUpPage() {
   return (
     <PageLayout>
       <Helmet>
-        <title>Company Set Up | Companies House Cyprus</title>
+        <title>Company Set Up | Companies House Cyprus</title>{/* CY-only service */}
       </Helmet>
 
       {/* HERO */}
