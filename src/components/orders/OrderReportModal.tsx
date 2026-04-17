@@ -417,7 +417,7 @@ export default function OrderReportModal({
               </div>
               <p className="text-xs leading-snug" style={{ color: 'var(--text-muted)' }}>
                 Sanctions, PEP &amp; adverse-media checks on the company, directors and shareholders.
-                Powered by ComplyAdvantage.
+                Powered by WorldAML.
               </p>
             </div>
           </label>
