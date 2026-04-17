@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/lib/tenant.tsx';
-import { useCart, isScreeningEligible, SCREENING_ADDON_PRICE_EUR } from '@/contexts/CartContext';
+import { useCart, isScreeningEligible, isScreeningIncluded, SCREENING_ADDON_PRICE_EUR } from '@/contexts/CartContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { ShieldCheck } from 'lucide-react';
 import type { Company, Product, ProductSpeed } from '@/types/database';
