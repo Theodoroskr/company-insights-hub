@@ -30,7 +30,7 @@ export default function OrderReportModal({
 }: OrderReportModalProps) {
   const navigate = useNavigate();
   const { tenant } = useTenant();
-  const { addItem } = useCart();
+  const { addItem, items: cartItems } = useCart();
   const { format: fmtFx } = useCurrency();
 
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(
