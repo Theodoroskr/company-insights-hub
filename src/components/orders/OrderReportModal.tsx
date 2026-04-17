@@ -230,7 +230,9 @@ export default function OrderReportModal({
   // Calculate total price (in EUR for cart math)
   const baseTotalEur = isCertificateMode
     ? certificates.filter((c) => selectedCertIds.has(c.id)).reduce((sum, c) => sum + c.base_price, 0)
-    : selectedProduct?.base_price ?? 0;
+    : eligibleUpgrade && selectedProduct?.slug === 'enhanced-uk-kyb-report'
+      ? Math.max(0, (selectedProduct.base_price ?? 0) - eligibleUpgrade.standardPrice)
+      : selectedProduct?.base_price ?? 0;
   const screeningEur = screeningEligible && addScreening ? SCREENING_ADDON_PRICE_EUR : 0;
   const totalEur = baseTotalEur + screeningEur;
 
