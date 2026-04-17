@@ -76,7 +76,7 @@ export default function CheckoutPaymentPage() {
     );
   }
 
-  const effectiveTotal = (details?.effectiveTotal as number) ?? items.reduce((s, i) => s + i.price + i.vatAmount, 0);
+  const effectiveTotalEur = ((details?.effectiveTotal as number) ?? items.reduce((s, i) => s + i.price + i.vatAmount, 0)) + screeningTotal;
   const customerEmail = (details?.email as string) ?? '';
 
   const formatCardNumber = (val: string) =>
@@ -335,12 +335,18 @@ export default function CheckoutPaymentPage() {
                         {item.product.name}
                       </span>
                       <span className="shrink-0" style={{ color: 'var(--text-heading)' }}>
-                        €{item.price.toFixed(2)}
+                        {format(item.price)}
                       </span>
                     </div>
                     <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
                       {item.company.name}
                     </span>
+                    {item.screeningAddon && (
+                      <div className="flex justify-between gap-2 mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
+                        <span>+ Compliance Screening</span>
+                        <span>{format(SCREENING_ADDON_PRICE_EUR)}</span>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -360,8 +366,11 @@ export default function CheckoutPaymentPage() {
               >
                 <div className="flex justify-between font-bold text-lg">
                   <span style={{ color: 'var(--text-heading)' }}>Total</span>
-                  <span style={{ color: 'var(--brand-accent)' }}>€{effectiveTotal.toFixed(2)}</span>
+                  <span style={{ color: 'var(--brand-accent)' }}>{format(effectiveTotalEur)}</span>
                 </div>
+                <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                  Charged in {currency} via Stripe.
+                </p>
               </div>
 
               <button
@@ -377,7 +386,7 @@ export default function CheckoutPaymentPage() {
                   e.currentTarget.style.backgroundColor = 'var(--brand-accent)';
                 }}
               >
-                {isPlacing ? 'Processing…' : `Place Order — €${effectiveTotal.toFixed(2)}`}
+                {isPlacing ? 'Processing…' : `Place Order — ${format(effectiveTotalEur)}`}
               </button>
             </div>
           </div>
