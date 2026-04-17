@@ -170,17 +170,16 @@ export default function SearchWidget({
     c.name.toLowerCase().includes(countrySearch.toLowerCase())
   );
 
-  const resolvedCountryName = (() => {
-    if (!isGlobal && tenant?.country_code) {
-      const c = countries.find((x) => x.code === tenant.country_code);
-      return c ? `${c.flag_emoji ?? ''} ${c.name}` : tenant.country_code;
-    }
-    if (selectedCountry) {
-      const c = countries.find((x) => x.code === selectedCountry);
-      return c ? `${c.flag_emoji ?? ''} ${c.name}` : selectedCountry;
-    }
-    return null;
-  })();
+  // Resolve the country currently shown in the picker button.
+  // - Single-tenant (e.g. Cyprus): always the tenant's home country, locked.
+  // - Global tenant (ICW): whatever the user picked, or null = "Choose country".
+  const activeCountryCode = !isGlobal
+    ? tenant?.country_code ?? null
+    : selectedCountry || null;
+
+  const activeCountry = activeCountryCode
+    ? countries.find((x) => x.code === activeCountryCode) ?? null
+    : null;
 
   const isHero = size === 'hero';
 
