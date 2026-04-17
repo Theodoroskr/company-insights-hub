@@ -186,6 +186,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
     try { localStorage.setItem(CERT_STORAGE_KEY, JSON.stringify(certificateOrders)); } catch {}
   }, [certificateOrders]);
 
+  // Recompute report-line VAT when the tenant (and therefore vatRate) changes
+  useEffect(() => {
+    setItems((prev) =>
+      prev.map((item) => {
+        const newVat = item.product.vat_on_full_price
+          ? parseFloat((item.price * vatRate).toFixed(2))
+          : 0;
+        return newVat === item.vatAmount ? item : { ...item, vatAmount: newVat };
+      }),
+    );
+  }, [vatRate]);
+
   const addItem = useCallback(
     (
       product: Product,
