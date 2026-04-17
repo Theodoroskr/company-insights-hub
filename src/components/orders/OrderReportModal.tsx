@@ -120,6 +120,19 @@ export default function OrderReportModal({
         if (!cancelled) setEligibleUpgrade(null);
         return;
       }
+
+      // 1) Check current cart for an unpaid standard UK Company Report on same company
+      const cartStandard = (cartItems as CartItem[]).find(
+        (i) =>
+          i.product.slug === 'uk-company-report' &&
+          i.company.icg_code === selectedCompany.icg_code,
+      );
+      if (cartStandard) {
+        if (!cancelled) setEligibleUpgrade({ standardPrice: cartStandard.price });
+        return;
+      }
+
+      // 2) Check past purchases (last 30d)
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) {
         if (!cancelled) setEligibleUpgrade(null);
@@ -147,7 +160,7 @@ export default function OrderReportModal({
     }
     check();
     return () => { cancelled = true; };
-  }, [selectedCompany?.id, selectedProduct?.slug]);
+  }, [selectedCompany?.id, selectedProduct?.slug, cartItems]);
 
   const toggleCert = (id: string) => {
     setSelectedCertIds((prev) => {
