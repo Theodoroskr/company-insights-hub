@@ -1024,7 +1024,22 @@ export default function CompanyProfilePage() {
                         style={{ borderColor: 'var(--bg-border)', opacity: isCeased ? 0.6 : 1 }}
                       >
                         <div className="flex items-center justify-between gap-2">
-                          <span className="font-medium" style={{ color: 'var(--text-body)' }}>{name}</span>
+                          {name && name !== '—' ? (
+                            <button
+                              type="button"
+                              onClick={() => focusAffiliatesByPerson(name)}
+                              className="font-medium text-left hover:underline transition-colors group inline-flex items-center gap-1.5"
+                              style={{ color: 'var(--brand-primary)' }}
+                              title="Find related companies for this beneficial owner"
+                            >
+                              {name}
+                              <span className="text-[10px] uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: 'var(--text-muted)' }}>
+                                Find related →
+                              </span>
+                            </button>
+                          ) : (
+                            <span className="font-medium" style={{ color: 'var(--text-body)' }}>{name}</span>
+                          )}
                           {kind && (
                             <span
                               className="text-xs px-2 py-0.5 rounded-full"
