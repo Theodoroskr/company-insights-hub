@@ -101,18 +101,45 @@ function RecordBadge({ count }: { count: string }) {
   );
 }
 
-function PersonRow({ name, role }: { name: string; role: string }) {
+function PersonRow({
+  name,
+  role,
+  onClick,
+  clickable = false,
+}: {
+  name: string;
+  role: string;
+  onClick?: () => void;
+  clickable?: boolean;
+}) {
+  const Wrapper: React.ElementType = clickable ? 'button' : 'div';
   return (
-    <div className="flex items-center gap-3 py-2 border-b last:border-0" style={{ borderColor: 'var(--bg-border)' }}>
+    <Wrapper
+      onClick={clickable ? onClick : undefined}
+      className={`w-full flex items-center gap-3 py-2 border-b last:border-0 text-left ${
+        clickable ? 'hover:bg-[var(--bg-subtle)] rounded-md px-2 -mx-2 transition-colors cursor-pointer group' : ''
+      }`}
+      style={{ borderColor: 'var(--bg-border)' }}
+    >
       <span className="text-base" style={{ color: 'var(--text-muted)' }}>👤</span>
-      <span className="text-sm font-medium flex-1" style={{ color: 'var(--text-body)' }}>{name}</span>
+      <span
+        className="text-sm font-medium flex-1"
+        style={{ color: clickable ? 'var(--brand-primary)' : 'var(--text-body)' }}
+      >
+        {name}
+        {clickable && (
+          <span className="ml-1.5 text-[10px] uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: 'var(--text-muted)' }}>
+            Find related →
+          </span>
+        )}
+      </span>
       <span
         className="text-xs px-2 py-0.5 rounded-full"
         style={{ backgroundColor: 'var(--bg-subtle)', color: 'var(--text-muted)' }}
       >
         {role}
       </span>
-    </div>
+    </Wrapper>
   );
 }
 
