@@ -397,6 +397,7 @@ export default function CompanyProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [kybModalOpen, setKybModalOpen] = useState(false);
+  const [kybModalProductOverride, setKybModalProductOverride] = useState<Product | null>(null);
   const [structureModalOpen, setStructureModalOpen] = useState(false);
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [reportPsc, setReportPsc] = useState<Array<Record<string, unknown>>>([]);
@@ -746,7 +747,10 @@ export default function CompanyProfilePage() {
               <UKComplianceScreeningPanel
                 orderItemId={unlockedOrderItemId}
                 isEnhanced={hasEnhancedKyb}
-                onUpgrade={() => setKybModalOpen(true)}
+                onUpgrade={() => {
+                  setKybModalProductOverride(enhancedKybProduct ?? null);
+                  setKybModalOpen(true);
+                }}
               />
             )}
 
@@ -777,8 +781,8 @@ export default function CompanyProfilePage() {
               {kybProduct && (
                 <OrderReportModal
                   isOpen={kybModalOpen}
-                  onClose={() => setKybModalOpen(false)}
-                  preselectedProduct={kybProduct}
+                  onClose={() => { setKybModalOpen(false); setKybModalProductOverride(null); }}
+                  preselectedProduct={kybModalProductOverride ?? kybProduct}
                   preselectedCompany={company as unknown as import('../types/database').Company}
                 />
               )}
