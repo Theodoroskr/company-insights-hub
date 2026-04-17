@@ -13,10 +13,9 @@ import {
   URGENT_DELIVERY_PRICE,
   COURIER_DELIVERY_PRICE,
   SERVICE_DELIVERY_FEE,
-  VAT_RATE as CERT_VAT_RATE,
 } from '../data/cyprusCertificates';
-
-const VAT_RATE = 0.19;
+import { useTenant } from '../lib/tenant';
+import { getVatRate } from '../lib/tenantConfig';
 
 /** Compliance screening add-on price (EUR), shown alongside eligible reports */
 export const SCREENING_ADDON_PRICE_EUR = 45;
