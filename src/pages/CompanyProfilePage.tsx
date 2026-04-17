@@ -628,6 +628,7 @@ export default function CompanyProfilePage() {
   const certificateProducts = products.filter((p) => p.type === 'certificate');
   const monitoringProduct = products.find((p) => p.type === 'monitoring');
   const kybProduct = products.find((p) => p.type === 'kyb' || p.slug === 'cyprus-kyb-report');
+  const enhancedKybProduct = products.find((p) => p.slug === 'enhanced-uk-kyb-report');
   const structureProduct = products.find((p) => p.slug?.includes('structure') || p.name?.toLowerCase().includes('structure'));
   const samplePdfUrl = products[0]?.sample_pdf_url ?? null;
 
