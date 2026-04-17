@@ -312,12 +312,21 @@ export default function CartPage() {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span style={{ color: 'var(--text-body)' }}>Subtotal</span>
-                    <span style={{ color: 'var(--text-body)' }}>€{subtotal.toFixed(2)}</span>
+                    <span style={{ color: 'var(--text-body)' }}>{format(subtotal)}</span>
                   </div>
+                  {screeningTotal > 0 && (
+                    <div className="flex justify-between">
+                      <span style={{ color: 'var(--text-muted)' }}>incl. Compliance Screening</span>
+                      <span style={{ color: 'var(--text-muted)' }}>{format(screeningTotal)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span style={{ color: 'var(--text-muted)' }}>VAT</span>
-                    <span style={{ color: 'var(--text-muted)' }}>+€{totalVat.toFixed(2)}</span>
+                    <span style={{ color: 'var(--text-muted)' }}>+{format(totalVat)}</span>
                   </div>
+                  <p className="text-[10px] pt-1" style={{ color: 'var(--text-muted)' }}>
+                    Charged in {currency}. Base prices in EUR.
+                  </p>
                 </div>
 
                 <div className="my-4 border-t" style={{ borderColor: 'var(--bg-border)' }} />
@@ -327,7 +336,7 @@ export default function CartPage() {
                     Grand Total
                   </span>
                   <span className="text-xl font-bold" style={{ color: 'var(--brand-accent)' }}>
-                    €{grandTotal.toFixed(2)}
+                    {format(grandTotal)}
                   </span>
                 </div>
 
