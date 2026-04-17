@@ -27,10 +27,19 @@ export const SCREENING_ELIGIBLE_SLUGS = new Set([
   'uk-company-report',
   'company-structure-report',
   'structure-report',
+]);
+
+/** Products where ComplyAdvantage screening is bundled in the base price (no add-on shown) */
+export const SCREENING_INCLUDED_SLUGS = new Set([
   'enhanced-uk-kyb-report',
 ]);
 
+export function isScreeningIncluded(p: { slug?: string }): boolean {
+  return !!p.slug && SCREENING_INCLUDED_SLUGS.has(p.slug);
+}
+
 export function isScreeningEligible(p: { type?: string; slug?: string }): boolean {
+  if (isScreeningIncluded(p)) return false;
   if (p.type && SCREENING_ELIGIBLE_TYPES.has(p.type)) return true;
   if (p.slug && SCREENING_ELIGIBLE_SLUGS.has(p.slug)) return true;
   return false;
