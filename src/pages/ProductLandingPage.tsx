@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronUp, CheckCircle2 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
@@ -9,20 +9,15 @@ import { useTenant } from '../lib/tenant.tsx';
 import { PRODUCT_TABS, resolveSlug } from '../data/productContent';
 import type { ProductContent, AccordionItem } from '../data/productContent';
 import type { Product } from '../types/database';
+import {
+  filterTabsForTenant,
+  getTenantHero,
+  localizeContent,
+} from '../lib/tenantConfig';
 
 // ── Typing animation ─────────────────────────────────────────
 
-const TYPING_WORDS = [
-  'Unlocking',
-  'Structure Report',
-  'Credit Report',
-  'Due Diligence',
-  'Certificates',
-  'Competitors Analysis',
-  'Industry Analysis',
-];
-
-function TypingWord() {
+function TypingWord({ words }: { words: string[] }) {
   const [wordIdx, setWordIdx] = useState(0);
   const [displayed, setDisplayed] = useState('');
   const [deleting, setDeleting] = useState(false);

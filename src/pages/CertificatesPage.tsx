@@ -31,12 +31,12 @@ import {
   COURIER_DELIVERY_PRICE,
   SERVICE_DELIVERY_FEE,
   CERT_PRICE,
-  VAT_RATE,
   type EntityType,
   type CertificateDefinition,
   type CertificateGroup,
   type BundleDefinition,
 } from '../data/cyprusCertificates';
+import { getVatRate } from '../lib/tenantConfig';
 
 // ── Entity type tab icons ────────────────────────────────────
 const entityIcons: Record<EntityType, React.ReactNode> = {
