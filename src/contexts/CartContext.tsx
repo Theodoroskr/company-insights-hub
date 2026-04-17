@@ -91,7 +91,7 @@ interface CartContextValue {
     product: Product,
     company: CartItem['company'],
     speedCode?: string,
-    opts?: { screeningAddon?: boolean }
+    opts?: { screeningAddon?: boolean; priceOverride?: number; isUpgrade?: boolean; upgradeLabel?: string }
   ) => void;
   removeItem: (id: string) => void;
   updateSpeed: (id: string, speedCode: string) => void;
@@ -185,14 +185,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
       product: Product,
       company: CartItem['company'],
       speedCode?: string,
-      opts?: { screeningAddon?: boolean }
+      opts?: { screeningAddon?: boolean; priceOverride?: number; isUpgrade?: boolean; upgradeLabel?: string }
     ) => {
       const speeds: ProductSpeed[] = Array.isArray(product.available_speeds)
         ? (product.available_speeds as ProductSpeed[])
         : [];
       const resolvedSpeed = speedCode ?? speeds[0]?.code ?? 'Normal';
-      const id = makeId(product.id, company.icg_code, resolvedSpeed);
-      const { price, vatAmount } = calcPrice(product, resolvedSpeed);
+      const idSuffix = opts?.isUpgrade ? '__upgrade' : '';
+      const id = makeId(product.id, company.icg_code, resolvedSpeed) + idSuffix;
+      const computed = calcPrice(product, resolvedSpeed);
+      const price = typeof opts?.priceOverride === 'number' ? opts.priceOverride : computed.price;
+      const vatAmount = product.vat_on_full_price
+        ? parseFloat((price * VAT_RATE).toFixed(2))
+        : 0;
       const eligible = isScreeningEligible({ type: product.type as string, slug: product.slug });
       const screeningAddon = !!opts?.screeningAddon && eligible;
 
@@ -200,7 +205,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
         if (prev.find((i) => i.id === id)) return prev;
         return [
           ...prev,
-          { id, product, company, speedCode: resolvedSpeed, price, vatAmount, screeningAddon },
+          {
+            id,
+            product,
+            company,
+            speedCode: resolvedSpeed,
+            price,
+            vatAmount,
+            screeningAddon,
+            isUpgrade: !!opts?.isUpgrade,
+            upgradeLabel: opts?.upgradeLabel,
+          },
         ];
       });
     },
