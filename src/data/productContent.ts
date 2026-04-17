@@ -305,14 +305,14 @@ const globalStructure: ProductContent = {
   deliveryNote: 'Reports are generated instantly using our global API network covering 200+ countries. Data is sourced from official registries and licensed providers worldwide.',
 };
 
-// ── Global KYB Report ─────────────────────────────────────────
+// ── Global Credit Report ──────────────────────────────────────
 
-const globalKyb: ProductContent = {
+const globalCredit: ProductContent = {
   description: [
-    'The Global KYB (Know Your Business) Report is a comprehensive instant company intelligence report covering 200+ countries. It delivers ownership structure, directors, financial indicators and risk assessment in seconds.',
+    'The Global Credit Report is a comprehensive instant company intelligence report covering 200+ countries. It delivers ownership structure, directors, financial indicators and risk assessment in seconds.',
     'Essential for compliance teams, risk managers and procurement departments who need to verify international counterparties quickly and reliably.',
   ],
-  sectionHeading: 'THE GLOBAL KYB REPORT INCLUDES:',
+  sectionHeading: 'THE GLOBAL CREDIT REPORT INCLUDES:',
   accordionItems: [
     { title: 'Company Registration Details', body: 'Official registration number, date and jurisdiction sourced from the relevant national registry.' },
     { title: 'Directors & Officers', body: 'Full board composition with names, positions, nationalities and appointment dates.' },
@@ -351,7 +351,9 @@ export const PRODUCT_TABS: TabDef[] = [
   { slug: 'competitors',               label: 'Competitors Analysis Report',          content: competitors },
   { slug: 'industry',                  label: 'Industry Analysis Report',             content: industry },
   { slug: 'global-structure-report',   label: 'Global Structure Report',              content: globalStructure },
-  { slug: 'global-kyb-report',         label: 'Global KYB Report',                    content: globalKyb },
+  { slug: 'global-credit-report',      label: 'Global Credit Report',                 content: globalCredit },
+  // Backwards-compat: old URL still resolves to the renamed product
+  { slug: 'global-kyb-report',         label: 'Global Credit Report',                 content: globalCredit },
 ];
 
 export const SLUG_TO_TAB: Record<string, TabDef> = Object.fromEntries(

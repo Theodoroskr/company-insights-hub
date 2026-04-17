@@ -61,7 +61,7 @@ export function getTenantHero(
         'Instant company reports, KYB intelligence and compliance screening across 200+ jurisdictions.',
       typingWords: [
         'Unlocking',
-        'Global KYB Report',
+        'Global Credit Report',
         'Global Structure',
         'UK Company Report',
         'Compliance Screening',
@@ -163,6 +163,8 @@ const CYPRUS_ONLY_SLUGS = new Set([
 // Slugs that only make sense for the global tenant
 const GLOBAL_ONLY_SLUGS = new Set([
   'global-structure-report',
+  'global-credit-report',
+  // legacy slug kept so any cached/bookmarked URLs still resolve
   'global-kyb-report',
 ]);
 
