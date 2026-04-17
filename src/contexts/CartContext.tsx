@@ -199,10 +199,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const resolvedSpeed = speedCode ?? speeds[0]?.code ?? 'Normal';
       const idSuffix = opts?.isUpgrade ? '__upgrade' : '';
       const id = makeId(product.id, company.icg_code, resolvedSpeed) + idSuffix;
-      const computed = calcPrice(product, resolvedSpeed);
+      const computed = calcPrice(product, resolvedSpeed, vatRate);
       const price = typeof opts?.priceOverride === 'number' ? opts.priceOverride : computed.price;
       const vatAmount = product.vat_on_full_price
-        ? parseFloat((price * VAT_RATE).toFixed(2))
+        ? parseFloat((price * vatRate).toFixed(2))
         : 0;
       const eligible = isScreeningEligible({ type: product.type as string, slug: product.slug });
       const screeningAddon = !!opts?.screeningAddon && eligible;
@@ -236,7 +236,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         ];
       });
     },
-    []
+    [vatRate]
   );
 
   const removeItem = useCallback((id: string) => {
@@ -248,11 +248,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       prev.map((item) => {
         if (item.id !== id) return item;
         const newId = makeId(item.product.id, item.company.icg_code, speedCode);
-        const { price, vatAmount } = calcPrice(item.product, speedCode);
+        const { price, vatAmount } = calcPrice(item.product, speedCode, vatRate);
         return { ...item, id: newId, speedCode, price, vatAmount };
       })
     );
-  }, []);
+  }, [vatRate]);
 
   const toggleScreeningAddon = useCallback((id: string) => {
     setItems((prev) =>
@@ -294,7 +294,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const certTotals = certificateOrders.reduce(
     (acc, order) => {
-      const t = calcCertOrderTotals(order);
+      const t = calcCertOrderTotals(order, vatRate);
       return { subtotal: acc.subtotal + t.subtotal, vat: acc.vat + t.vat };
     },
     { subtotal: 0, vat: 0 }
