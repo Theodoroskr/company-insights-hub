@@ -925,10 +925,12 @@ export default function CompanyProfilePage() {
                       </>
                     )}
 
-                    <p className="text-sm italic mt-3" style={{ color: 'var(--text-muted)' }}>
-                      Partial names shown. Full names, addresses, appointment dates and history
-                      included in Structure Report.
-                    </p>
+                    {!isUnlocked && (
+                      <p className="text-sm italic mt-3" style={{ color: 'var(--text-muted)' }}>
+                        Partial names shown. Full names, addresses, appointment dates and history
+                        included in Structure Report.
+                      </p>
+                    )}
 
                     {/* Gated history */}
                     <div className="mt-3">
