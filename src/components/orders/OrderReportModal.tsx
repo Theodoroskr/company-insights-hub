@@ -363,6 +363,33 @@ export default function OrderReportModal({
           />
         </div>
 
+        {/* Compliance screening: bundled badge for Enhanced UK KYB */}
+        {selectedProduct && isScreeningIncluded(selectedProduct) && !justAdded && (
+          <div
+            className="mt-4 flex items-start gap-3 rounded-lg border p-3"
+            style={{
+              borderColor: 'var(--brand-accent)',
+              backgroundColor: 'var(--bg-subtle)',
+            }}
+          >
+            <ShieldCheck className="w-4 h-4 mt-0.5 shrink-0" style={{ color: 'var(--brand-accent)' }} />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <span className="text-sm font-semibold" style={{ color: 'var(--text-heading)' }}>
+                  Compliance Screening included
+                </span>
+                <span className="text-xs font-semibold ml-auto px-2 py-0.5 rounded" style={{ backgroundColor: 'var(--brand-accent)', color: 'white' }}>
+                  BUNDLED
+                </span>
+              </div>
+              <p className="text-xs leading-snug" style={{ color: 'var(--text-muted)' }}>
+                Sanctions, PEP &amp; adverse-media checks on the company, directors and shareholders are
+                included in this report at no extra cost.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Compliance screening add-on (KYB / UK / Structure reports only) */}
         {screeningEligible && !justAdded && (
           <label
