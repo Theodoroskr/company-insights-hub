@@ -900,10 +900,22 @@ export default function CompanyProfilePage() {
                     {directors.length > 0 ? (
                       <>
                         {directorEntries.map((d, i) => (
-                          <PersonRow key={`dir-${i}`} name={isUnlocked ? d.name : maskName(d.name)} role="Director" />
+                          <PersonRow
+                            key={`dir-${i}`}
+                            name={isUnlocked ? d.name : maskName(d.name)}
+                            role="Director"
+                            clickable={isUnlocked && !!d.name}
+                            onClick={() => focusAffiliatesByPerson(d.name)}
+                          />
                         ))}
                         {secretaryEntries.map((d, i) => (
-                          <PersonRow key={`sec-${i}`} name={isUnlocked ? d.name : maskName(d.name)} role="Secretary" />
+                          <PersonRow
+                            key={`sec-${i}`}
+                            name={isUnlocked ? d.name : maskName(d.name)}
+                            role="Secretary"
+                            clickable={isUnlocked && !!d.name}
+                            onClick={() => focusAffiliatesByPerson(d.name)}
+                          />
                         ))}
                       </>
                     ) : (
