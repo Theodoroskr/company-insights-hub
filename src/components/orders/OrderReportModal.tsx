@@ -214,6 +214,7 @@ export default function OrderReportModal({
     setSelectedCompany(preselectedCompany ?? null);
     setComment('');
     setAddScreening(false);
+    setEligibleUpgrade(null);
   };
 
   const handleGoToCart = () => {
