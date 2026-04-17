@@ -61,6 +61,10 @@ export interface CartItem {
   vatAmount: number;
   /** True when customer ticked the +€45 ComplyAdvantage screening add-on */
   screeningAddon: boolean;
+  /** True when this is an upgrade from a previously-purchased report (price = delta only) */
+  isUpgrade?: boolean;
+  /** Human label like "Upgrade from UK Company Report" */
+  upgradeLabel?: string;
 }
 
 export interface CertificateCartItem {
