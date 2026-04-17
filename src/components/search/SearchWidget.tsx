@@ -467,6 +467,16 @@ export default function SearchWidget({
           <Search className="w-5 h-5 text-white" />
         </button>
       </div>
+
+      {/* Hint for global tenant when no country picked */}
+      {isGlobal && !selectedCountry && (
+        <p
+          className={`text-xs mt-2 ${isHero ? 'text-center' : 'text-left'}`}
+          style={{ color: 'var(--text-muted)' }}
+        >
+          💡 Tip: pick a country for faster, more accurate results.
+        </p>
+      )}
     </div>
   );
 }
