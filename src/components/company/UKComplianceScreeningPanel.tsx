@@ -360,3 +360,123 @@ export default function UKComplianceScreeningPanel({ orderItemId, isEnhanced, on
     </div>
   );
 }
+
+const ROLE_META: Record<string, { label: string; Icon: typeof Building2 }> = {
+  company: { label: 'Company', Icon: Building2 },
+  officer: { label: 'Officers', Icon: User },
+  shareholder: { label: 'Shareholders', Icon: Users },
+  psc: { label: 'Persons with Significant Control', Icon: Users },
+};
+
+const ROLE_ORDER = ['company', 'officer', 'psc', 'shareholder'];
+
+function ScreenedEntities({
+  entities,
+  fallbackCount,
+  hits,
+}: {
+  entities: ScreenedEntity[];
+  fallbackCount: number;
+  hits: Hit[];
+}) {
+  const [open, setOpen] = useState(false);
+
+  const grouped = useMemo(() => {
+    const groups: Record<string, ScreenedEntity[]> = {};
+    for (const e of entities) {
+      const key = e.role || 'other';
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(e);
+    }
+    return groups;
+  }, [entities]);
+
+  const hitNames = useMemo(() => {
+    const s = new Set<string>();
+    for (const h of hits) s.add(h.entity_name.toLowerCase());
+    return s;
+  }, [hits]);
+
+  if (!entities.length) {
+    return (
+      <p className="text-xs mb-3" style={{ color: 'var(--text-muted)' }}>
+        {fallbackCount} entit{fallbackCount === 1 ? 'y' : 'ies'} screened.
+      </p>
+    );
+  }
+
+  const orderedKeys = ROLE_ORDER.filter((k) => grouped[k]?.length);
+  for (const k of Object.keys(grouped)) if (!orderedKeys.includes(k)) orderedKeys.push(k);
+
+  return (
+    <div
+      className="mb-3 rounded-md border"
+      style={{ borderColor: 'var(--bg-border)', backgroundColor: 'var(--bg-subtle)' }}
+    >
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-3 py-2 text-sm"
+        style={{ color: 'var(--text-body)' }}
+      >
+        <span>
+          <strong style={{ color: 'var(--text-heading)' }}>{entities.length}</strong>{' '}
+          entit{entities.length === 1 ? 'y' : 'ies'} screened
+          <span style={{ color: 'var(--text-muted)' }}>
+            {' '}
+            ·{' '}
+            {orderedKeys
+              .map((k) => `${grouped[k].length} ${ROLE_META[k]?.label.toLowerCase() ?? k}`)
+              .join(' · ')}
+          </span>
+        </span>
+        {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+      </button>
+      {open && (
+        <div className="px-3 pb-3 pt-1 border-t space-y-3" style={{ borderColor: 'var(--bg-border)' }}>
+          {orderedKeys.map((key) => {
+            const meta = ROLE_META[key] ?? { label: key, Icon: User };
+            const RoleIcon = meta.Icon;
+            return (
+              <div key={key}>
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <RoleIcon className="w-3.5 h-3.5" style={{ color: 'var(--text-muted)' }} />
+                  <span
+                    className="text-[11px] font-semibold uppercase tracking-wider"
+                    style={{ color: 'var(--text-muted)' }}
+                  >
+                    {meta.label} ({grouped[key].length})
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {grouped[key].map((e, idx) => {
+                    const isHit = hitNames.has(e.name.toLowerCase());
+                    return (
+                      <span
+                        key={`${e.name}-${idx}`}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border"
+                        style={{
+                          backgroundColor: isHit ? 'var(--risk-high-bg)' : '#fff',
+                          borderColor: isHit ? 'var(--risk-high)' : 'var(--bg-border)',
+                          color: isHit ? 'var(--risk-high)' : 'var(--text-body)',
+                        }}
+                        title={isHit ? 'Match found — see details below' : 'No matches'}
+                      >
+                        {isHit ? (
+                          <ShieldX className="w-3 h-3" />
+                        ) : (
+                          <ShieldCheck className="w-3 h-3" style={{ color: 'var(--risk-low)' }} />
+                        )}
+                        {e.name}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
