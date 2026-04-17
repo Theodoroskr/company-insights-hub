@@ -393,7 +393,9 @@ export default function CompanyProfilePage() {
 
   const [company, setCompany] = useState<Company | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
-  const [affiliated, setAffiliated] = useState<Company[]>([]);
+  const [affiliated, setAffiliated] = useState<Array<Company & { _sharedNames?: string[] }>>([]);
+  const [personFilter, setPersonFilter] = useState<string | null>(null);
+  const affiliatesRef = React.useRef<HTMLDivElement | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [kybModalOpen, setKybModalOpen] = useState(false);
