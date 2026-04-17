@@ -47,6 +47,8 @@ export default function OrderReportModal({
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
   const [addScreening, setAddScreening] = useState(false);
+  /** Eligible upgrade: user already bought standard UK Company Report (within 30d) for this company */
+  const [eligibleUpgrade, setEligibleUpgrade] = useState<{ standardPrice: number } | null>(null);
 
   const isCertificateMode = preselectedProduct?.type === 'certificate' || 
     (!preselectedProduct && selectedProduct?.type === 'certificate');
@@ -109,6 +111,44 @@ export default function OrderReportModal({
     }
   }, [selectedProduct?.type]);
 
+  // Detect upgrade eligibility: user already bought standard UK Company Report
+  // for this company in the last 30 days, AND currently selected = Enhanced UK KYB.
+  useEffect(() => {
+    let cancelled = false;
+    async function check() {
+      if (!selectedCompany || selectedProduct?.slug !== 'enhanced-uk-kyb-report') {
+        if (!cancelled) setEligibleUpgrade(null);
+        return;
+      }
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        if (!cancelled) setEligibleUpgrade(null);
+        return;
+      }
+      const cutoffIso = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
+      const { data } = await supabase
+        .from('order_items')
+        .select('id, unit_price, created_at, products:product_id!inner(slug), orders!inner(user_id, status)')
+        .eq('company_id', selectedCompany.id)
+        .eq('orders.user_id', session.user.id)
+        .gte('created_at', cutoffIso)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      if (cancelled) return;
+      type Row = { unit_price: number; products?: { slug?: string } | null };
+      const rows = (data ?? []) as unknown as Row[];
+      const standard = rows.find((r) => r.products?.slug === 'uk-company-report');
+      const alreadyEnhanced = rows.find((r) => r.products?.slug === 'enhanced-uk-kyb-report');
+      if (standard && !alreadyEnhanced) {
+        setEligibleUpgrade({ standardPrice: Number(standard.unit_price) || 0 });
+      } else {
+        setEligibleUpgrade(null);
+      }
+    }
+    check();
+    return () => { cancelled = true; };
+  }, [selectedCompany?.id, selectedProduct?.slug]);
+
   const toggleCert = (id: string) => {
     setSelectedCertIds((prev) => {
       const next = new Set(prev);
@@ -153,8 +193,15 @@ export default function OrderReportModal({
         ? (selectedProduct.available_speeds as ProductSpeed[])
         : [];
       const speedCode = speeds[0]?.code ?? 'Normal';
+      const isUpgrade = !!eligibleUpgrade;
+      const upgradeDelta = isUpgrade
+        ? Math.max(0, selectedProduct.base_price - (eligibleUpgrade?.standardPrice ?? 0))
+        : undefined;
       addItem(selectedProduct, selectedCompany, speedCode, {
         screeningAddon: addScreening && screeningEligible,
+        priceOverride: upgradeDelta,
+        isUpgrade,
+        upgradeLabel: isUpgrade ? 'Upgrade from UK Company Report' : undefined,
       });
     }
     setJustAdded(true);
@@ -167,6 +214,7 @@ export default function OrderReportModal({
     setSelectedCompany(preselectedCompany ?? null);
     setComment('');
     setAddScreening(false);
+    setEligibleUpgrade(null);
   };
 
   const handleGoToCart = () => {
@@ -183,7 +231,9 @@ export default function OrderReportModal({
   // Calculate total price (in EUR for cart math)
   const baseTotalEur = isCertificateMode
     ? certificates.filter((c) => selectedCertIds.has(c.id)).reduce((sum, c) => sum + c.base_price, 0)
-    : selectedProduct?.base_price ?? 0;
+    : eligibleUpgrade && selectedProduct?.slug === 'enhanced-uk-kyb-report'
+      ? Math.max(0, (selectedProduct.base_price ?? 0) - eligibleUpgrade.standardPrice)
+      : selectedProduct?.base_price ?? 0;
   const screeningEur = screeningEligible && addScreening ? SCREENING_ADDON_PRICE_EUR : 0;
   const totalEur = baseTotalEur + screeningEur;
 
@@ -362,6 +412,32 @@ export default function OrderReportModal({
             }}
           />
         </div>
+
+        {/* Upgrade banner: standard UK report bought in last 30d → Enhanced upgrade for delta */}
+        {eligibleUpgrade && selectedProduct?.slug === 'enhanced-uk-kyb-report' && !justAdded && (
+          <div
+            className="mt-4 rounded-lg border-2 p-3"
+            style={{
+              borderColor: 'var(--brand-accent)',
+              backgroundColor: 'var(--bg-subtle)',
+            }}
+          >
+            <div className="flex items-center gap-1.5 mb-1">
+              <span className="text-xs font-bold px-2 py-0.5 rounded" style={{ backgroundColor: 'var(--brand-accent)', color: 'white' }}>
+                UPGRADE PRICING
+              </span>
+              <span className="text-sm font-semibold" style={{ color: 'var(--text-heading)' }}>
+                You already own the UK Company Report
+              </span>
+            </div>
+            <p className="text-xs leading-snug" style={{ color: 'var(--text-muted)' }}>
+              Pay only the difference: {fmtFx(selectedProduct.base_price, { decimals: 0 })}{' '}
+              − {fmtFx(eligibleUpgrade.standardPrice, { decimals: 0 })}{' '}
+              = <strong style={{ color: 'var(--brand-accent)' }}>{fmtFx(Math.max(0, selectedProduct.base_price - eligibleUpgrade.standardPrice), { decimals: 0 })}</strong>{' '}
+              to unlock Enhanced KYB with full ComplyAdvantage screening.
+            </p>
+          </div>
+        )}
 
         {/* Compliance screening: bundled badge for Enhanced UK KYB */}
         {selectedProduct && isScreeningIncluded(selectedProduct) && !justAdded && (
