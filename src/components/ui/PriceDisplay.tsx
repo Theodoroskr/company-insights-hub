@@ -58,14 +58,16 @@ export default function PriceDisplay({
           </span>
         </div>
       )}
-      <div className="flex justify-between">
-        <span style={{ color: 'var(--text-muted)' }}>
-          VAT ({(vatRate * 100).toFixed(0)}%)
-        </span>
-        <span className="tabular-nums" style={{ color: 'var(--text-body)' }}>
-          {formatCurrency(vatAmount, currency)}
-        </span>
-      </div>
+      {effectiveVatRate > 0 && (
+        <div className="flex justify-between">
+          <span style={{ color: 'var(--text-muted)' }}>
+            VAT ({(effectiveVatRate * 100).toFixed(0)}%)
+          </span>
+          <span className="tabular-nums" style={{ color: 'var(--text-body)' }}>
+            {formatCurrency(vatAmount, currency)}
+          </span>
+        </div>
+      )}
       <div
         className="flex justify-between font-semibold pt-1 border-t"
         style={{ borderColor: 'var(--bg-border)' }}
