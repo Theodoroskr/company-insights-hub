@@ -253,7 +253,15 @@ export default function UKComplianceScreeningPanel({ orderItemId, isEnhanced, on
         </span>
       </div>
 
+      {/* Screened entities summary */}
+      <ScreenedEntities
+        entities={result.raw_response?.entities ?? []}
+        fallbackCount={result.entities_screened}
+        hits={hits}
+      />
+
       <div className="grid grid-cols-3 gap-3 mb-3">
+
         {tiles.map((t) => {
           const tm = STATUS_META[t.tone];
           return (
