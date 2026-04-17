@@ -1,8 +1,11 @@
 import React from 'react';
+import { useTenant } from '@/lib/tenant';
+import { getVatRate } from '@/lib/tenantConfig';
 
 interface PriceDisplayProps {
   basePrice: number;
   serviceFee?: number;
+  /** Override VAT rate; if omitted, derived from active tenant */
   vatRate?: number;
   currency?: string;
   showBreakdown?: boolean;
@@ -17,7 +20,7 @@ function formatCurrency(amount: number, currency: string): string {
 export default function PriceDisplay({
   basePrice,
   serviceFee = 0,
-  vatRate = 0.19,
+  vatRate,
   currency = 'EUR',
   showBreakdown = false,
   className = '',
