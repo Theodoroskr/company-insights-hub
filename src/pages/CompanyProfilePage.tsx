@@ -498,7 +498,7 @@ export default function CompanyProfilePage() {
 
       const { data, error } = await supabase
         .from('order_items')
-        .select('id, fulfillment_status, products:product_id(slug), orders!inner(user_id, status), generated_reports(api4all_raw_json, generated_at)')
+        .select('id, fulfillment_status, screening_addon, products:product_id(slug), orders!inner(user_id, status), generated_reports(api4all_raw_json, generated_at)')
         .eq('company_id', company.id)
         .eq('orders.user_id', session.user.id)
         .in('fulfillment_status', ['completed', 'fulfilled', 'delivered']);
@@ -511,16 +511,20 @@ export default function CompanyProfilePage() {
       if (unlocked && data) {
         type Item = {
           id: string;
+          screening_addon?: boolean;
           products?: { slug?: string } | null;
           generated_reports?: Array<{ generated_at?: string; api4all_raw_json?: { psc?: unknown[] } }>;
         };
         const items = data as unknown as Item[];
 
-        // Prefer the enhanced item if user owns it, else most recent
+        // Screening is unlocked if the user owns Enhanced UK KYB OR
+        // any standard report with the paid screening add-on for this company.
         const enhanced = items.find((i) => i.products?.slug === 'enhanced-uk-kyb-report');
-        setHasEnhancedKyb(!!enhanced);
+        const withScreeningAddon = items.find((i) => i.screening_addon === true);
+        setHasEnhancedKyb(!!enhanced || !!withScreeningAddon);
 
-        let chosen: Item | null = enhanced ?? null;
+        // Prefer enhanced, then add-on item, else most recent
+        let chosen: Item | null = enhanced ?? withScreeningAddon ?? null;
         let latestReport: { generated_at?: string; api4all_raw_json?: { psc?: unknown[] } } | null = null;
 
         if (chosen) {
