@@ -450,27 +450,52 @@ export default function CompanyProfilePage() {
         );
       }
 
-      // Find affiliated companies by matching director names
+      // Find affiliated companies by matching director / officer / PSC names
       const directors: DirectorEntry[] = Array.isArray(comp.directors_json) ? comp.directors_json : [];
-      const directorNames = directors.map(d => d.name.toUpperCase());
+      const namePool = new Set<string>();
+      for (const d of directors) {
+        if (d?.name) namePool.add(d.name.toUpperCase().trim());
+      }
+      // Also harvest from cached UK CH bundle (officers + psc on raw_source_json)
+      const raw = (comp.raw_source_json ?? null) as { officers?: Array<{ name?: string }>; psc?: Array<{ name?: string }> } | null;
+      if (Array.isArray(raw?.officers)) {
+        for (const o of raw!.officers) if (o?.name) namePool.add(o.name.toUpperCase().trim());
+      }
+      if (Array.isArray(raw?.psc)) {
+        for (const p of raw!.psc) if (p?.name) namePool.add(p.name.toUpperCase().trim());
+      }
 
-      if (directorNames.length > 0) {
-        // Search companies that have directors_json containing any matching name
+      if (namePool.size > 0) {
+        // Pull a generous candidate set from the same tenant (cached_at desc)
         const { data: affData } = await supabase
           .from('companies')
           .select('id, name, slug, reg_no, status, country_code, icg_code, directors_json, raw_source_json, tenant_id, vat_no, legal_form, registered_address, cached_at, meta_title, meta_description')
           .eq('tenant_id', tenant!.id)
           .neq('id', comp.id)
-          .not('directors_json', 'is', null)
-          .limit(50);
+          .or('directors_json.not.is.null,raw_source_json.not.is.null')
+          .order('cached_at', { ascending: false })
+          .limit(300);
 
         if (affData) {
-          // Filter to companies sharing at least one director name
-          const matches = (affData as unknown as Company[]).filter(c => {
+          const matches: Array<Company & { _sharedNames?: string[] }> = [];
+          for (const c of affData as unknown as Company[]) {
+            const theirNames = new Set<string>();
             const theirDirectors: DirectorEntry[] = Array.isArray(c.directors_json) ? c.directors_json : [];
-            return theirDirectors.some(d => directorNames.includes(d.name.toUpperCase()));
-          });
-          setAffiliated(matches.slice(0, 10));
+            for (const d of theirDirectors) if (d?.name) theirNames.add(d.name.toUpperCase().trim());
+            const theirRaw = (c.raw_source_json ?? null) as { officers?: Array<{ name?: string }>; psc?: Array<{ name?: string }> } | null;
+            if (Array.isArray(theirRaw?.officers)) {
+              for (const o of theirRaw!.officers) if (o?.name) theirNames.add(o.name.toUpperCase().trim());
+            }
+            if (Array.isArray(theirRaw?.psc)) {
+              for (const p of theirRaw!.psc) if (p?.name) theirNames.add(p.name.toUpperCase().trim());
+            }
+            const shared: string[] = [];
+            for (const n of theirNames) if (namePool.has(n)) shared.push(n);
+            if (shared.length > 0) {
+              matches.push({ ...c, _sharedNames: shared });
+            }
+          }
+          setAffiliated(matches.slice(0, 25));
         }
       } else {
         setAffiliated([]);
