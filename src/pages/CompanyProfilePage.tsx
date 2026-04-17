@@ -101,18 +101,45 @@ function RecordBadge({ count }: { count: string }) {
   );
 }
 
-function PersonRow({ name, role }: { name: string; role: string }) {
+function PersonRow({
+  name,
+  role,
+  onClick,
+  clickable = false,
+}: {
+  name: string;
+  role: string;
+  onClick?: () => void;
+  clickable?: boolean;
+}) {
+  const Wrapper: React.ElementType = clickable ? 'button' : 'div';
   return (
-    <div className="flex items-center gap-3 py-2 border-b last:border-0" style={{ borderColor: 'var(--bg-border)' }}>
+    <Wrapper
+      onClick={clickable ? onClick : undefined}
+      className={`w-full flex items-center gap-3 py-2 border-b last:border-0 text-left ${
+        clickable ? 'hover:bg-[var(--bg-subtle)] rounded-md px-2 -mx-2 transition-colors cursor-pointer group' : ''
+      }`}
+      style={{ borderColor: 'var(--bg-border)' }}
+    >
       <span className="text-base" style={{ color: 'var(--text-muted)' }}>👤</span>
-      <span className="text-sm font-medium flex-1" style={{ color: 'var(--text-body)' }}>{name}</span>
+      <span
+        className="text-sm font-medium flex-1"
+        style={{ color: clickable ? 'var(--brand-primary)' : 'var(--text-body)' }}
+      >
+        {name}
+        {clickable && (
+          <span className="ml-1.5 text-[10px] uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: 'var(--text-muted)' }}>
+            Find related →
+          </span>
+        )}
+      </span>
       <span
         className="text-xs px-2 py-0.5 rounded-full"
         style={{ backgroundColor: 'var(--bg-subtle)', color: 'var(--text-muted)' }}
       >
         {role}
       </span>
-    </div>
+    </Wrapper>
   );
 }
 
@@ -393,7 +420,9 @@ export default function CompanyProfilePage() {
 
   const [company, setCompany] = useState<Company | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
-  const [affiliated, setAffiliated] = useState<Company[]>([]);
+  const [affiliated, setAffiliated] = useState<Array<Company & { _sharedNames?: string[] }>>([]);
+  const [personFilter, setPersonFilter] = useState<string | null>(null);
+  const affiliatesRef = React.useRef<HTMLDivElement | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [kybModalOpen, setKybModalOpen] = useState(false);
@@ -448,27 +477,52 @@ export default function CompanyProfilePage() {
         );
       }
 
-      // Find affiliated companies by matching director names
+      // Find affiliated companies by matching director / officer / PSC names
       const directors: DirectorEntry[] = Array.isArray(comp.directors_json) ? comp.directors_json : [];
-      const directorNames = directors.map(d => d.name.toUpperCase());
+      const namePool = new Set<string>();
+      for (const d of directors) {
+        if (d?.name) namePool.add(d.name.toUpperCase().trim());
+      }
+      // Also harvest from cached UK CH bundle (officers + psc on raw_source_json)
+      const raw = (comp.raw_source_json ?? null) as { officers?: Array<{ name?: string }>; psc?: Array<{ name?: string }> } | null;
+      if (Array.isArray(raw?.officers)) {
+        for (const o of raw!.officers) if (o?.name) namePool.add(o.name.toUpperCase().trim());
+      }
+      if (Array.isArray(raw?.psc)) {
+        for (const p of raw!.psc) if (p?.name) namePool.add(p.name.toUpperCase().trim());
+      }
 
-      if (directorNames.length > 0) {
-        // Search companies that have directors_json containing any matching name
+      if (namePool.size > 0) {
+        // Pull a generous candidate set from the same tenant (cached_at desc)
         const { data: affData } = await supabase
           .from('companies')
           .select('id, name, slug, reg_no, status, country_code, icg_code, directors_json, raw_source_json, tenant_id, vat_no, legal_form, registered_address, cached_at, meta_title, meta_description')
           .eq('tenant_id', tenant!.id)
           .neq('id', comp.id)
-          .not('directors_json', 'is', null)
-          .limit(50);
+          .or('directors_json.not.is.null,raw_source_json.not.is.null')
+          .order('cached_at', { ascending: false })
+          .limit(300);
 
         if (affData) {
-          // Filter to companies sharing at least one director name
-          const matches = (affData as unknown as Company[]).filter(c => {
+          const matches: Array<Company & { _sharedNames?: string[] }> = [];
+          for (const c of affData as unknown as Company[]) {
+            const theirNames = new Set<string>();
             const theirDirectors: DirectorEntry[] = Array.isArray(c.directors_json) ? c.directors_json : [];
-            return theirDirectors.some(d => directorNames.includes(d.name.toUpperCase()));
-          });
-          setAffiliated(matches.slice(0, 10));
+            for (const d of theirDirectors) if (d?.name) theirNames.add(d.name.toUpperCase().trim());
+            const theirRaw = (c.raw_source_json ?? null) as { officers?: Array<{ name?: string }>; psc?: Array<{ name?: string }> } | null;
+            if (Array.isArray(theirRaw?.officers)) {
+              for (const o of theirRaw!.officers) if (o?.name) theirNames.add(o.name.toUpperCase().trim());
+            }
+            if (Array.isArray(theirRaw?.psc)) {
+              for (const p of theirRaw!.psc) if (p?.name) theirNames.add(p.name.toUpperCase().trim());
+            }
+            const shared: string[] = [];
+            for (const n of theirNames) if (namePool.has(n)) shared.push(n);
+            if (shared.length > 0) {
+              matches.push({ ...c, _sharedNames: shared });
+            }
+          }
+          setAffiliated(matches.slice(0, 25));
         }
       } else {
         setAffiliated([]);
@@ -639,6 +693,18 @@ export default function CompanyProfilePage() {
 
   const openStructureModal = () => {
     if (structureProduct) setStructureModalOpen(true);
+  };
+
+  const focusAffiliatesByPerson = (name: string) => {
+    if (!isUnlocked) {
+      // Not unlocked → encourage purchase that reveals the data
+      openStructureModal();
+      return;
+    }
+    setPersonFilter(name.toUpperCase().trim());
+    setTimeout(() => {
+      affiliatesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
   };
 
   const companySidebarShape = {
@@ -834,10 +900,22 @@ export default function CompanyProfilePage() {
                     {directors.length > 0 ? (
                       <>
                         {directorEntries.map((d, i) => (
-                          <PersonRow key={`dir-${i}`} name={isUnlocked ? d.name : maskName(d.name)} role="Director" />
+                          <PersonRow
+                            key={`dir-${i}`}
+                            name={isUnlocked ? d.name : maskName(d.name)}
+                            role="Director"
+                            clickable={isUnlocked && !!d.name}
+                            onClick={() => focusAffiliatesByPerson(d.name)}
+                          />
                         ))}
                         {secretaryEntries.map((d, i) => (
-                          <PersonRow key={`sec-${i}`} name={isUnlocked ? d.name : maskName(d.name)} role="Secretary" />
+                          <PersonRow
+                            key={`sec-${i}`}
+                            name={isUnlocked ? d.name : maskName(d.name)}
+                            role="Secretary"
+                            clickable={isUnlocked && !!d.name}
+                            onClick={() => focusAffiliatesByPerson(d.name)}
+                          />
                         ))}
                       </>
                     ) : (
@@ -946,7 +1024,22 @@ export default function CompanyProfilePage() {
                         style={{ borderColor: 'var(--bg-border)', opacity: isCeased ? 0.6 : 1 }}
                       >
                         <div className="flex items-center justify-between gap-2">
-                          <span className="font-medium" style={{ color: 'var(--text-body)' }}>{name}</span>
+                          {name && name !== '—' ? (
+                            <button
+                              type="button"
+                              onClick={() => focusAffiliatesByPerson(name)}
+                              className="font-medium text-left hover:underline transition-colors group inline-flex items-center gap-1.5"
+                              style={{ color: 'var(--brand-primary)' }}
+                              title="Find related companies for this beneficial owner"
+                            >
+                              {name}
+                              <span className="text-[10px] uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: 'var(--text-muted)' }}>
+                                Find related →
+                              </span>
+                            </button>
+                          ) : (
+                            <span className="font-medium" style={{ color: 'var(--text-body)' }}>{name}</span>
+                          )}
                           {kind && (
                             <span
                               className="text-xs px-2 py-0.5 rounded-full"
@@ -1032,55 +1125,82 @@ export default function CompanyProfilePage() {
 
             {/* G — Affiliated Companies */}
             <SectionCard>
-              <SectionTitle>Potentially Affiliated Companies</SectionTitle>
+              <div ref={affiliatesRef} />
+              <div className="flex items-center justify-between gap-2 flex-wrap mb-1">
+                <SectionTitle>Potentially Affiliated Companies</SectionTitle>
+                {personFilter && (
+                  <button
+                    type="button"
+                    onClick={() => setPersonFilter(null)}
+                    className="text-xs px-2.5 py-1 rounded-full border hover:opacity-80 transition-opacity"
+                    style={{
+                      borderColor: 'var(--brand-primary)',
+                      backgroundColor: 'var(--brand-primary-bg)',
+                      color: 'var(--brand-primary)',
+                    }}
+                  >
+                    Filtered by: {personFilter} · clear ✕
+                  </button>
+                )}
+              </div>
               <p className="text-sm mb-4" style={{ color: 'var(--text-muted)' }}>
-                Companies sharing directors or secretaries with {company.name}
+                {personFilter
+                  ? `Other companies linked to ${personFilter} as a director, officer or beneficial owner.`
+                  : `Companies sharing directors, officers or beneficial owners with ${company.name}`}
               </p>
 
-              {affiliated.length > 0 ? (
-                <div className="space-y-2">
-                  {affiliated.map((aff) => {
-                    // Find the shared director name(s)
-                    const myDirectors = Array.isArray(company.directors_json) ? company.directors_json : [];
-                    const theirDirectors: DirectorEntry[] = Array.isArray(aff.directors_json) ? aff.directors_json : [];
-                    const myNames = myDirectors.map(d => d.name.toUpperCase());
-                    const sharedNames = theirDirectors
-                      .filter(d => myNames.includes(d.name.toUpperCase()))
-                      .map(d => maskName(d.name));
+              {(() => {
+                const filtered = personFilter
+                  ? affiliated.filter((a) => (a._sharedNames ?? []).includes(personFilter))
+                  : affiliated;
 
-                    return (
-                      <div
-                        key={aff.id}
-                        className="flex items-center justify-between p-3 rounded border"
-                        style={{ borderColor: 'var(--bg-border)' }}
-                      >
-                        <div>
-                          <Link
-                            to={`/company/${aff.slug ?? aff.id}`}
-                            className="text-sm font-medium hover:underline"
-                            style={{ color: 'var(--brand-accent)' }}
-                          >
-                            {aff.name}
-                          </Link>
-                          {aff.reg_no && (
-                            <span className="ml-2 text-xs" style={{ color: 'var(--text-muted)' }}>
-                              {aff.reg_no}
-                            </span>
-                          )}
-                          <p className="text-xs italic mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                            via {sharedNames.length > 0 ? sharedNames.join(', ') : 'shared director'}
-                          </p>
+                if (filtered.length === 0) {
+                  return (
+                    <p className="text-sm italic" style={{ color: 'var(--text-muted)' }}>
+                      {personFilter
+                        ? `No other companies in our index are currently linked to ${personFilter}. Order an Enhanced KYB report to run a deeper officer cross-check.`
+                        : 'No affiliated companies found yet. More connections appear as companies are searched.'}
+                    </p>
+                  );
+                }
+
+                return (
+                  <div className="space-y-2">
+                    {filtered.map((aff) => {
+                      const sharedNames = aff._sharedNames ?? [];
+                      const display = isUnlocked
+                        ? sharedNames
+                        : sharedNames.map((n) => maskName(n));
+                      return (
+                        <div
+                          key={aff.id}
+                          className="flex items-center justify-between p-3 rounded border"
+                          style={{ borderColor: 'var(--bg-border)' }}
+                        >
+                          <div>
+                            <Link
+                              to={`/company/${aff.slug ?? aff.id}`}
+                              className="text-sm font-medium hover:underline"
+                              style={{ color: 'var(--brand-accent)' }}
+                            >
+                              {aff.name}
+                            </Link>
+                            {aff.reg_no && (
+                              <span className="ml-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+                                {aff.reg_no}
+                              </span>
+                            )}
+                            <p className="text-xs italic mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                              via {display.length > 0 ? display.join(', ') : 'shared person'}
+                            </p>
+                          </div>
+                          {aff.status && <StatusBadge status={aff.status} />}
                         </div>
-                        {aff.status && <StatusBadge status={aff.status} />}
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="text-sm italic" style={{ color: 'var(--text-muted)' }}>
-                  No affiliated companies found yet. More connections appear as companies are searched.
-                </p>
-              )}
+                      );
+                    })}
+                  </div>
+                );
+              })()}
 
               {Array.isArray(company.directors_json) && company.directors_json.length > 0 && (
                 <Link
