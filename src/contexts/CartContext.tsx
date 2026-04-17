@@ -203,8 +203,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       setItems((prev) => {
         if (prev.find((i) => i.id === id)) return prev;
+        // If this is an Enhanced UK KYB upgrade, drop any standard uk-company-report
+        // line in the cart for the same company — the upgrade replaces it.
+        const filtered = opts?.isUpgrade
+          ? prev.filter(
+              (i) =>
+                !(
+                  i.product.slug === 'uk-company-report' &&
+                  i.company.icg_code === company.icg_code
+                ),
+            )
+          : prev;
         return [
-          ...prev,
+          ...filtered,
           {
             id,
             product,
