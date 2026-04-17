@@ -193,8 +193,15 @@ export default function OrderReportModal({
         ? (selectedProduct.available_speeds as ProductSpeed[])
         : [];
       const speedCode = speeds[0]?.code ?? 'Normal';
+      const isUpgrade = !!eligibleUpgrade;
+      const upgradeDelta = isUpgrade
+        ? Math.max(0, selectedProduct.base_price - (eligibleUpgrade?.standardPrice ?? 0))
+        : undefined;
       addItem(selectedProduct, selectedCompany, speedCode, {
         screeningAddon: addScreening && screeningEligible,
+        priceOverride: upgradeDelta,
+        isUpgrade,
+        upgradeLabel: isUpgrade ? 'Upgrade from UK Company Report' : undefined,
       });
     }
     setJustAdded(true);
