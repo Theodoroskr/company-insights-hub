@@ -191,95 +191,75 @@ export default function SearchWidget({
       >
         {/* ── Country selector panel ── */}
         <div className="relative flex-shrink-0">
-          {!isGlobal ? (
-            /* Single-country: disabled chip */
+          <button
+            type="button"
+            disabled={!isGlobal}
+            onClick={() => isGlobal && setShowAllCountries((v) => !v)}
+            className={`flex items-center gap-2 px-4 border-r font-medium text-sm whitespace-nowrap select-none transition-colors ${
+              isHero ? 'h-14 min-w-[180px]' : 'h-11 min-w-[150px]'
+            } ${isGlobal ? 'cursor-pointer hover:bg-gray-50' : 'cursor-default'}`}
+            style={{
+              borderColor: 'var(--bg-border)',
+              color: activeCountry ? 'var(--text-body)' : 'var(--text-muted)',
+              backgroundColor: 'var(--bg-subtle)',
+              borderRadius: '8px 0 0 8px',
+            }}
+            aria-haspopup={isGlobal ? 'listbox' : undefined}
+            aria-expanded={isGlobal ? showAllCountries : undefined}
+          >
+            <span className="text-base leading-none">
+              {activeCountry?.flag_emoji ?? '🌍'}
+            </span>
+            <span className="flex-1 text-left truncate">
+              {activeCountry?.name ?? 'Choose country'}
+            </span>
+            {isGlobal && (
+              <ChevronDown
+                className={`w-4 h-4 transition-transform ${
+                  showAllCountries ? 'rotate-180' : ''
+                }`}
+                style={{ color: 'var(--text-muted)' }}
+              />
+            )}
+          </button>
+
+          {/* All countries dropdown (global tenant only) */}
+          {isGlobal && showAllCountries && (
             <div
-              className={`flex items-center gap-2 px-3 border-r font-medium text-sm whitespace-nowrap select-none ${isHero ? 'h-14' : 'h-11'}`}
-              style={{
-                borderColor: 'var(--bg-border)',
-                color: 'var(--text-body)',
-                backgroundColor: 'var(--bg-subtle)',
-                borderRadius: '8px 0 0 8px',
-              }}
+              className="absolute top-full left-0 mt-1 w-72 bg-white rounded-lg shadow-xl border z-50 overflow-hidden"
+              style={{ borderColor: 'var(--bg-border)' }}
             >
-              {resolvedCountryName || '🌍 Select country'}
-            </div>
-          ) : (
-            /* Global: featured chips + dropdown */
-            <div
-              className={`flex flex-wrap items-center gap-1.5 px-3 py-2 border-r max-w-xs ${isHero ? 'min-h-14' : 'min-h-11'}`}
-              style={{
-                borderColor: 'var(--bg-border)',
-                backgroundColor: 'var(--bg-subtle)',
-                borderRadius: '8px 0 0 8px',
-              }}
-            >
-              {featuredCountries.slice(0, 5).map((c: Country) => (
-                <button
-                  key={c.code}
-                  type="button"
-                  onClick={() =>
-                    setSelectedCountry((prev) => (prev === c.code ? '' : c.code))
-                  }
-                  className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium border transition-all"
+              <div className="p-2 border-b" style={{ borderColor: 'var(--bg-border)' }}>
+                <input
+                  type="text"
+                  placeholder="Search countries..."
+                  value={countrySearch}
+                  onChange={(e) => setCountrySearch(e.target.value)}
+                  autoFocus
+                  className="w-full px-3 py-1.5 text-sm rounded border outline-none"
                   style={{
-                    backgroundColor:
-                      selectedCountry === c.code ? 'var(--brand-primary)' : '#fff',
-                    color:
-                      selectedCountry === c.code ? '#fff' : 'var(--text-body)',
-                    borderColor:
-                      selectedCountry === c.code
-                        ? 'var(--brand-primary)'
-                        : 'var(--bg-border)',
+                    borderColor: 'var(--bg-border)',
+                    color: 'var(--text-body)',
                   }}
-                >
-                  <span>{c.flag_emoji}</span>
-                  <span>{c.name}</span>
-                </button>
-              ))}
-
-              {/* All countries dropdown trigger */}
-              <button
-                type="button"
-                onClick={() => setShowAllCountries((v) => !v)}
-                className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium border transition-all"
-                style={{
-                  borderColor: 'var(--bg-border)',
-                  color: 'var(--text-body)',
-                  backgroundColor: '#fff',
-                }}
-              >
-                All countries
-                <ChevronDown className="w-3 h-3" />
-              </button>
-
-              {/* All countries dropdown */}
-              {showAllCountries && (
-                <div
-                  className="absolute top-full left-0 mt-1 w-72 bg-white rounded-lg shadow-xl border z-50 overflow-hidden"
-                  style={{ borderColor: 'var(--bg-border)' }}
-                >
-                  <div className="p-2 border-b" style={{ borderColor: 'var(--bg-border)' }}>
-                    <input
-                      type="text"
-                      placeholder="Search countries..."
-                      value={countrySearch}
-                      onChange={(e) => setCountrySearch(e.target.value)}
-                      className="w-full px-3 py-1.5 text-sm rounded border outline-none"
-                      style={{
-                        borderColor: 'var(--bg-border)',
-                        color: 'var(--text-body)',
-                      }}
-                    />
-                  </div>
-                  <div className="max-h-48 overflow-y-auto py-1">
-                    {filteredAllCountries.map((c: Country) => (
+                />
+              </div>
+              <div className="max-h-64 overflow-y-auto py-1">
+                {countrySearch === '' && featuredCountries.length > 0 && (
+                  <>
+                    <p
+                      className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider"
+                      style={{ color: 'var(--text-muted)' }}
+                    >
+                      Popular
+                    </p>
+                    {featuredCountries.map((c: Country) => (
                       <button
-                        key={c.code}
+                        key={`featured-${c.code}`}
                         type="button"
                         onClick={() => {
                           setSelectedCountry(c.code);
                           setShowAllCountries(false);
+                          setCountrySearch('');
                         }}
                         className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50 transition-colors"
                         style={{
@@ -288,17 +268,60 @@ export default function SearchWidget({
                         }}
                       >
                         <span>{c.flag_emoji}</span>
-                        <span>{c.name}</span>
+                        <span className="flex-1 text-left">{c.name}</span>
                       </button>
                     ))}
-                    {filteredAllCountries.length === 0 && (
-                      <p className="px-3 py-4 text-sm text-center" style={{ color: 'var(--text-muted)' }}>
-                        No countries found
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
+                    <div
+                      className="my-1 border-t"
+                      style={{ borderColor: 'var(--bg-border)' }}
+                    />
+                    <p
+                      className="px-3 pt-1 pb-1 text-[10px] font-semibold uppercase tracking-wider"
+                      style={{ color: 'var(--text-muted)' }}
+                    >
+                      All countries
+                    </p>
+                  </>
+                )}
+                {countrySearch === '' && selectedCountry && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedCountry('');
+                      setShowAllCountries(false);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50 transition-colors italic"
+                    style={{ color: 'var(--text-muted)' }}
+                  >
+                    <span>🌍</span>
+                    <span className="flex-1 text-left">Any country</span>
+                  </button>
+                )}
+                {filteredAllCountries.map((c: Country) => (
+                  <button
+                    key={c.code}
+                    type="button"
+                    onClick={() => {
+                      setSelectedCountry(c.code);
+                      setShowAllCountries(false);
+                      setCountrySearch('');
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50 transition-colors"
+                    style={{
+                      color: 'var(--text-body)',
+                      fontWeight: selectedCountry === c.code ? 600 : 400,
+                    }}
+                  >
+                    <span>{c.flag_emoji}</span>
+                    <span className="flex-1 text-left">{c.name}</span>
+                  </button>
+                ))}
+                {filteredAllCountries.length === 0 && (
+                  <p className="px-3 py-4 text-sm text-center" style={{ color: 'var(--text-muted)' }}>
+                    No countries found
+                  </p>
+                )}
+              </div>
             </div>
           )}
         </div>
