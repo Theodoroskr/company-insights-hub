@@ -695,6 +695,18 @@ export default function CompanyProfilePage() {
     if (structureProduct) setStructureModalOpen(true);
   };
 
+  const focusAffiliatesByPerson = (name: string) => {
+    if (!isUnlocked) {
+      // Not unlocked → encourage purchase that reveals the data
+      openStructureModal();
+      return;
+    }
+    setPersonFilter(name.toUpperCase().trim());
+    setTimeout(() => {
+      affiliatesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  };
+
   const companySidebarShape = {
     id: company.id,
     icg_code: company.icg_code,
