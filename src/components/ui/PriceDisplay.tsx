@@ -25,8 +25,10 @@ export default function PriceDisplay({
   showBreakdown = false,
   className = '',
 }: PriceDisplayProps) {
+  const { tenant } = useTenant();
+  const effectiveVatRate = vatRate ?? getVatRate(tenant?.slug);
   const subtotal = basePrice + serviceFee;
-  const vatAmount = subtotal * vatRate;
+  const vatAmount = subtotal * effectiveVatRate;
   const total = subtotal + vatAmount;
 
   if (!showBreakdown) {
