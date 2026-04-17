@@ -167,14 +167,28 @@ export default function ProductLandingPage() {
     }
   };
 
-  const content: ProductContent | null = activeTab?.content ?? null;
+  const baseContent: ProductContent | null = activeTab?.content ?? null;
+  const tenantSlug = tenant?.slug ?? null;
+  const hero = useMemo(
+    () => getTenantHero(tenantSlug, tenant?.brand_name),
+    [tenantSlug, tenant?.brand_name],
+  );
+  const visibleTabs = useMemo(
+    () => filterTabsForTenant(PRODUCT_TABS, tenantSlug),
+    [tenantSlug],
+  );
+  const content: ProductContent | null = useMemo(
+    () => (baseContent ? localizeContent(baseContent, tenantSlug) : null),
+    [baseContent, tenantSlug],
+  );
+
   const productName = activeTab?.label ?? dbProduct?.name ?? 'Report';
   const price = dbProduct?.base_price ?? null;
 
   return (
     <PageLayout>
       <Helmet>
-        <title>{productName} | Companies House Cyprus</title>
+        <title>{productName} | {hero.metaTitleSuffix}</title>
       </Helmet>
 
       {/* ── HERO ─────────────────────────────────────────────── */}
@@ -187,14 +201,13 @@ export default function ProductLandingPage() {
       >
         <div className="max-w-6xl mx-auto px-6 w-full">
           <p className="text-4xl italic font-light mb-1">
-            <TypingWord />
+            <TypingWord words={hero.typingWords} />
           </p>
           <h1 className="text-5xl font-light text-white leading-tight">
-            Company Insights in Cyprus
+            {hero.productLandingHeroH1}
           </h1>
           <p className="mt-4 text-base max-w-2xl" style={{ color: 'rgba(255,255,255,0.70)' }}>
-            Explore Comprehensive Company Structure and Ownership Information in Cyprus. Ensure
-            Invoicing Accuracy and Secure Your Business Future.
+            {hero.productLandingHeroSubtitle}
           </p>
         </div>
       </section>
@@ -209,7 +222,7 @@ export default function ProductLandingPage() {
           className="flex min-w-max max-w-6xl mx-auto px-6"
           style={{ scrollbarWidth: 'none' }}
         >
-          {PRODUCT_TABS.map((tab) => {
+          {visibleTabs.map((tab) => {
             const isActive = tab.slug === activeTab?.slug;
             return (
               <button
