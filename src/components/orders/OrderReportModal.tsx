@@ -412,6 +412,32 @@ export default function OrderReportModal({
           />
         </div>
 
+        {/* Upgrade banner: standard UK report bought in last 30d → Enhanced upgrade for delta */}
+        {eligibleUpgrade && selectedProduct?.slug === 'enhanced-uk-kyb-report' && !justAdded && (
+          <div
+            className="mt-4 rounded-lg border-2 p-3"
+            style={{
+              borderColor: 'var(--brand-accent)',
+              backgroundColor: 'var(--bg-subtle)',
+            }}
+          >
+            <div className="flex items-center gap-1.5 mb-1">
+              <span className="text-xs font-bold px-2 py-0.5 rounded" style={{ backgroundColor: 'var(--brand-accent)', color: 'white' }}>
+                UPGRADE PRICING
+              </span>
+              <span className="text-sm font-semibold" style={{ color: 'var(--text-heading)' }}>
+                You already own the UK Company Report
+              </span>
+            </div>
+            <p className="text-xs leading-snug" style={{ color: 'var(--text-muted)' }}>
+              Pay only the difference: {fmtFx(selectedProduct.base_price, { decimals: 0 })}{' '}
+              − {fmtFx(eligibleUpgrade.standardPrice, { decimals: 0 })}{' '}
+              = <strong style={{ color: 'var(--brand-accent)' }}>{fmtFx(Math.max(0, selectedProduct.base_price - eligibleUpgrade.standardPrice), { decimals: 0 })}</strong>{' '}
+              to unlock Enhanced KYB with full ComplyAdvantage screening.
+            </p>
+          </div>
+        )}
+
         {/* Compliance screening: bundled badge for Enhanced UK KYB */}
         {selectedProduct && isScreeningIncluded(selectedProduct) && !justAdded && (
           <div
