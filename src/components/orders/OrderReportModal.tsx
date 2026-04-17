@@ -47,6 +47,8 @@ export default function OrderReportModal({
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
   const [addScreening, setAddScreening] = useState(false);
+  /** Eligible upgrade: user already bought standard UK Company Report (within 30d) for this company */
+  const [eligibleUpgrade, setEligibleUpgrade] = useState<{ standardPrice: number } | null>(null);
 
   const isCertificateMode = preselectedProduct?.type === 'certificate' || 
     (!preselectedProduct && selectedProduct?.type === 'certificate');
