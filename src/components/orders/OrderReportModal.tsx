@@ -111,6 +111,44 @@ export default function OrderReportModal({
     }
   }, [selectedProduct?.type]);
 
+  // Detect upgrade eligibility: user already bought standard UK Company Report
+  // for this company in the last 30 days, AND currently selected = Enhanced UK KYB.
+  useEffect(() => {
+    let cancelled = false;
+    async function check() {
+      if (!selectedCompany || selectedProduct?.slug !== 'enhanced-uk-kyb-report') {
+        if (!cancelled) setEligibleUpgrade(null);
+        return;
+      }
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        if (!cancelled) setEligibleUpgrade(null);
+        return;
+      }
+      const cutoffIso = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
+      const { data } = await supabase
+        .from('order_items')
+        .select('id, unit_price, created_at, products:product_id!inner(slug), orders!inner(user_id, status)')
+        .eq('company_id', selectedCompany.id)
+        .eq('orders.user_id', session.user.id)
+        .gte('created_at', cutoffIso)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      if (cancelled) return;
+      type Row = { unit_price: number; products?: { slug?: string } | null };
+      const rows = (data ?? []) as unknown as Row[];
+      const standard = rows.find((r) => r.products?.slug === 'uk-company-report');
+      const alreadyEnhanced = rows.find((r) => r.products?.slug === 'enhanced-uk-kyb-report');
+      if (standard && !alreadyEnhanced) {
+        setEligibleUpgrade({ standardPrice: Number(standard.unit_price) || 0 });
+      } else {
+        setEligibleUpgrade(null);
+      }
+    }
+    check();
+    return () => { cancelled = true; };
+  }, [selectedCompany?.id, selectedProduct?.slug]);
+
   const toggleCert = (id: string) => {
     setSelectedCertIds((prev) => {
       const next = new Set(prev);
