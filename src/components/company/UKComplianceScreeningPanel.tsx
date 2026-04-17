@@ -20,6 +20,12 @@ interface ScreeningResult {
   entities_screened: number;
   screened_at: string;
   error: string | null;
+  raw_response?: { entities?: ScreenedEntity[] } | null;
+}
+
+interface ScreenedEntity {
+  name: string;
+  role: 'company' | 'officer' | 'shareholder' | 'psc' | string;
 }
 
 interface Hit {
