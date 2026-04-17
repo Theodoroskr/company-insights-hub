@@ -161,7 +161,7 @@ Deno.serve(async (req) => {
         success: true,
         report_id: report.id,
         download_token: report.download_token,
-        screening_triggered: isEnhanced,
+        screening_triggered: screeningWanted,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
