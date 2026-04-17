@@ -104,7 +104,7 @@ export default function UKComplianceScreeningPanel({ orderItemId, isEnhanced, on
               Compliance Screening
             </h2>
             <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
-              Sanctions · PEP · Adverse Media — Powered by ComplyAdvantage
+              Sanctions · PEP · Adverse Media — Powered by WorldAML
             </p>
           </div>
         </div>
@@ -235,7 +235,7 @@ export default function UKComplianceScreeningPanel({ orderItemId, isEnhanced, on
             </h2>
             <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
               {result.entities_screened} entit{result.entities_screened === 1 ? 'y' : 'ies'} screened ·{' '}
-              Sanctions · PEP · Adverse Media · Powered by ComplyAdvantage
+              Sanctions · PEP · Adverse Media · Powered by WorldAML
             </p>
           </div>
         </div>
