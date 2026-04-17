@@ -336,6 +336,7 @@ export default function SearchWidget({
             onKeyDown={handleKeyDown}
             onFocus={() => {
               if (results.length > 0) setShowResults(true);
+              if (isGlobal && !selectedCountry) setShowAllCountries(true);
             }}
             placeholder="Search by company name or registration number..."
             className={`w-full pr-12 outline-none bg-transparent ${isHero ? 'h-14 px-4 text-base' : 'h-11 px-3 text-sm'}`}
