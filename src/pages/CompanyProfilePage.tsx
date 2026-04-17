@@ -1125,55 +1125,82 @@ export default function CompanyProfilePage() {
 
             {/* G — Affiliated Companies */}
             <SectionCard>
-              <SectionTitle>Potentially Affiliated Companies</SectionTitle>
+              <div ref={affiliatesRef} />
+              <div className="flex items-center justify-between gap-2 flex-wrap mb-1">
+                <SectionTitle>Potentially Affiliated Companies</SectionTitle>
+                {personFilter && (
+                  <button
+                    type="button"
+                    onClick={() => setPersonFilter(null)}
+                    className="text-xs px-2.5 py-1 rounded-full border hover:opacity-80 transition-opacity"
+                    style={{
+                      borderColor: 'var(--brand-primary)',
+                      backgroundColor: 'var(--brand-primary-bg)',
+                      color: 'var(--brand-primary)',
+                    }}
+                  >
+                    Filtered by: {personFilter} · clear ✕
+                  </button>
+                )}
+              </div>
               <p className="text-sm mb-4" style={{ color: 'var(--text-muted)' }}>
-                Companies sharing directors or secretaries with {company.name}
+                {personFilter
+                  ? `Other companies linked to ${personFilter} as a director, officer or beneficial owner.`
+                  : `Companies sharing directors, officers or beneficial owners with ${company.name}`}
               </p>
 
-              {affiliated.length > 0 ? (
-                <div className="space-y-2">
-                  {affiliated.map((aff) => {
-                    // Find the shared director name(s)
-                    const myDirectors = Array.isArray(company.directors_json) ? company.directors_json : [];
-                    const theirDirectors: DirectorEntry[] = Array.isArray(aff.directors_json) ? aff.directors_json : [];
-                    const myNames = myDirectors.map(d => d.name.toUpperCase());
-                    const sharedNames = theirDirectors
-                      .filter(d => myNames.includes(d.name.toUpperCase()))
-                      .map(d => maskName(d.name));
+              {(() => {
+                const filtered = personFilter
+                  ? affiliated.filter((a) => (a._sharedNames ?? []).includes(personFilter))
+                  : affiliated;
 
-                    return (
-                      <div
-                        key={aff.id}
-                        className="flex items-center justify-between p-3 rounded border"
-                        style={{ borderColor: 'var(--bg-border)' }}
-                      >
-                        <div>
-                          <Link
-                            to={`/company/${aff.slug ?? aff.id}`}
-                            className="text-sm font-medium hover:underline"
-                            style={{ color: 'var(--brand-accent)' }}
-                          >
-                            {aff.name}
-                          </Link>
-                          {aff.reg_no && (
-                            <span className="ml-2 text-xs" style={{ color: 'var(--text-muted)' }}>
-                              {aff.reg_no}
-                            </span>
-                          )}
-                          <p className="text-xs italic mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                            via {sharedNames.length > 0 ? sharedNames.join(', ') : 'shared director'}
-                          </p>
+                if (filtered.length === 0) {
+                  return (
+                    <p className="text-sm italic" style={{ color: 'var(--text-muted)' }}>
+                      {personFilter
+                        ? `No other companies in our index are currently linked to ${personFilter}. Order an Enhanced KYB report to run a deeper officer cross-check.`
+                        : 'No affiliated companies found yet. More connections appear as companies are searched.'}
+                    </p>
+                  );
+                }
+
+                return (
+                  <div className="space-y-2">
+                    {filtered.map((aff) => {
+                      const sharedNames = aff._sharedNames ?? [];
+                      const display = isUnlocked
+                        ? sharedNames
+                        : sharedNames.map((n) => maskName(n));
+                      return (
+                        <div
+                          key={aff.id}
+                          className="flex items-center justify-between p-3 rounded border"
+                          style={{ borderColor: 'var(--bg-border)' }}
+                        >
+                          <div>
+                            <Link
+                              to={`/company/${aff.slug ?? aff.id}`}
+                              className="text-sm font-medium hover:underline"
+                              style={{ color: 'var(--brand-accent)' }}
+                            >
+                              {aff.name}
+                            </Link>
+                            {aff.reg_no && (
+                              <span className="ml-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+                                {aff.reg_no}
+                              </span>
+                            )}
+                            <p className="text-xs italic mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                              via {display.length > 0 ? display.join(', ') : 'shared person'}
+                            </p>
+                          </div>
+                          {aff.status && <StatusBadge status={aff.status} />}
                         </div>
-                        {aff.status && <StatusBadge status={aff.status} />}
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="text-sm italic" style={{ color: 'var(--text-muted)' }}>
-                  No affiliated companies found yet. More connections appear as companies are searched.
-                </p>
-              )}
+                      );
+                    })}
+                  </div>
+                );
+              })()}
 
               {Array.isArray(company.directors_json) && company.directors_json.length > 0 && (
                 <Link
