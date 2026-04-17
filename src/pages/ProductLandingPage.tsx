@@ -28,7 +28,7 @@ function TypingWord({ words }: { words: string[] }) {
       const t = setTimeout(() => setPausing(false), 1400);
       return () => clearTimeout(t);
     }
-    const target = TYPING_WORDS[wordIdx];
+    const target = words[wordIdx];
     if (!deleting) {
       if (displayed.length < target.length) {
         const t = setTimeout(() => setDisplayed(target.slice(0, displayed.length + 1)), 60);
@@ -44,10 +44,10 @@ function TypingWord({ words }: { words: string[] }) {
       } else {
         setDeleting(false);
         setPausing(true);
-        setWordIdx((i) => (i + 1) % TYPING_WORDS.length);
+        setWordIdx((i) => (i + 1) % words.length);
       }
     }
-  }, [displayed, deleting, pausing, wordIdx]);
+  }, [displayed, deleting, pausing, wordIdx, words]);
 
   return (
     <span style={{ color: 'var(--brand-accent)' }} className="italic">
