@@ -342,7 +342,7 @@ export default function UKComplianceScreeningPanel({ orderItemId, isEnhanced, on
       )}
 
       <p className="text-[11px] mt-3" style={{ color: 'var(--text-muted)' }}>
-        Screened {new Date(result.screened_at).toLocaleString('en-GB')} · ComplyAdvantage
+        Screened {new Date(result.screened_at).toLocaleString('en-GB')} · WorldAML
       </p>
     </div>
   );

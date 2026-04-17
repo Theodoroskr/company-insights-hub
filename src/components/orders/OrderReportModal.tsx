@@ -434,7 +434,7 @@ export default function OrderReportModal({
               Pay only the difference: {fmtFx(selectedProduct.base_price, { decimals: 0 })}{' '}
               − {fmtFx(eligibleUpgrade.standardPrice, { decimals: 0 })}{' '}
               = <strong style={{ color: 'var(--brand-accent)' }}>{fmtFx(Math.max(0, selectedProduct.base_price - eligibleUpgrade.standardPrice), { decimals: 0 })}</strong>{' '}
-              to unlock Enhanced KYB with full ComplyAdvantage screening.
+              to unlock Enhanced KYB with full WorldAML screening.
             </p>
           </div>
         )}
