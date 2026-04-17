@@ -20,8 +20,21 @@ const TenantContext = createContext<TenantContextValue>({
   error: null,
 });
 
-// Resolves which tenant slug to fall back to on localhost/dev
+// Resolves which tenant slug to fall back to on localhost/dev.
+// Supports `?tenant=<slug>` URL override (persisted in localStorage) for QA.
 function resolveFallbackSlug(): string {
+  try {
+    const url = new URL(window.location.href);
+    const param = url.searchParams.get('tenant');
+    if (param) {
+      localStorage.setItem('dev_tenant_slug', param);
+      return param;
+    }
+    const stored = localStorage.getItem('dev_tenant_slug');
+    if (stored) return stored;
+  } catch {
+    /* ignore */
+  }
   return 'icw';
 }
 
