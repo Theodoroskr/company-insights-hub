@@ -126,13 +126,17 @@ const CartContext = createContext<CartContextValue>({
 const STORAGE_KEY = 'ch_cart_v1';
 const CERT_STORAGE_KEY = 'ch_cert_cart_v1';
 
-function calcPrice(product: Product, speedCode: string): { price: number; vatAmount: number } {
+function calcPrice(
+  product: Product,
+  speedCode: string,
+  vatRate: number,
+): { price: number; vatAmount: number } {
   const speeds: ProductSpeed[] = Array.isArray(product.available_speeds)
     ? (product.available_speeds as ProductSpeed[])
     : [];
   const speed = speeds.find((s) => s.code === speedCode);
   const base = product.base_price + (speed?.price_delta ?? 0);
-  const vat = product.vat_on_full_price ? base * VAT_RATE : 0;
+  const vat = product.vat_on_full_price ? base * vatRate : 0;
   return { price: base, vatAmount: parseFloat(vat.toFixed(2)) };
 }
 
@@ -140,7 +144,7 @@ function makeId(productId: string, icgCode: string, speedCode: string) {
   return `${productId}__${icgCode}__${speedCode}`;
 }
 
-function calcCertOrderTotals(order: CertificateOrder) {
+function calcCertOrderTotals(order: CertificateOrder, vatRate: number) {
   const certCount = order.certificates.length;
   const certTotal = order.certificates.reduce((s, c) => s + c.price, 0);
   const serviceDeliveryTotal = certCount * SERVICE_DELIVERY_FEE;
@@ -148,7 +152,7 @@ function calcCertOrderTotals(order: CertificateOrder) {
   const urgentTotal = order.urgentDelivery ? URGENT_DELIVERY_PRICE * certCount : 0;
   const courierTotal = order.courierDelivery ? COURIER_DELIVERY_PRICE : 0;
   const sub = certTotal + serviceDeliveryTotal + apostilleTotal + urgentTotal + courierTotal;
-  const vat = parseFloat((sub * CERT_VAT_RATE).toFixed(2));
+  const vat = parseFloat((sub * vatRate).toFixed(2));
   return { subtotal: sub, vat };
 }
 
