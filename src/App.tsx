@@ -58,6 +58,9 @@ import AdminAuditLogsPage from "./pages/admin/AdminAuditLogsPage";
 import AdminSettingsPage from "./pages/admin/AdminSettingsPage";
 import AdminTenantsPage from "./pages/admin/AdminTenantsPage";
 
+// Dev-only tenant switcher (visible on localhost / lovable.app preview)
+import TenantSwitcher from "./components/dev/TenantSwitcher";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -68,6 +71,7 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
+          <TenantSwitcher />
           <BrowserRouter>
             <Routes>
               {/* ── Public ── */}
