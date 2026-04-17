@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
 
     const { data: order, error } = await supabase
       .from('orders')
-      .select('id, total, currency, user_id, guest_email')
+      .select('id, total, currency, display_currency, fx_rate_to_eur, user_id, guest_email')
       .eq('id', order_id)
       .single();
 
@@ -45,9 +45,12 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Create Stripe PaymentIntent (amount in cents)
-    const amountCents = Math.round(order.total * 100);
-    const currency = (order.currency ?? 'EUR').toLowerCase();
+    // Charge in the customer's selected currency.
+    // order.total is canonical EUR; fx_rate_to_eur converts EUR -> display_currency.
+    const displayCurrency = (order.display_currency ?? order.currency ?? 'EUR').toLowerCase();
+    const fxRate = Number(order.fx_rate_to_eur ?? 1) || 1;
+    const chargeAmount = Number(order.total) * fxRate;
+    const amountCents = Math.round(chargeAmount * 100);
 
     const piRes = await fetch('https://api.stripe.com/v1/payment_intents', {
       method: 'POST',
@@ -57,8 +60,12 @@ Deno.serve(async (req) => {
       },
       body: new URLSearchParams({
         amount: String(amountCents),
-        currency,
-        metadata: JSON.stringify({ order_id }),
+        currency: displayCurrency,
+        metadata: JSON.stringify({
+          order_id,
+          eur_total: String(order.total),
+          fx_rate_to_eur: String(fxRate),
+        }),
         description: `Order ${order_id}`,
       }).toString(),
     });
