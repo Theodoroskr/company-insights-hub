@@ -13,10 +13,9 @@ import {
   URGENT_DELIVERY_PRICE,
   COURIER_DELIVERY_PRICE,
   SERVICE_DELIVERY_FEE,
-  VAT_RATE as CERT_VAT_RATE,
 } from '../data/cyprusCertificates';
-
-const VAT_RATE = 0.19;
+import { useTenant } from '../lib/tenant';
+import { getVatRate } from '../lib/tenantConfig';
 
 /** Compliance screening add-on price (EUR), shown alongside eligible reports */
 export const SCREENING_ADDON_PRICE_EUR = 45;
@@ -127,13 +126,17 @@ const CartContext = createContext<CartContextValue>({
 const STORAGE_KEY = 'ch_cart_v1';
 const CERT_STORAGE_KEY = 'ch_cert_cart_v1';
 
-function calcPrice(product: Product, speedCode: string): { price: number; vatAmount: number } {
+function calcPrice(
+  product: Product,
+  speedCode: string,
+  vatRate: number,
+): { price: number; vatAmount: number } {
   const speeds: ProductSpeed[] = Array.isArray(product.available_speeds)
     ? (product.available_speeds as ProductSpeed[])
     : [];
   const speed = speeds.find((s) => s.code === speedCode);
   const base = product.base_price + (speed?.price_delta ?? 0);
-  const vat = product.vat_on_full_price ? base * VAT_RATE : 0;
+  const vat = product.vat_on_full_price ? base * vatRate : 0;
   return { price: base, vatAmount: parseFloat(vat.toFixed(2)) };
 }
 
@@ -141,7 +144,7 @@ function makeId(productId: string, icgCode: string, speedCode: string) {
   return `${productId}__${icgCode}__${speedCode}`;
 }
 
-function calcCertOrderTotals(order: CertificateOrder) {
+function calcCertOrderTotals(order: CertificateOrder, vatRate: number) {
   const certCount = order.certificates.length;
   const certTotal = order.certificates.reduce((s, c) => s + c.price, 0);
   const serviceDeliveryTotal = certCount * SERVICE_DELIVERY_FEE;
@@ -149,11 +152,14 @@ function calcCertOrderTotals(order: CertificateOrder) {
   const urgentTotal = order.urgentDelivery ? URGENT_DELIVERY_PRICE * certCount : 0;
   const courierTotal = order.courierDelivery ? COURIER_DELIVERY_PRICE : 0;
   const sub = certTotal + serviceDeliveryTotal + apostilleTotal + urgentTotal + courierTotal;
-  const vat = parseFloat((sub * CERT_VAT_RATE).toFixed(2));
+  const vat = parseFloat((sub * vatRate).toFixed(2));
   return { subtotal: sub, vat };
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
+  const { tenant } = useTenant();
+  const vatRate = getVatRate(tenant?.slug);
+
   const [items, setItems] = useState<CartItem[]>(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -180,6 +186,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
     try { localStorage.setItem(CERT_STORAGE_KEY, JSON.stringify(certificateOrders)); } catch {}
   }, [certificateOrders]);
 
+  // Recompute report-line VAT when the tenant (and therefore vatRate) changes
+  useEffect(() => {
+    setItems((prev) =>
+      prev.map((item) => {
+        const newVat = item.product.vat_on_full_price
+          ? parseFloat((item.price * vatRate).toFixed(2))
+          : 0;
+        return newVat === item.vatAmount ? item : { ...item, vatAmount: newVat };
+      }),
+    );
+  }, [vatRate]);
+
   const addItem = useCallback(
     (
       product: Product,
@@ -193,10 +211,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const resolvedSpeed = speedCode ?? speeds[0]?.code ?? 'Normal';
       const idSuffix = opts?.isUpgrade ? '__upgrade' : '';
       const id = makeId(product.id, company.icg_code, resolvedSpeed) + idSuffix;
-      const computed = calcPrice(product, resolvedSpeed);
+      const computed = calcPrice(product, resolvedSpeed, vatRate);
       const price = typeof opts?.priceOverride === 'number' ? opts.priceOverride : computed.price;
       const vatAmount = product.vat_on_full_price
-        ? parseFloat((price * VAT_RATE).toFixed(2))
+        ? parseFloat((price * vatRate).toFixed(2))
         : 0;
       const eligible = isScreeningEligible({ type: product.type as string, slug: product.slug });
       const screeningAddon = !!opts?.screeningAddon && eligible;
@@ -230,7 +248,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         ];
       });
     },
-    []
+    [vatRate]
   );
 
   const removeItem = useCallback((id: string) => {
@@ -242,11 +260,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       prev.map((item) => {
         if (item.id !== id) return item;
         const newId = makeId(item.product.id, item.company.icg_code, speedCode);
-        const { price, vatAmount } = calcPrice(item.product, speedCode);
+        const { price, vatAmount } = calcPrice(item.product, speedCode, vatRate);
         return { ...item, id: newId, speedCode, price, vatAmount };
       })
     );
-  }, []);
+  }, [vatRate]);
 
   const toggleScreeningAddon = useCallback((id: string) => {
     setItems((prev) =>
@@ -288,7 +306,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const certTotals = certificateOrders.reduce(
     (acc, order) => {
-      const t = calcCertOrderTotals(order);
+      const t = calcCertOrderTotals(order, vatRate);
       return { subtotal: acc.subtotal + t.subtotal, vat: acc.vat + t.vat };
     },
     { subtotal: 0, vat: 0 }

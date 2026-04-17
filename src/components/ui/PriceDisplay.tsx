@@ -1,8 +1,11 @@
 import React from 'react';
+import { useTenant } from '@/lib/tenant';
+import { getVatRate } from '@/lib/tenantConfig';
 
 interface PriceDisplayProps {
   basePrice: number;
   serviceFee?: number;
+  /** Override VAT rate; if omitted, derived from active tenant */
   vatRate?: number;
   currency?: string;
   showBreakdown?: boolean;
@@ -17,13 +20,15 @@ function formatCurrency(amount: number, currency: string): string {
 export default function PriceDisplay({
   basePrice,
   serviceFee = 0,
-  vatRate = 0.19,
+  vatRate,
   currency = 'EUR',
   showBreakdown = false,
   className = '',
 }: PriceDisplayProps) {
+  const { tenant } = useTenant();
+  const effectiveVatRate = vatRate ?? getVatRate(tenant?.slug);
   const subtotal = basePrice + serviceFee;
-  const vatAmount = subtotal * vatRate;
+  const vatAmount = subtotal * effectiveVatRate;
   const total = subtotal + vatAmount;
 
   if (!showBreakdown) {
@@ -53,14 +58,16 @@ export default function PriceDisplay({
           </span>
         </div>
       )}
-      <div className="flex justify-between">
-        <span style={{ color: 'var(--text-muted)' }}>
-          VAT ({(vatRate * 100).toFixed(0)}%)
-        </span>
-        <span className="tabular-nums" style={{ color: 'var(--text-body)' }}>
-          {formatCurrency(vatAmount, currency)}
-        </span>
-      </div>
+      {effectiveVatRate > 0 && (
+        <div className="flex justify-between">
+          <span style={{ color: 'var(--text-muted)' }}>
+            VAT ({(effectiveVatRate * 100).toFixed(0)}%)
+          </span>
+          <span className="tabular-nums" style={{ color: 'var(--text-body)' }}>
+            {formatCurrency(vatAmount, currency)}
+          </span>
+        </div>
+      )}
       <div
         className="flex justify-between font-semibold pt-1 border-t"
         style={{ borderColor: 'var(--bg-border)' }}

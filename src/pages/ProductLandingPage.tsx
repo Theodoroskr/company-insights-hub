@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronUp, CheckCircle2 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
@@ -9,20 +9,15 @@ import { useTenant } from '../lib/tenant.tsx';
 import { PRODUCT_TABS, resolveSlug } from '../data/productContent';
 import type { ProductContent, AccordionItem } from '../data/productContent';
 import type { Product } from '../types/database';
+import {
+  filterTabsForTenant,
+  getTenantHero,
+  localizeContent,
+} from '../lib/tenantConfig';
 
 // ── Typing animation ─────────────────────────────────────────
 
-const TYPING_WORDS = [
-  'Unlocking',
-  'Structure Report',
-  'Credit Report',
-  'Due Diligence',
-  'Certificates',
-  'Competitors Analysis',
-  'Industry Analysis',
-];
-
-function TypingWord() {
+function TypingWord({ words }: { words: string[] }) {
   const [wordIdx, setWordIdx] = useState(0);
   const [displayed, setDisplayed] = useState('');
   const [deleting, setDeleting] = useState(false);
@@ -33,7 +28,7 @@ function TypingWord() {
       const t = setTimeout(() => setPausing(false), 1400);
       return () => clearTimeout(t);
     }
-    const target = TYPING_WORDS[wordIdx];
+    const target = words[wordIdx];
     if (!deleting) {
       if (displayed.length < target.length) {
         const t = setTimeout(() => setDisplayed(target.slice(0, displayed.length + 1)), 60);
@@ -49,10 +44,10 @@ function TypingWord() {
       } else {
         setDeleting(false);
         setPausing(true);
-        setWordIdx((i) => (i + 1) % TYPING_WORDS.length);
+        setWordIdx((i) => (i + 1) % words.length);
       }
     }
-  }, [displayed, deleting, pausing, wordIdx]);
+  }, [displayed, deleting, pausing, wordIdx, words]);
 
   return (
     <span style={{ color: 'var(--brand-accent)' }} className="italic">
@@ -172,14 +167,28 @@ export default function ProductLandingPage() {
     }
   };
 
-  const content: ProductContent | null = activeTab?.content ?? null;
+  const baseContent: ProductContent | null = activeTab?.content ?? null;
+  const tenantSlug = tenant?.slug ?? null;
+  const hero = useMemo(
+    () => getTenantHero(tenantSlug, tenant?.brand_name),
+    [tenantSlug, tenant?.brand_name],
+  );
+  const visibleTabs = useMemo(
+    () => filterTabsForTenant(PRODUCT_TABS, tenantSlug),
+    [tenantSlug],
+  );
+  const content: ProductContent | null = useMemo(
+    () => (baseContent ? localizeContent(baseContent, tenantSlug) : null),
+    [baseContent, tenantSlug],
+  );
+
   const productName = activeTab?.label ?? dbProduct?.name ?? 'Report';
   const price = dbProduct?.base_price ?? null;
 
   return (
     <PageLayout>
       <Helmet>
-        <title>{productName} | Companies House Cyprus</title>
+        <title>{productName} | {hero.metaTitleSuffix}</title>
       </Helmet>
 
       {/* ── HERO ─────────────────────────────────────────────── */}
@@ -192,14 +201,13 @@ export default function ProductLandingPage() {
       >
         <div className="max-w-6xl mx-auto px-6 w-full">
           <p className="text-4xl italic font-light mb-1">
-            <TypingWord />
+            <TypingWord words={hero.typingWords} />
           </p>
           <h1 className="text-5xl font-light text-white leading-tight">
-            Company Insights in Cyprus
+            {hero.productLandingHeroH1}
           </h1>
           <p className="mt-4 text-base max-w-2xl" style={{ color: 'rgba(255,255,255,0.70)' }}>
-            Explore Comprehensive Company Structure and Ownership Information in Cyprus. Ensure
-            Invoicing Accuracy and Secure Your Business Future.
+            {hero.productLandingHeroSubtitle}
           </p>
         </div>
       </section>
@@ -214,7 +222,7 @@ export default function ProductLandingPage() {
           className="flex min-w-max max-w-6xl mx-auto px-6"
           style={{ scrollbarWidth: 'none' }}
         >
-          {PRODUCT_TABS.map((tab) => {
+          {visibleTabs.map((tab) => {
             const isActive = tab.slug === activeTab?.slug;
             return (
               <button

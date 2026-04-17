@@ -7,12 +7,12 @@ import { useCart } from '../contexts/CartContext';
 import { useTenant } from '../lib/tenant';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { supabase } from '@/integrations/supabase/client';
+import { getVatRate } from '../lib/tenantConfig';
 
 const EU_COUNTRY_CODES = new Set([
   'AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU',
   'IE','IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE',
 ]);
-const VAT_RATE = 0.19;
 
 const CHECKOUT_STEPS = ['Cart', 'Details', 'Payment', 'Confirmation'];
 

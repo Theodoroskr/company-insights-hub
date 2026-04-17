@@ -10,6 +10,7 @@ import WorldCoverageMap from '../components/global/WorldCoverageMap';
 import LiveActivityTicker from '../components/global/LiveActivityTicker';
 import { useTenant } from '../lib/tenant';
 import { useCountries } from '../lib/countries';
+import { getTenantHero } from '../lib/tenantConfig';
 import { supabase } from '../lib/supabase';
 import type { Product } from '../types/database';
 import { useState } from 'react';
@@ -70,6 +71,7 @@ export default function HomePage() {
     const c = countries.find((x) => x.code === tenant.country_code);
     return c?.name ?? tenant.country_code;
   })();
+  const hero = getTenantHero(tenant?.slug, tenant?.brand_name);
 
   // Fetch products
   useEffect(() => {
@@ -120,7 +122,7 @@ export default function HomePage() {
             </div>
           ) : (
             <>
-              {isGlobal && (
+              {isGlobal && hero.badge && (
                 <div
                   className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-6 text-xs font-semibold uppercase tracking-wider"
                   style={{
@@ -130,24 +132,20 @@ export default function HomePage() {
                   }}
                 >
                   <Globe className="w-3.5 h-3.5" />
-                  200+ Countries · Instant · Pay-Per-Report
+                  {hero.badge}
                 </div>
               )}
               <h1
                 className="text-4xl md:text-6xl font-extrabold mb-4 leading-tight"
                 style={{ color: '#ffffff', lineHeight: 1.05 }}
               >
-                {isGlobal
-                  ? 'Global company intelligence, on demand.'
-                  : `Search and Verify ${countryName} Companies`}
+                {hero.h1}
               </h1>
               <p
                 className="text-lg md:text-xl mb-10 max-w-2xl mx-auto"
                 style={{ color: 'rgba(255,255,255,0.8)' }}
               >
-                {isGlobal
-                  ? 'Instant KYB and company reports across 200+ jurisdictions. No subscription, no sales call — pay only for the report you need.'
-                  : 'Instant access to official registry data, structure reports, KYB intelligence and official certificates'}
+                {hero.subtitle}
               </p>
             </>
           )}

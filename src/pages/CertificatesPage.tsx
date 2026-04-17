@@ -31,12 +31,12 @@ import {
   COURIER_DELIVERY_PRICE,
   SERVICE_DELIVERY_FEE,
   CERT_PRICE,
-  VAT_RATE,
   type EntityType,
   type CertificateDefinition,
   type CertificateGroup,
   type BundleDefinition,
 } from '../data/cyprusCertificates';
+import { getVatRate } from '../lib/tenantConfig';
 
 // ── Entity type tab icons ────────────────────────────────────
 const entityIcons: Record<EntityType, React.ReactNode> = {
@@ -327,7 +327,8 @@ export default function CertificatesPage() {
   const urgentTotal = urgentDelivery ? URGENT_DELIVERY_PRICE * certCount : 0;
   const courierTotal = courierDelivery ? COURIER_DELIVERY_PRICE : 0;
   const subtotal = certSubtotal + serviceDeliveryTotal + apostilleTotal + urgentTotal + courierTotal;
-  const vat = parseFloat((subtotal * VAT_RATE).toFixed(2));
+  const vatRate = getVatRate(tenant?.slug);
+  const vat = parseFloat((subtotal * vatRate).toFixed(2));
   const grandTotal = subtotal + vat;
 
   const handleAddToCart = () => {
