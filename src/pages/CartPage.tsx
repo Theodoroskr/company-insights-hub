@@ -230,6 +230,11 @@ export default function CartPage() {
                       <p className="text-sm mt-2 font-medium" style={{ color: 'var(--text-body)' }}>
                         📋 {item.product.name}
                       </p>
+                      {item.isUpgrade && (
+                        <p className="text-xs mt-1 font-semibold" style={{ color: 'var(--brand-accent)' }}>
+                          ⬆ {item.upgradeLabel ?? 'Upgrade pricing applied'}
+                        </p>
+                      )}
 
                       {speeds.length > 1 && (
                         <div className="mt-2">
