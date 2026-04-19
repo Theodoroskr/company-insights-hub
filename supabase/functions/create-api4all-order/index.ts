@@ -225,6 +225,20 @@ Deno.serve(async (req) => {
       });
 
       const rawBody = await api4allRes.text();
+
+      // API4ALL sometimes returns HTTP 200 with {"message":"Unauthorized or token expired"}.
+      // Detect both that and a real 401, then force-refresh the cached token before retrying.
+      const isAuthFailure =
+        api4allRes.status === 401 ||
+        /unauthor[iz]?ed|token expired/i.test(rawBody);
+
+      if (isAuthFailure) {
+        console.warn(`API4ALL auth failure on attempt ${attempt + 1}, refreshing token`);
+        lastError = { status: api4allRes.status, body: rawBody.slice(0, 1000), reason: 'auth_failure' };
+        token = await getApi4AllToken(supabase, true); // force refresh
+        continue;
+      }
+
       if (!api4allRes.ok) {
         lastError = { status: api4allRes.status, body: rawBody.slice(0, 1000), reason: 'http_error' };
         console.error(`API4ALL HTTP ${api4allRes.status} on attempt ${attempt + 1}:`, rawBody.slice(0, 300));
@@ -232,7 +246,14 @@ Deno.serve(async (req) => {
       }
 
       try {
-        api4allOrder = JSON.parse(rawBody);
+        const parsed = JSON.parse(rawBody);
+        if (!parsed?.id && !parsed?.items) {
+          // 200 OK but no order — treat as failure and retry
+          lastError = { status: api4allRes.status, body: rawBody.slice(0, 1000), reason: 'invalid_response' };
+          console.error(`API4ALL JSON without order id on attempt ${attempt + 1}:`, rawBody.slice(0, 300));
+          continue;
+        }
+        api4allOrder = parsed;
         break; // success
       } catch {
         lastError = { status: api4allRes.status, body: rawBody.slice(0, 1000), reason: 'non_json_response' };
