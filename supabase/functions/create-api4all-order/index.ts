@@ -165,16 +165,28 @@ Deno.serve(async (req) => {
       body: JSON.stringify(orderPayload),
     });
 
+    const rawBody = await api4allRes.text();
     if (!api4allRes.ok) {
-      const errText = await api4allRes.text();
-      console.error('API4All order creation failed:', errText);
+      console.error('API4All order creation failed:', api4allRes.status, rawBody.slice(0, 500));
       return new Response(
-        JSON.stringify({ error: 'API4All order submission failed', details: errText }),
+        JSON.stringify({ error: 'API4All order submission failed', status: api4allRes.status, details: rawBody.slice(0, 1000) }),
         { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const api4allOrder = await api4allRes.json();
+    let api4allOrder: any;
+    try {
+      api4allOrder = JSON.parse(rawBody);
+    } catch (parseErr) {
+      console.error('API4All returned non-JSON body:', rawBody.slice(0, 500));
+      return new Response(
+        JSON.stringify({
+          error: 'API4All returned an invalid response (not JSON). The upstream service may be down or rejected the request.',
+          details: rawBody.slice(0, 1000),
+        }),
+        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     console.log('API4All order created:', JSON.stringify(api4allOrder));
 
     // Map returned item codes back to our order_item ids
