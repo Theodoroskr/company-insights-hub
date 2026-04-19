@@ -7,7 +7,7 @@
 // ============================================================
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ForceGraph2D } from 'react-force-graph-2d';
+import ForceGraph2D from 'react-force-graph-2d';
 import { Lock } from 'lucide-react';
 import type { Company, DirectorEntry } from '../../types/database';
 
