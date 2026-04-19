@@ -108,54 +108,102 @@ export default function HomePage() {
       </Helmet>
 
       {/* ═══════════════════════════════════════════════════
-          SECTION 1 — HERO
+          SECTION 1 — HERO (animated gradient mesh)
       ═══════════════════════════════════════════════════ */}
-      <section
-        className="py-20 md:py-28 px-4"
-        style={{ backgroundColor: 'var(--brand-primary)' }}
-      >
-        <div className="max-w-4xl mx-auto text-center">
+      <section className="relative overflow-hidden px-4 pt-24 pb-28 md:pt-32 md:pb-36">
+        {/* Animated mesh background */}
+        <div className="hero-mesh" aria-hidden>
+          <div className="hero-mesh-blob" />
+          <div className="hero-grid-overlay" />
+          <div className="hero-noise" />
+        </div>
+        {/* Bottom fade into page */}
+        <div
+          aria-hidden
+          className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none"
+          style={{ background: 'linear-gradient(to bottom, transparent, #ffffff)' }}
+        />
+
+        <div className="relative max-w-5xl mx-auto text-center">
           {tenantLoading ? (
             <div className="space-y-4 mb-10">
-              <div className="h-10 rounded skeleton-shimmer mx-auto w-3/4" style={{ opacity: 0.3 }} />
-              <div className="h-6 rounded skeleton-shimmer mx-auto w-1/2" style={{ opacity: 0.3 }} />
+              <div className="h-12 rounded skeleton-shimmer mx-auto w-3/4" style={{ opacity: 0.2 }} />
+              <div className="h-6 rounded skeleton-shimmer mx-auto w-1/2" style={{ opacity: 0.2 }} />
             </div>
           ) : (
             <>
-              {isGlobal && hero.badge && (
-                <div
-                  className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-6 text-xs font-semibold uppercase tracking-wider"
-                  style={{
-                    backgroundColor: 'rgba(255,255,255,0.1)',
-                    color: 'rgba(255,255,255,0.9)',
-                    border: '1px solid rgba(255,255,255,0.2)',
-                  }}
-                >
-                  <Globe className="w-3.5 h-3.5" />
-                  {hero.badge}
-                </div>
-              )}
-              <h1
-                className="text-4xl md:text-6xl font-extrabold mb-4 leading-tight"
-                style={{ color: '#ffffff', lineHeight: 1.05 }}
+              {/* Eyebrow pill */}
+              <div
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full mb-7 text-[11px] font-semibold uppercase tracking-[0.18em] backdrop-blur-sm animate-fade-in-up"
+                style={{
+                  background: 'rgba(255,255,255,0.06)',
+                  color: 'rgba(255,255,255,0.85)',
+                  border: '1px solid rgba(255,255,255,0.14)',
+                }}
               >
-                {hero.h1}
+                <span
+                  className="w-1.5 h-1.5 rounded-full"
+                  style={{ background: '#38BDF8', boxShadow: '0 0 12px #38BDF8' }}
+                />
+                {isGlobal && hero.badge ? hero.badge : 'Live registry data · 200+ jurisdictions'}
+              </div>
+
+              {/* Display headline */}
+              <h1
+                className="font-extrabold tracking-tight mb-6 text-balance animate-fade-in-up"
+                style={{
+                  fontSize: 'clamp(2.5rem, 6vw, 5rem)',
+                  lineHeight: 1.02,
+                  letterSpacing: '-0.035em',
+                  animationDelay: '80ms',
+                }}
+              >
+                <span style={{ color: '#ffffff' }}>{hero.h1.split(' ').slice(0, -2).join(' ')} </span>
+                <span className="hero-headline-gradient">
+                  {hero.h1.split(' ').slice(-2).join(' ')}
+                </span>
               </h1>
+
+              {/* Subtitle */}
               <p
-                className="text-lg md:text-xl mb-10 max-w-2xl mx-auto"
-                style={{ color: 'rgba(255,255,255,0.8)' }}
+                className="text-lg md:text-xl mb-12 max-w-2xl mx-auto text-pretty animate-fade-in-up"
+                style={{ color: 'rgba(226,232,240,0.78)', animationDelay: '160ms' }}
               >
                 {hero.subtitle}
               </p>
             </>
           )}
 
-          <SearchWidget size="hero" isGlobal={isGlobal} />
+          {/* Search — front and center, framed */}
+          <div
+            className="relative mx-auto max-w-3xl animate-fade-in-up"
+            style={{ animationDelay: '240ms' }}
+          >
+            {/* Glow */}
+            <div
+              aria-hidden
+              className="absolute -inset-4 rounded-2xl pointer-events-none"
+              style={{
+                background: 'radial-gradient(60% 80% at 50% 50%, rgba(56,189,248,0.25), transparent 70%)',
+                filter: 'blur(18px)',
+              }}
+            />
+            <div
+              className="relative rounded-2xl p-2 backdrop-blur-xl"
+              style={{
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.14)',
+                boxShadow: '0 24px 60px -20px rgba(0,0,0,0.55)',
+              }}
+            >
+              <SearchWidget size="hero" isGlobal={isGlobal} />
+            </div>
+          </div>
 
           {!isGlobal && countryName && (
             <p
-              className="mt-4 text-sm"
-              style={{ color: 'rgba(255,255,255,0.55)' }}
+              className="mt-5 text-sm animate-fade-in-up"
+              style={{ color: 'rgba(255,255,255,0.55)', animationDelay: '320ms' }}
             >
               Searching official registry data for {countryName}
             </p>
