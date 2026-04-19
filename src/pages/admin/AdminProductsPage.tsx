@@ -252,6 +252,44 @@ export default function AdminProductsPage() {
               </div>
 
               <div>
+                <label className="text-xs font-medium text-muted-foreground block mb-1">
+                  Country Scope
+                </label>
+                <select
+                  value={editing.country_scope ?? 'global'}
+                  onChange={e => setEditing(prev => ({ ...prev, country_scope: e.target.value }))}
+                  className="w-full border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  {COUNTRY_SCOPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  Controls which jurisdictions this product is available in. Tenants only see products matching their country.
+                </p>
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-muted-foreground block mb-1">
+                  Allowed Countries (ISO codes, comma-separated)
+                </label>
+                <input
+                  type="text"
+                  value={(editing.allowed_countries ?? []).join(', ')}
+                  onChange={e => {
+                    const arr = e.target.value
+                      .split(',')
+                      .map(s => s.trim().toUpperCase())
+                      .filter(Boolean);
+                    setEditing(prev => ({ ...prev, allowed_countries: arr.length ? arr : null }));
+                  }}
+                  placeholder="e.g. CY, GB, IE"
+                  className="w-full border rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  Leave empty for the scope tag to apply alone. Required when scope = "custom".
+                </p>
+              </div>
+
+              <div>
                 <label className="text-xs font-medium text-muted-foreground block mb-1">Description</label>
                 <textarea
                   value={editing.description ?? ''}
