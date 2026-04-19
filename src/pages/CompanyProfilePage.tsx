@@ -11,6 +11,7 @@ import CountryFlag from '../components/ui/CountryFlag';
 import CoverageTierBadge from '../components/ui/CoverageTierBadge';
 import { ProductIcon } from '../components/ui/ProductIcon';
 import OrderReportModal from '../components/orders/OrderReportModal';
+import SaveCompanyButton from '../components/company/SaveCompanyButton';
 import UKCompanySections from '../components/company/UKCompanySections';
 import UKRiskSummaryPanel from '../components/company/UKRiskSummaryPanel';
 import UKCompanyFactsPanel from '../components/company/UKCompanyFactsPanel';
@@ -778,6 +779,7 @@ export default function CompanyProfilePage() {
                   {company.name}
                 </h1>
                 {company.status && <StatusBadge status={company.status} className="text-sm px-3 py-1" />}
+                <SaveCompanyButton companyId={company.id} variant="full" stopPropagation={false} />
               </div>
 
               <div

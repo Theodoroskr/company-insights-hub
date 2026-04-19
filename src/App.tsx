@@ -44,6 +44,7 @@ import AccountDownloadsPage from "./pages/account/AccountDownloadsPage";
 import AccountMonitoringPage from "./pages/account/AccountMonitoringPage";
 import AccountProfilePage from "./pages/account/AccountProfilePage";
 import AccountInvoicesPage from "./pages/account/AccountInvoicesPage";
+import AccountSavedPage from "./pages/account/AccountSavedPage";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -112,6 +113,7 @@ const App = () => (
               <Route path="/account/invoices" element={<ProtectedRoute><AccountInvoicesPage /></ProtectedRoute>} />
               <Route path="/account/downloads" element={<ProtectedRoute><AccountDownloadsPage /></ProtectedRoute>} />
               <Route path="/account/monitoring" element={<ProtectedRoute><AccountMonitoringPage /></ProtectedRoute>} />
+              <Route path="/account/saved" element={<ProtectedRoute><AccountSavedPage /></ProtectedRoute>} />
 
               {/* ── Legacy dashboard redirects ── */}
               <Route path="/dashboard/profile" element={<Navigate to="/account/profile" replace />} />

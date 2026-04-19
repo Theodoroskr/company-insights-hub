@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { Search, ExternalLink, FileText, Award } from 'lucide-react';
 import PageLayout from '../components/layout/PageLayout';
+import SaveCompanyButton from '../components/company/SaveCompanyButton';
 import StatusBadge from '../components/ui/StatusBadge';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import EmptyState from '../components/ui/EmptyState';
@@ -330,12 +331,15 @@ export default function SearchResultsPage() {
                       >
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
-                            <h3
-                              className="text-base font-semibold truncate"
-                              style={{ color: 'var(--text-heading)' }}
-                            >
-                              {company.name}
-                            </h3>
+                            <div className="flex items-start gap-2">
+                              <h3
+                                className="text-base font-semibold truncate flex-1"
+                                style={{ color: 'var(--text-heading)' }}
+                              >
+                                {company.name}
+                              </h3>
+                              <SaveCompanyButton companyId={company.id} variant="icon" />
+                            </div>
                             <div
                               className="flex flex-wrap items-center gap-1.5 mt-1 text-sm"
                               style={{ color: 'var(--text-muted)' }}
