@@ -30,10 +30,11 @@ async function getApi4AllToken(supabase: ReturnType<typeof createClient>): Promi
     throw new Error('API4ALL credentials not configured');
   }
 
-  const tokenRes = await fetch(`${API4ALL_BASE}/token`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password, project_code: projectCode }),
+  const clientId = projectCode || 'F25Y0RU2M5';
+  const credentials = btoa(`${username}:${password}`);
+  const tokenRes = await fetch(`${API4ALL_BASE}/token/${clientId}`, {
+    method: 'GET',
+    headers: { Authorization: `Basic ${credentials}` },
   });
 
   if (!tokenRes.ok) {
