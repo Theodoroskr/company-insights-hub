@@ -5,6 +5,7 @@ import { useTenant } from '../../lib/tenant';
 import { supabase } from '../../lib/supabase';
 import { useCart } from '../../contexts/CartContext';
 import CurrencySwitcher from './CurrencySwitcher';
+import BrandMark from './BrandMark';
 import type { Product, Company } from '../../types/database';
 
 // ── Debounce hook ─────────────────────────────────────────────
@@ -284,10 +285,14 @@ export default function Navbar() {
             {/* ── Logo ── */}
             <Link
               to="/"
-              className="flex-shrink-0 font-bold tracking-tight"
-              style={{ color: 'var(--brand-primary)', fontSize: '1.05rem' }}
+              className="flex-shrink-0 transition-opacity hover:opacity-80"
+              aria-label={`${tenant?.brand_name ?? 'Companies House'} home`}
             >
-              {tenant?.brand_name ?? 'Companies House'}
+              <BrandMark
+                brandName={tenant?.brand_name ?? 'Companies House'}
+                variant="light"
+                size="md"
+              />
             </Link>
 
             {/* ── Desktop nav ── */}
@@ -707,9 +712,11 @@ function MobileMenu({
           className="flex items-center justify-between px-5 h-16 border-b shrink-0"
           style={{ borderColor: 'var(--bg-border)' }}
         >
-          <span className="font-bold" style={{ color: 'var(--brand-primary)' }}>
-            {tenant?.brand_name ?? 'Companies House'}
-          </span>
+          <BrandMark
+            brandName={tenant?.brand_name ?? 'Companies House'}
+            variant="light"
+            size="sm"
+          />
           <button type="button" onClick={onClose} style={{ color: 'var(--text-muted)' }}>
             <X className="w-5 h-5" />
           </button>

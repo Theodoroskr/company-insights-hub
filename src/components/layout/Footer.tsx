@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTenant } from '../../lib/tenant';
+import BrandMark from './BrandMark';
 
 export default function Footer() {
   const { tenant } = useTenant();
@@ -15,9 +16,11 @@ export default function Footer() {
           style={{ borderBottom: '1px solid rgba(255,255,255,0.15)' }}
         >
           <div>
-            <p className="font-bold text-lg" style={{ color: '#fff' }}>
-              {tenant?.brand_name ?? 'Companies House'}
-            </p>
+            <BrandMark
+              brandName={tenant?.brand_name ?? 'Companies House'}
+              variant="dark"
+              size="lg"
+            />
             <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.65)' }}>
               Professional company intelligence, delivered digitally.
             </p>
