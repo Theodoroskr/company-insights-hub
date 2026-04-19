@@ -9,6 +9,7 @@ import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import RiskTrafficLight from '../components/ui/RiskTrafficLight';
 import CountryFlag from '../components/ui/CountryFlag';
 import CoverageTierBadge from '../components/ui/CoverageTierBadge';
+import { ProductIcon } from '../components/ui/ProductIcon';
 import OrderReportModal from '../components/orders/OrderReportModal';
 import UKCompanySections from '../components/company/UKCompanySections';
 import UKRiskSummaryPanel from '../components/company/UKRiskSummaryPanel';
