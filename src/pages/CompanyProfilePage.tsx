@@ -805,6 +805,27 @@ export default function CompanyProfilePage() {
               </p>
             </div>
 
+            {/* INTEL-1 — Dense KPI strip (6 tiles) */}
+            <IntelligenceKpiStrip
+              company={company}
+              country={countryInfo}
+              isUnlocked={isUnlocked}
+            />
+
+            {/* INTEL-2 — Director relationship graph */}
+            <DirectorRelationshipGraph
+              company={company}
+              isUnlocked={isUnlocked}
+              onUnlockClick={() => (kybProduct ? setKybModalOpen(true) : openStructureModal())}
+            />
+
+            {/* INTEL-3 — Change & activity timeline */}
+            <CompanyChangeTimeline
+              company={company}
+              isUnlocked={isUnlocked}
+              onUnlockClick={() => (monitoringProduct ? setKybModalOpen(true) : (kybProduct ? setKybModalOpen(true) : openStructureModal()))}
+            />
+
             {/* B0 — UK Risk Summary (unlocked only) */}
             {isUnlocked && company.country_code === 'GB' && reportBundle && (
               <UKRiskSummaryPanel bundle={reportBundle} />
