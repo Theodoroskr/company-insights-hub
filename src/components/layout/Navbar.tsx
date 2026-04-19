@@ -712,9 +712,11 @@ function MobileMenu({
           className="flex items-center justify-between px-5 h-16 border-b shrink-0"
           style={{ borderColor: 'var(--bg-border)' }}
         >
-          <span className="font-bold" style={{ color: 'var(--brand-primary)' }}>
-            {tenant?.brand_name ?? 'Companies House'}
-          </span>
+          <BrandMark
+            brandName={tenant?.brand_name ?? 'Companies House'}
+            variant="light"
+            size="sm"
+          />
           <button type="button" onClick={onClose} style={{ color: 'var(--text-muted)' }}>
             <X className="w-5 h-5" />
           </button>
