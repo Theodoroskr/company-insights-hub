@@ -154,38 +154,105 @@ Deno.serve(async (req) => {
       items: api4allItems,
     };
 
-    const api4allRes = await fetch(`${API4ALL_BASE}/orders/create/`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Expires': '0',
-      },
-      body: JSON.stringify(orderPayload),
-    });
+    // Helper: check if API4ALL silently created our order despite a previous timeout.
+    // Returns the matched API4ALL order object if found, otherwise null.
+    const findExistingApi4AllOrder = async () => {
+      try {
+        const today = new Date();
+        const yyyymmdd = `${today.getUTCFullYear()}${String(today.getUTCMonth() + 1).padStart(2, '0')}${String(today.getUTCDate()).padStart(2, '0')}`;
+        const listRes = await fetch(`${API4ALL_BASE}/orders/period/${yyyymmdd}-${yyyymmdd}`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+        if (!listRes.ok) return null;
+        const listJson = await listRes.json().catch(() => null);
+        const orders: Array<{ id: string | number; reference: string; details?: Array<{ id: string | number; reference: string; sla_deadline?: string | null }> }> =
+          listJson?.orders ?? [];
+        return orders.find((o) => o.reference === order.order_ref) ?? null;
+      } catch (e) {
+        console.error('findExistingApi4AllOrder failed:', e);
+        return null;
+      }
+    };
 
-    const rawBody = await api4allRes.text();
-    if (!api4allRes.ok) {
-      console.error('API4All order creation failed:', api4allRes.status, rawBody.slice(0, 500));
-      return new Response(
-        JSON.stringify({ error: 'API4All order submission failed', status: api4allRes.status, details: rawBody.slice(0, 1000) }),
-        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // Submit with retry-with-backoff (3 attempts: 0s / 5s / 15s).
+    // Between retries, reconcile against API4ALL's orders list to avoid duplicates
+    // (their server occasionally times out via PHP fatal but still creates the order).
+    const delays = [0, 5000, 15000];
+    let api4allOrder: any = null;
+    let lastError: { status: number; body: string; reason: string } | null = null;
+
+    for (let attempt = 0; attempt < delays.length; attempt++) {
+      if (delays[attempt] > 0) {
+        await new Promise((r) => setTimeout(r, delays[attempt]));
+        const existing = await findExistingApi4AllOrder();
+        if (existing) {
+          console.log(`Found silently-created API4ALL order on retry ${attempt}:`, existing.id);
+          api4allOrder = {
+            id: existing.id,
+            items: (existing.details ?? []).map((d) => ({
+              id: d.id,
+              reference: d.reference,
+              status: 'Received',
+              sla_deadline: d.sla_deadline ?? null,
+            })),
+          };
+          break;
+        }
+      }
+
+      console.log(`API4ALL submit attempt ${attempt + 1}/${delays.length} for ${order.order_ref}`);
+      const api4allRes = await fetch(`${API4ALL_BASE}/orders/create/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Expires': '0',
+        },
+        body: JSON.stringify(orderPayload),
+      });
+
+      const rawBody = await api4allRes.text();
+      if (!api4allRes.ok) {
+        lastError = { status: api4allRes.status, body: rawBody.slice(0, 1000), reason: 'http_error' };
+        console.error(`API4ALL HTTP ${api4allRes.status} on attempt ${attempt + 1}:`, rawBody.slice(0, 300));
+        continue;
+      }
+
+      try {
+        api4allOrder = JSON.parse(rawBody);
+        break; // success
+      } catch {
+        lastError = { status: api4allRes.status, body: rawBody.slice(0, 1000), reason: 'non_json_response' };
+        console.error(`API4ALL non-JSON body on attempt ${attempt + 1}:`, rawBody.slice(0, 300));
+      }
     }
 
-    let api4allOrder: any;
-    try {
-      api4allOrder = JSON.parse(rawBody);
-    } catch (parseErr) {
-      console.error('API4All returned non-JSON body:', rawBody.slice(0, 500));
-      return new Response(
-        JSON.stringify({
-          error: 'API4All returned an invalid response (not JSON). The upstream service may be down or rejected the request.',
-          details: rawBody.slice(0, 1000),
-        }),
-        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    if (!api4allOrder) {
+      // All retries exhausted — final reconciliation pass in case the last attempt
+      // also silently succeeded upstream.
+      const existing = await findExistingApi4AllOrder();
+      if (existing) {
+        console.log('Found silently-created API4ALL order after final retry:', existing.id);
+        api4allOrder = {
+          id: existing.id,
+          items: (existing.details ?? []).map((d) => ({
+            id: d.id,
+            reference: d.reference,
+            status: 'Received',
+            sla_deadline: d.sla_deadline ?? null,
+          })),
+        };
+      } else {
+        return new Response(
+          JSON.stringify({
+            error: 'Provider temporarily unavailable. Please try again in a few minutes — your payment is safe and no duplicate order will be created.',
+            details: lastError?.body ?? null,
+            reason: lastError?.reason ?? 'unknown',
+          }),
+          { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     }
     console.log('API4All order created:', JSON.stringify(api4allOrder));
 
