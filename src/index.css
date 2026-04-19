@@ -193,8 +193,85 @@
   animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* ── Keyframes for Tailwind plugin ── */
 @layer utilities {
   .text-balance { text-wrap: balance; }
   .text-pretty  { text-wrap: pretty; }
+}
+
+/* ── Animated gradient mesh (hero background) ── */
+@keyframes mesh-drift {
+  0%, 100% { transform: translate3d(0,0,0)    scale(1); }
+  33%      { transform: translate3d(4%,-3%,0) scale(1.08); }
+  66%      { transform: translate3d(-3%,4%,0) scale(0.96); }
+}
+@keyframes mesh-drift-slow {
+  0%, 100% { transform: translate3d(0,0,0)    scale(1); }
+  50%      { transform: translate3d(-5%,3%,0) scale(1.12); }
+}
+@keyframes hero-grain {
+  0%, 100% { opacity: 0.06; }
+  50%      { opacity: 0.10; }
+}
+@keyframes headline-shimmer {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+.hero-mesh {
+  position: absolute; inset: 0; overflow: hidden; pointer-events: none;
+  background:
+    radial-gradient(at 0% 0%, #0F2444 0%, transparent 55%),
+    radial-gradient(at 100% 100%, #1B3A6B 0%, transparent 55%),
+    #08152C;
+}
+.hero-mesh::before,
+.hero-mesh::after {
+  content: ''; position: absolute; border-radius: 9999px;
+  filter: blur(80px); will-change: transform;
+}
+.hero-mesh::before {
+  width: 60vw; height: 60vw; top: -10%; left: -10%;
+  background: radial-gradient(circle, rgba(37,99,235,0.55), transparent 60%);
+  animation: mesh-drift 18s ease-in-out infinite;
+}
+.hero-mesh::after {
+  width: 55vw; height: 55vw; bottom: -15%; right: -10%;
+  background: radial-gradient(circle, rgba(139,92,246,0.45), transparent 60%);
+  animation: mesh-drift-slow 22s ease-in-out infinite;
+}
+.hero-mesh-blob {
+  position: absolute; width: 40vw; height: 40vw; top: 30%; left: 40%;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(56,189,248,0.35), transparent 60%);
+  filter: blur(70px);
+  animation: mesh-drift 26s ease-in-out infinite reverse;
+  pointer-events: none;
+}
+.hero-grid-overlay {
+  position: absolute; inset: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%);
+}
+.hero-noise {
+  position: absolute; inset: 0; pointer-events: none; opacity: 0.08;
+  animation: hero-grain 6s ease-in-out infinite;
+  background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.6'/></svg>");
+}
+.hero-headline-gradient {
+  background: linear-gradient(90deg, #ffffff 0%, #93C5FD 45%, #38BDF8 70%, #ffffff 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: headline-shimmer 8s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-mesh::before,
+  .hero-mesh::after,
+  .hero-mesh-blob,
+  .hero-noise,
+  .hero-headline-gradient { animation: none !important; }
 }
