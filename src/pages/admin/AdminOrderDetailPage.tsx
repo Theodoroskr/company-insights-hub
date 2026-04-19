@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ChevronLeft, RefreshCw, ChevronDown, ChevronRight, ShieldCheck } from 'lucide-react';
+import { ChevronLeft, RefreshCw, ChevronDown, ChevronRight, ShieldCheck, Link2 } from 'lucide-react';
 import AdminLayout from '../../components/layout/AdminLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -80,6 +80,38 @@ export default function AdminOrderDetailPage() {
   const [refundModal, setRefundModal] = useState(false);
   const [refundAmount, setRefundAmount] = useState('');
   const [refundReason, setRefundReason] = useState('');
+  const [reconciling, setReconciling] = useState(false);
+
+  const reconcileWithApi4All = async () => {
+    if (!id) return;
+    setReconciling(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('reconcile-api4all-order', {
+        body: { order_id: id },
+      });
+      if (error) throw error;
+      if (data?.matched) {
+        toast({
+          title: 'Reconciled with API4ALL',
+          description: `Linked ${data.linked_count} item(s) to API4ALL order ${data.api4all_order_id}.`,
+        });
+        await fetchOrder();
+      } else {
+        toast({
+          title: 'No match found',
+          description: data?.reason ?? 'API4ALL has no order with this reference.',
+        });
+      }
+    } catch (err: any) {
+      toast({
+        title: 'Reconciliation failed',
+        description: err?.message ?? 'Unknown error',
+        variant: 'destructive',
+      });
+    } finally {
+      setReconciling(false);
+    }
+  };
 
   const fetchOrder = async () => {
     if (!id) return;
@@ -375,6 +407,14 @@ export default function AdminOrderDetailPage() {
             {/* Refund */}
             <div className="bg-card border rounded-xl p-5">
               <h2 className="font-semibold text-sm mb-3" style={{ color: 'var(--text-heading)' }}>Actions</h2>
+              <button
+                onClick={reconcileWithApi4All}
+                disabled={reconciling}
+                className="w-full text-sm py-2 mb-2 border rounded-lg hover:bg-muted transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
+              >
+                <Link2 className="h-3.5 w-3.5" />
+                {reconciling ? 'Reconciling…' : 'Reconcile with API4ALL'}
+              </button>
               <button
                 onClick={() => setRefundModal(true)}
                 className="w-full text-sm py-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
