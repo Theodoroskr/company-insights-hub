@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ChevronLeft, RefreshCw, ChevronDown, ChevronRight, ShieldCheck } from 'lucide-react';
+import { ChevronLeft, RefreshCw, ChevronDown, ChevronRight, ShieldCheck, Link2 } from 'lucide-react';
 import AdminLayout from '../../components/layout/AdminLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
