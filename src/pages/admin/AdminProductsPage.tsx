@@ -23,7 +23,17 @@ interface Product {
   vat_on_fee_only: boolean;
   available_speeds: any;
   tenant_id: string | null;
+  country_scope: string;
+  allowed_countries: string[] | null;
 }
+
+const COUNTRY_SCOPE_OPTIONS = [
+  { value: 'global', label: 'Global (all jurisdictions)' },
+  { value: 'cy-only', label: 'Cyprus only' },
+  { value: 'uk-only', label: 'UK only' },
+  { value: 'eu-only', label: 'EU only' },
+  { value: 'custom', label: 'Custom (use Allowed Countries)' },
+];
 
 const EMPTY: Omit<Product, 'id'> = {
   name: '',
@@ -43,6 +53,8 @@ const EMPTY: Omit<Product, 'id'> = {
   vat_on_fee_only: false,
   available_speeds: [],
   tenant_id: null,
+  country_scope: 'global',
+  allowed_countries: null,
 };
 
 export default function AdminProductsPage() {
