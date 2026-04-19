@@ -290,7 +290,21 @@ export default function AdminOrderDetailPage() {
                 <div key={item.id} className="px-5 py-4 border-b last:border-0">
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div>
-                      <div className="font-medium text-sm">{item.company_name ?? '—'}</div>
+                      <div className="font-medium text-sm flex items-center gap-2 flex-wrap">
+                        {item.company_name ?? '—'}
+                        {item.api4all_order_id && (
+                          <a
+                            href={`https://v3.api4all.io/orders/${item.api4all_order_id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="Open in API4ALL dashboard"
+                            className="inline-flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                          >
+                            API4ALL #{item.api4all_order_id}
+                            <ChevronRight className="h-2.5 w-2.5" />
+                          </a>
+                        )}
+                      </div>
                       <div className="text-xs text-muted-foreground">{item.product_name ?? '—'} · {item.speed}</div>
                     </div>
                     <div className="text-right text-sm font-semibold tabular-nums">€{item.unit_price.toFixed(2)}</div>
