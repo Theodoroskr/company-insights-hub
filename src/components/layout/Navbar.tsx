@@ -5,6 +5,7 @@ import { useTenant } from '../../lib/tenant';
 import { supabase } from '../../lib/supabase';
 import { useCart } from '../../contexts/CartContext';
 import CurrencySwitcher from './CurrencySwitcher';
+import BrandMark from './BrandMark';
 import type { Product, Company } from '../../types/database';
 
 // ── Debounce hook ─────────────────────────────────────────────
