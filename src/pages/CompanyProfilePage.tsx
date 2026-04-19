@@ -14,6 +14,9 @@ import UKCompanySections from '../components/company/UKCompanySections';
 import UKRiskSummaryPanel from '../components/company/UKRiskSummaryPanel';
 import UKCompanyFactsPanel from '../components/company/UKCompanyFactsPanel';
 import UKComplianceScreeningPanel from '../components/company/UKComplianceScreeningPanel';
+import IntelligenceKpiStrip from '../components/company/IntelligenceKpiStrip';
+import DirectorRelationshipGraph from '../components/company/DirectorRelationshipGraph';
+import CompanyChangeTimeline from '../components/company/CompanyChangeTimeline';
 import { useTenant } from '../lib/tenant.tsx';
 import { useCountries } from '../lib/countries';
 import { useCart } from '../contexts/CartContext';
@@ -801,6 +804,27 @@ export default function CompanyProfilePage() {
                 </button>
               </p>
             </div>
+
+            {/* INTEL-1 — Dense KPI strip (6 tiles) */}
+            <IntelligenceKpiStrip
+              company={company}
+              country={countryInfo}
+              isUnlocked={isUnlocked}
+            />
+
+            {/* INTEL-2 — Director relationship graph */}
+            <DirectorRelationshipGraph
+              company={company}
+              isUnlocked={isUnlocked}
+              onUnlockClick={() => (kybProduct ? setKybModalOpen(true) : openStructureModal())}
+            />
+
+            {/* INTEL-3 — Change & activity timeline */}
+            <CompanyChangeTimeline
+              company={company}
+              isUnlocked={isUnlocked}
+              onUnlockClick={() => (monitoringProduct ? setKybModalOpen(true) : (kybProduct ? setKybModalOpen(true) : openStructureModal()))}
+            />
 
             {/* B0 — UK Risk Summary (unlocked only) */}
             {isUnlocked && company.country_code === 'GB' && reportBundle && (
