@@ -20,14 +20,6 @@ import { getVatRate } from '../lib/tenantConfig';
 /** Compliance screening add-on price (EUR), shown alongside eligible reports */
 export const SCREENING_ADDON_PRICE_EUR = 45;
 
-/** Product slugs / types eligible for the compliance screening add-on */
-export const SCREENING_ELIGIBLE_TYPES = new Set(['kyb']);
-export const SCREENING_ELIGIBLE_SLUGS = new Set([
-  'uk-company-report',
-  'company-structure-report',
-  'structure-report',
-]);
-
 /** Products where ComplyAdvantage screening is bundled in the base price (no add-on shown) */
 export const SCREENING_INCLUDED_SLUGS = new Set([
   'enhanced-uk-kyb-report',
@@ -37,14 +29,15 @@ export function isScreeningIncluded(p: { slug?: string }): boolean {
   return !!p.slug && SCREENING_INCLUDED_SLUGS.has(p.slug);
 }
 
-export function isScreeningEligible(p: { type?: string; slug?: string; screening_enabled?: boolean | null }): boolean {
+/** Determine if a product is eligible for the screening add-on.
+ *  Source of truth: product.screening_enabled DB flag. */
+export function isScreeningEligible(p: {
+  type?: string;
+  slug?: string;
+  screening_enabled?: boolean | null;
+}): boolean {
   if (isScreeningIncluded(p)) return false;
-  // Primary source of truth: DB flag on the product
-  if (p.screening_enabled === true) return true;
-  // Legacy fallbacks for older callers that don't pass the flag
-  if (p.type && SCREENING_ELIGIBLE_TYPES.has(p.type)) return true;
-  if (p.slug && SCREENING_ELIGIBLE_SLUGS.has(p.slug)) return true;
-  return false;
+  return p.screening_enabled === true;
 }
 
 export interface CartItem {
