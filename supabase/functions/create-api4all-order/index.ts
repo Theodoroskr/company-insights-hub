@@ -7,18 +7,30 @@ const corsHeaders = {
 
 const API4ALL_BASE = 'https://v3.api4all.io/a4a/3.0/api';
 
-async function getApi4AllToken(supabase: ReturnType<typeof createClient>): Promise<string> {
-  // Try to get a valid cached token
-  const { data: existingToken } = await supabase
-    .from('api4all_tokens')
-    .select('access_token, expires_at')
-    .gt('expires_at', new Date(Date.now() + 5 * 60 * 1000).toISOString())
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .single();
+async function getApi4AllToken(
+  supabase: ReturnType<typeof createClient>,
+  forceRefresh = false,
+): Promise<string> {
+  if (!forceRefresh) {
+    // Try to get a valid cached token
+    const { data: existingToken } = await supabase
+      .from('api4all_tokens')
+      .select('access_token, expires_at')
+      .gt('expires_at', new Date(Date.now() + 5 * 60 * 1000).toISOString())
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
 
-  if (existingToken?.access_token) {
-    return existingToken.access_token;
+    if (existingToken?.access_token) {
+      return existingToken.access_token;
+    }
+  } else {
+    // Evict any cached tokens — they were rejected by the upstream
+    const serviceClient = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    );
+    await serviceClient.from('api4all_tokens').delete().neq('id', '00000000-0000-0000-0000-000000000000');
   }
 
   // Fetch a new token
