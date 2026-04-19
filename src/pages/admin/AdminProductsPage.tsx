@@ -23,7 +23,17 @@ interface Product {
   vat_on_fee_only: boolean;
   available_speeds: any;
   tenant_id: string | null;
+  country_scope: string;
+  allowed_countries: string[] | null;
 }
+
+const COUNTRY_SCOPE_OPTIONS = [
+  { value: 'global', label: 'Global (all jurisdictions)' },
+  { value: 'cy-only', label: 'Cyprus only' },
+  { value: 'uk-only', label: 'UK only' },
+  { value: 'eu-only', label: 'EU only' },
+  { value: 'custom', label: 'Custom (use Allowed Countries)' },
+];
 
 const EMPTY: Omit<Product, 'id'> = {
   name: '',
@@ -43,6 +53,8 @@ const EMPTY: Omit<Product, 'id'> = {
   vat_on_fee_only: false,
   available_speeds: [],
   tenant_id: null,
+  country_scope: 'global',
+  allowed_countries: null,
 };
 
 export default function AdminProductsPage() {
@@ -137,22 +149,37 @@ export default function AdminProductsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted/30">
-                  {['', 'Name', 'Type', 'Price', 'Service Fee', 'API4All Code', 'SLA', 'Active', 'Actions'].map(h => (
+                  {['', 'Name', 'Type', 'Scope', 'Price', 'Service Fee', 'API4All Code', 'SLA', 'Active', 'Actions'].map(h => (
                     <th key={h} className="text-left px-4 py-3 text-xs font-medium text-muted-foreground whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan={9} className="px-4 py-12 text-center text-muted-foreground">Loading…</td></tr>
+                  <tr><td colSpan={10} className="px-4 py-12 text-center text-muted-foreground">Loading…</td></tr>
                 ) : products.length === 0 ? (
-                  <tr><td colSpan={9} className="px-4 py-12 text-center text-muted-foreground">No products yet</td></tr>
+                  <tr><td colSpan={10} className="px-4 py-12 text-center text-muted-foreground">No products yet</td></tr>
                 ) : (
                   products.map(p => (
                     <tr key={p.id} className="border-b last:border-0 hover:bg-muted/20 transition-colors">
                       <td className="px-3 py-3 text-muted-foreground"><GripVertical className="h-4 w-4" /></td>
                       <td className="px-4 py-3 font-medium">{p.name}</td>
                       <td className="px-4 py-3 text-muted-foreground capitalize">{p.type}</td>
+                      <td className="px-4 py-3">
+                        <span
+                          className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border font-mono"
+                          style={{
+                            borderColor: p.country_scope === 'global' ? 'var(--bg-border)' : 'var(--brand-accent)',
+                            color: p.country_scope === 'global' ? 'var(--text-muted)' : 'var(--brand-accent)',
+                            backgroundColor: p.country_scope === 'global' ? 'transparent' : 'rgba(59,130,246,0.06)',
+                          }}
+                        >
+                          {p.country_scope}
+                          {p.allowed_countries && p.allowed_countries.length > 0 && p.country_scope === 'custom' && (
+                            <span>· {p.allowed_countries.join(',')}</span>
+                          )}
+                        </span>
+                      </td>
                       <td className="px-4 py-3 tabular-nums">€{Number(p.base_price).toFixed(2)}</td>
                       <td className="px-4 py-3 tabular-nums">€{Number(p.service_fee).toFixed(2)}</td>
                       <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{p.api4all_product_code ?? '—'}</td>
@@ -222,6 +249,44 @@ export default function AdminProductsPage() {
                 >
                   {['report', 'extract', 'monitoring', 'service'].map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-muted-foreground block mb-1">
+                  Country Scope
+                </label>
+                <select
+                  value={editing.country_scope ?? 'global'}
+                  onChange={e => setEditing(prev => ({ ...prev, country_scope: e.target.value }))}
+                  className="w-full border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  {COUNTRY_SCOPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  Controls which jurisdictions this product is available in. Tenants only see products matching their country.
+                </p>
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-muted-foreground block mb-1">
+                  Allowed Countries (ISO codes, comma-separated)
+                </label>
+                <input
+                  type="text"
+                  value={(editing.allowed_countries ?? []).join(', ')}
+                  onChange={e => {
+                    const arr = e.target.value
+                      .split(',')
+                      .map(s => s.trim().toUpperCase())
+                      .filter(Boolean);
+                    setEditing(prev => ({ ...prev, allowed_countries: arr.length ? arr : null }));
+                  }}
+                  placeholder="e.g. CY, GB, IE"
+                  className="w-full border rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  Leave empty for the scope tag to apply alone. Required when scope = "custom".
+                </p>
               </div>
 
               <div>
