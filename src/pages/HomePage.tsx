@@ -115,6 +115,7 @@ export default function HomePage() {
         <div className="hero-mesh" aria-hidden>
           <div className="hero-mesh-blob" />
           <div className="hero-grid-overlay" />
+          {isGlobal && <div className="hero-world-map" />}
           <div className="hero-noise" />
         </div>
         {/* Bottom fade into page */}
