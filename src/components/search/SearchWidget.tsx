@@ -163,6 +163,7 @@ export default function SearchWidget({
 
         setResults(unique.slice(0, 8));
         setShowResults(true);
+        setHighlightIndex(-1);
       } finally {
         setIsSearching(false);
       }
