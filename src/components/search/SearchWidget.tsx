@@ -197,7 +197,27 @@ export default function SearchWidget({
   }, [query, selectedCountry, onSearch, navigate]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') handleSearch();
+    if (!showResults || results.length === 0) {
+      if (e.key === 'Enter') handleSearch();
+      return;
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlightIndex((i) => (i + 1) % results.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlightIndex((i) => (i <= 0 ? results.length - 1 : i - 1));
+    } else if (e.key === 'Enter') {
+      if (highlightIndex >= 0 && highlightIndex < results.length) {
+        e.preventDefault();
+        handleResultClick(results[highlightIndex]);
+      } else {
+        handleSearch();
+      }
+    } else if (e.key === 'Escape') {
+      setShowResults(false);
+      setHighlightIndex(-1);
+    }
   };
 
   const handleResultClick = (company: Company) => {
