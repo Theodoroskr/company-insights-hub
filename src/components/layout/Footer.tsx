@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTenant } from '../../lib/tenant';
+import BrandMark from './BrandMark';
 
 export default function Footer() {
   const { tenant } = useTenant();
