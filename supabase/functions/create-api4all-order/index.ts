@@ -154,11 +154,13 @@ Deno.serve(async (req) => {
       items: api4allItems,
     };
 
-    const api4allRes = await fetch(`${API4ALL_BASE}/order`, {
+    const api4allRes = await fetch(`${API4ALL_BASE}/orders/create/`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Expires': '0',
       },
       body: JSON.stringify(orderPayload),
     });
