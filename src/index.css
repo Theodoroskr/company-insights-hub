@@ -261,6 +261,17 @@
   animation: hero-grain 6s ease-in-out infinite;
   background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.6'/></svg>");
 }
+/* Faded dotted world map — only rendered on the global (Infocredit World) tenant */
+.hero-world-map {
+  position: absolute; inset: 0; pointer-events: none;
+  background-repeat: no-repeat;
+  background-position: center 55%;
+  background-size: min(1400px, 110%) auto;
+  opacity: 0.18;
+  -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 78%);
+          mask-image: radial-gradient(ellipse at center, black 30%, transparent 78%);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 500'><defs><pattern id='d' x='0' y='0' width='10' height='10' patternUnits='userSpaceOnUse'><circle cx='1.5' cy='1.5' r='1.2' fill='%2393C5FD'/></pattern><mask id='m'><rect width='1000' height='500' fill='black'/><g fill='white'><path d='M158 95c-12 6-30 8-42 22-8 9-2 22 8 24 12 2 22-6 32-12 14-8 30-12 38-26 4-7-2-14-10-14-9 0-18 2-26 6zm70 30c-8 4-14 14-8 22 6 6 16 4 22-2 6-6 4-16-4-20-3-2-7-2-10 0zm-90 18c-6 4-4 12 2 14 8 2 14-6 10-12-3-4-9-4-12-2zm230-90c-22 8-46 6-66 18-12 8-22 22-16 36 8 16 30 16 46 12 26-6 50-22 70-40 8-8 4-22-6-26-10-4-20-4-28 0zm-30 90c-30 6-60 14-86 30-30 18-50 50-50 86 0 28 16 56 40 70 30 18 68 18 100 8 36-12 64-40 76-76 8-26 6-56-10-78-22-30-58-46-94-44-26-2 4 0-24 4h48zm160-100c-26 8-50 24-66 46-12 18-16 42-8 62 10 24 36 38 60 40 28 2 56-10 74-32 16-22 22-50 14-76-6-22-26-40-50-44-12-2 4 0-24 4zm120 80c-20 6-38 18-50 36-10 16-12 36-4 54 10 22 32 36 56 38 26 2 50-10 64-30 14-22 16-50 4-72-10-20-32-32-54-32-7 0-12 2-16 6zM200 240c-24 8-44 26-54 50-8 22-4 48 12 66 18 22 48 32 76 28 28-4 54-22 66-46 12-26 8-58-10-80-18-22-46-32-72-26-7 2-13 4-18 8zm230 0c-30 8-54 32-62 62-6 26 2 56 22 76 22 22 56 32 86 24 30-8 54-32 62-62 6-26-2-56-22-76-20-20-50-30-78-26-3 0-5 1-8 2zm230-20c-26 6-48 24-58 50-8 22-6 48 8 68 16 22 44 34 70 32 28-2 54-18 68-42 14-24 16-54 4-78-12-26-40-42-68-40-9 0-16 4-24 10zM160 360c-22 8-40 28-46 52-4 22 4 48 22 62 22 18 54 22 80 12 26-10 46-32 50-58 4-26-8-54-30-68-22-14-50-16-76-6v6zm200 30c-24 8-42 28-48 52-4 22 4 48 22 62 22 18 52 22 78 12 26-10 46-32 50-58 4-24-8-50-28-64-22-16-50-18-74-8v4zm210 0c-22 8-40 26-46 50-4 22 4 46 22 60 22 18 52 22 78 12 24-10 42-30 46-54 4-24-8-50-28-62-22-14-50-16-72-6zm200-10c-26 8-46 28-52 54-4 24 6 50 26 64 22 16 54 18 78 6 24-12 40-36 40-62 0-26-16-50-40-60-16-6-34-6-52-2z'/></g></mask></defs><rect width='1000' height='500' fill='url(%23d)' mask='url(%23m)'/></svg>");
+}
 .hero-headline-gradient {
   background: linear-gradient(90deg, #ffffff 0%, #93C5FD 45%, #38BDF8 70%, #ffffff 100%);
   background-size: 200% 100%;
