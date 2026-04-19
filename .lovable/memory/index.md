@@ -37,3 +37,4 @@ Updated: just now
 - [Routing conventions](mem://architecture/routing-conventions) — Search and profile routing slugs, reg_no, and redirects
 - [Alphabetical directory](mem://features/alphabetical-directory) — A-Z directory for secondary navigation and crawlers
 - [Contact system](mem://features/contact-system) — Public insert logic for contact_messages table
+- [Saved companies](mem://features/saved-companies) — User bookmarks via SaveCompanyButton, listed at /account/saved
