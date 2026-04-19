@@ -80,6 +80,7 @@ export default function SearchWidget({
   const [showResults, setShowResults] = useState(false);
   const [showAllCountries, setShowAllCountries] = useState(false);
   const [countrySearch, setCountrySearch] = useState('');
+  const [highlightIndex, setHighlightIndex] = useState(-1);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
