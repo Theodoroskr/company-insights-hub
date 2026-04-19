@@ -586,9 +586,11 @@ export type Database = {
       }
       products: {
         Row: {
+          allowed_countries: string[] | null
           api4all_product_code: string | null
           available_speeds: Json | null
           base_price: number
+          country_scope: string
           created_at: string | null
           delivery_sla_hours: number | null
           description: string | null
@@ -609,9 +611,11 @@ export type Database = {
           what_is_included: string[] | null
         }
         Insert: {
+          allowed_countries?: string[] | null
           api4all_product_code?: string | null
           available_speeds?: Json | null
           base_price: number
+          country_scope?: string
           created_at?: string | null
           delivery_sla_hours?: number | null
           description?: string | null
@@ -632,9 +636,11 @@ export type Database = {
           what_is_included?: string[] | null
         }
         Update: {
+          allowed_countries?: string[] | null
           api4all_product_code?: string | null
           available_speeds?: Json | null
           base_price?: number
+          country_scope?: string
           created_at?: string | null
           delivery_sla_hours?: number | null
           description?: string | null
