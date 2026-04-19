@@ -1,11 +1,48 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Loader2, ChevronDown, X } from 'lucide-react';
+import { Search, Loader2, ChevronDown, X, Building2, MapPin, Hash, CornerDownLeft, ArrowUpDown } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../lib/tenant';
 import { useCountries } from '../../lib/countries';
 import StatusBadge from '../ui/StatusBadge';
 import type { Company, Country } from '../../types/database';
+
+// ── Highlight matching characters inside a label ──
+function highlightMatch(text: string, query: string): React.ReactNode {
+  if (!query) return text;
+  const q = query.trim();
+  if (!q) return text;
+  const i = text.toLowerCase().indexOf(q.toLowerCase());
+  if (i === -1) return text;
+  return (
+    <>
+      {text.slice(0, i)}
+      <mark
+        className="bg-transparent font-bold rounded-sm px-0.5"
+        style={{ color: 'var(--brand-accent)', background: 'rgba(56,189,248,0.12)' }}
+      >
+        {text.slice(i, i + q.length)}
+      </mark>
+      {text.slice(i + q.length)}
+    </>
+  );
+}
+
+// ── Pull a useful snippet from a company's raw payload ──
+function pickSnippet(c: Company): { kind: 'address' | 'sector' | 'form'; value: string } | null {
+  if (c.registered_address) return { kind: 'address', value: c.registered_address };
+  const raw = (c.raw_source_json ?? null) as
+    | { nature_of_business?: string; sic_codes?: string[]; registered_office_address?: { address_line_1?: string; locality?: string } }
+    | null;
+  const office = raw?.registered_office_address;
+  if (office?.address_line_1 || office?.locality) {
+    return { kind: 'address', value: [office.address_line_1, office.locality].filter(Boolean).join(', ') };
+  }
+  if (raw?.nature_of_business) return { kind: 'sector', value: raw.nature_of_business };
+  if (raw?.sic_codes?.length) return { kind: 'sector', value: `SIC ${raw.sic_codes.join(', ')}` };
+  if (c.legal_form) return { kind: 'form', value: c.legal_form };
+  return null;
+}
 
 interface SearchWidgetProps {
   defaultQuery?: string;
@@ -43,6 +80,7 @@ export default function SearchWidget({
   const [showResults, setShowResults] = useState(false);
   const [showAllCountries, setShowAllCountries] = useState(false);
   const [countrySearch, setCountrySearch] = useState('');
+  const [highlightIndex, setHighlightIndex] = useState(-1);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -125,6 +163,7 @@ export default function SearchWidget({
 
         setResults(unique.slice(0, 8));
         setShowResults(true);
+        setHighlightIndex(-1);
       } finally {
         setIsSearching(false);
       }
@@ -158,7 +197,27 @@ export default function SearchWidget({
   }, [query, selectedCountry, onSearch, navigate]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') handleSearch();
+    if (!showResults || results.length === 0) {
+      if (e.key === 'Enter') handleSearch();
+      return;
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlightIndex((i) => (i + 1) % results.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlightIndex((i) => (i <= 0 ? results.length - 1 : i - 1));
+    } else if (e.key === 'Enter') {
+      if (highlightIndex >= 0 && highlightIndex < results.length) {
+        e.preventDefault();
+        handleResultClick(results[highlightIndex]);
+      } else {
+        handleSearch();
+      }
+    } else if (e.key === 'Escape') {
+      setShowResults(false);
+      setHighlightIndex(-1);
+    }
   };
 
   const handleResultClick = (company: Company) => {
@@ -375,62 +434,126 @@ export default function SearchWidget({
           {/* Live results dropdown */}
           {showResults && results.length > 0 && (
             <div
-              className="absolute left-0 right-0 top-full mt-1 bg-white rounded-lg shadow-xl border z-50 overflow-hidden"
-              style={{ borderColor: 'var(--bg-border)' }}
+              className="absolute left-0 right-0 top-full mt-2 bg-white rounded-xl border z-50 overflow-hidden"
+              style={{
+                borderColor: 'var(--bg-border)',
+                boxShadow: '0 24px 48px -12px rgba(15,36,68,0.18), 0 4px 12px -2px rgba(15,36,68,0.06)',
+              }}
+              role="listbox"
             >
-              {results.map((company) => {
-                const cc = (company.country_code ?? '').toUpperCase();
-                const ccMeta = countries.find((x) => x.code === cc);
-                return (
-                  <button
-                    key={company.id}
-                    type="button"
-                    onClick={() => handleResultClick(company)}
-                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors text-left border-b last:border-b-0"
-                    style={{ borderColor: 'var(--bg-border)' }}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-heading)' }}>
-                        {company.name}
-                      </p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        {cc && (
-                          <span
-                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border"
-                            style={{
-                              borderColor: 'var(--bg-border)',
-                              backgroundColor: 'var(--bg-subtle)',
-                              color: 'var(--text-body)',
-                            }}
-                            title={ccMeta?.name ?? cc}
+              <div
+                className="flex items-center justify-between px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] border-b"
+                style={{
+                  background: 'var(--bg-subtle)',
+                  color: 'var(--text-muted)',
+                  borderColor: 'var(--bg-border)',
+                }}
+              >
+                <span>{results.length} match{results.length === 1 ? '' : 'es'}</span>
+                <span className="hidden sm:inline-flex items-center gap-1">
+                  <ArrowUpDown className="w-3 h-3" /> navigate
+                  <CornerDownLeft className="w-3 h-3 ml-2" /> open
+                </span>
+              </div>
+
+              <div className="max-h-[420px] overflow-y-auto">
+                {results.map((company, idx) => {
+                  const cc = (company.country_code ?? '').toUpperCase();
+                  const ccMeta = countries.find((x) => x.code === cc);
+                  const snippet = pickSnippet(company);
+                  const isActive = idx === highlightIndex;
+                  return (
+                    <button
+                      key={company.id}
+                      type="button"
+                      onClick={() => handleResultClick(company)}
+                      onMouseEnter={() => setHighlightIndex(idx)}
+                      className="w-full flex items-start gap-3 px-4 py-3 text-left border-b last:border-b-0 transition-colors"
+                      style={{
+                        borderColor: 'var(--bg-border)',
+                        background: isActive ? 'var(--bg-subtle)' : 'transparent',
+                      }}
+                      role="option"
+                      aria-selected={isActive}
+                    >
+                      {/* Flag chip */}
+                      <span
+                        className="flex-shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-lg text-lg"
+                        style={{
+                          background: 'var(--bg-subtle)',
+                          border: '1px solid var(--bg-border)',
+                        }}
+                        title={ccMeta?.name ?? cc}
+                      >
+                        {ccMeta?.flag_emoji ?? '🌐'}
+                      </span>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p
+                            className="text-sm font-semibold truncate"
+                            style={{ color: 'var(--text-heading)' }}
                           >
-                            <span>{ccMeta?.flag_emoji ?? '🌐'}</span>
-                            <span>{cc}</span>
-                          </span>
-                        )}
-                        {company.reg_no && (
-                          <span className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>
-                            Reg: {company.reg_no}
-                          </span>
+                            {highlightMatch(company.name, debouncedQuery)}
+                          </p>
+                          {company.status && (
+                            <StatusBadge status={company.status} className="flex-shrink-0" />
+                          )}
+                        </div>
+
+                        <div
+                          className="flex items-center gap-3 mt-1 text-xs"
+                          style={{ color: 'var(--text-muted)' }}
+                        >
+                          {cc && (
+                            <span className="inline-flex items-center gap-1">
+                              <MapPin className="w-3 h-3" />
+                              {ccMeta?.name ?? cc}
+                            </span>
+                          )}
+                          {company.reg_no && (
+                            <span className="inline-flex items-center gap-1 truncate">
+                              <Hash className="w-3 h-3" />
+                              {highlightMatch(company.reg_no, debouncedQuery)}
+                            </span>
+                          )}
+                          {company.legal_form && !snippet && (
+                            <span className="inline-flex items-center gap-1 truncate">
+                              <Building2 className="w-3 h-3" />
+                              {company.legal_form}
+                            </span>
+                          )}
+                        </div>
+
+                        {snippet && (
+                          <p
+                            className="text-xs mt-1 truncate flex items-center gap-1"
+                            style={{ color: 'var(--text-body)' }}
+                          >
+                            {snippet.kind === 'address' && <MapPin className="w-3 h-3 flex-shrink-0 opacity-60" />}
+                            {snippet.kind === 'sector' && <Building2 className="w-3 h-3 flex-shrink-0 opacity-60" />}
+                            {snippet.kind === 'form' && <Building2 className="w-3 h-3 flex-shrink-0 opacity-60" />}
+                            <span className="truncate">{snippet.value}</span>
+                          </p>
                         )}
                       </div>
-                    </div>
-                    {company.status && (
-                      <StatusBadge status={company.status} className="ml-3 flex-shrink-0" />
-                    )}
-                  </button>
-                );
-              })}
+                    </button>
+                  );
+                })}
+              </div>
+
               <button
                 type="button"
                 onClick={handleSearch}
-                className="w-full px-4 py-2.5 text-sm font-medium text-center transition-colors"
+                className="w-full px-4 py-3 text-sm font-semibold text-center transition-colors flex items-center justify-center gap-1.5 border-t"
                 style={{
                   backgroundColor: 'var(--bg-subtle)',
                   color: 'var(--brand-accent)',
+                  borderColor: 'var(--bg-border)',
                 }}
               >
-                See all results for "{query}" →
+                See all results for "{query}"
+                <CornerDownLeft className="w-3.5 h-3.5" />
               </button>
             </div>
           )}
@@ -438,11 +561,18 @@ export default function SearchWidget({
           {/* No results */}
           {showResults && !isSearching && results.length === 0 && query.length >= 3 && (
             <div
-              className="absolute left-0 right-0 top-full mt-1 bg-white rounded-lg shadow-xl border z-50 px-4 py-6 text-center"
-              style={{ borderColor: 'var(--bg-border)' }}
+              className="absolute left-0 right-0 top-full mt-2 bg-white rounded-xl border z-50 px-6 py-8 text-center"
+              style={{
+                borderColor: 'var(--bg-border)',
+                boxShadow: '0 24px 48px -12px rgba(15,36,68,0.18)',
+              }}
             >
-              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+              <Search className="w-6 h-6 mx-auto mb-2 opacity-40" style={{ color: 'var(--text-muted)' }} />
+              <p className="text-sm font-medium" style={{ color: 'var(--text-heading)' }}>
                 No companies found for "{query}"
+              </p>
+              <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                Try a different spelling or registration number.
               </p>
             </div>
           )}
