@@ -130,7 +130,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const token = await getApi4AllToken(supabase);
+    let token = await getApi4AllToken(supabase);
 
     // Build API4All order payload
     const api4allItems = orderItems
