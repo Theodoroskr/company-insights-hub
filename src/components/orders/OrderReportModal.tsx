@@ -239,6 +239,7 @@ export default function OrderReportModal({
   const screeningEligible = !isCertificateMode && !!selectedProduct && isScreeningEligible({
     type: selectedProduct.type as string,
     slug: selectedProduct.slug,
+    screening_enabled: (selectedProduct as any).screening_enabled,
   });
 
   // Calculate total price (in EUR for cart math)

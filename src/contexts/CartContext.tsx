@@ -37,8 +37,11 @@ export function isScreeningIncluded(p: { slug?: string }): boolean {
   return !!p.slug && SCREENING_INCLUDED_SLUGS.has(p.slug);
 }
 
-export function isScreeningEligible(p: { type?: string; slug?: string }): boolean {
+export function isScreeningEligible(p: { type?: string; slug?: string; screening_enabled?: boolean | null }): boolean {
   if (isScreeningIncluded(p)) return false;
+  // Primary source of truth: DB flag on the product
+  if (p.screening_enabled === true) return true;
+  // Legacy fallbacks for older callers that don't pass the flag
   if (p.type && SCREENING_ELIGIBLE_TYPES.has(p.type)) return true;
   if (p.slug && SCREENING_ELIGIBLE_SLUGS.has(p.slug)) return true;
   return false;
@@ -216,7 +219,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const vatAmount = product.vat_on_full_price
         ? parseFloat((price * vatRate).toFixed(2))
         : 0;
-      const eligible = isScreeningEligible({ type: product.type as string, slug: product.slug });
+      const eligible = isScreeningEligible({ type: product.type as string, slug: product.slug, screening_enabled: (product as any).screening_enabled });
       const screeningAddon = !!opts?.screeningAddon && eligible;
 
       setItems((prev) => {
@@ -273,6 +276,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         const eligible = isScreeningEligible({
           type: item.product.type as string,
           slug: item.product.slug,
+          screening_enabled: (item.product as any).screening_enabled,
         });
         if (!eligible) return item;
         return { ...item, screeningAddon: !item.screeningAddon };
