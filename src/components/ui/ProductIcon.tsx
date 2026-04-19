@@ -1,4 +1,5 @@
 import React from 'react';
+import type { LucideIcon } from 'lucide-react';
 import {
   FileBarChart,
   ScanSearch,
@@ -45,7 +46,7 @@ export type ProductIconKey =
   | 'trade-registration'
   | 'report-generic';
 
-const ICON_MAP: Record<ProductIconKey, React.ComponentType<{ className?: string; strokeWidth?: number }>> = {
+const ICON_MAP: Record<ProductIconKey, LucideIcon> = {
   structure: ClipboardList,
   kyb: ScanSearch,
   credit: TrendingUp,
