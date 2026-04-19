@@ -80,6 +80,38 @@ export default function AdminOrderDetailPage() {
   const [refundModal, setRefundModal] = useState(false);
   const [refundAmount, setRefundAmount] = useState('');
   const [refundReason, setRefundReason] = useState('');
+  const [reconciling, setReconciling] = useState(false);
+
+  const reconcileWithApi4All = async () => {
+    if (!id) return;
+    setReconciling(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('reconcile-api4all-order', {
+        body: { order_id: id },
+      });
+      if (error) throw error;
+      if (data?.matched) {
+        toast({
+          title: 'Reconciled with API4ALL',
+          description: `Linked ${data.linked_count} item(s) to API4ALL order ${data.api4all_order_id}.`,
+        });
+        await fetchOrder();
+      } else {
+        toast({
+          title: 'No match found',
+          description: data?.reason ?? 'API4ALL has no order with this reference.',
+        });
+      }
+    } catch (err: any) {
+      toast({
+        title: 'Reconciliation failed',
+        description: err?.message ?? 'Unknown error',
+        variant: 'destructive',
+      });
+    } finally {
+      setReconciling(false);
+    }
+  };
 
   const fetchOrder = async () => {
     if (!id) return;
