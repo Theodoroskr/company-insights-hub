@@ -37,8 +37,11 @@ export function isScreeningIncluded(p: { slug?: string }): boolean {
   return !!p.slug && SCREENING_INCLUDED_SLUGS.has(p.slug);
 }
 
-export function isScreeningEligible(p: { type?: string; slug?: string }): boolean {
+export function isScreeningEligible(p: { type?: string; slug?: string; screening_enabled?: boolean | null }): boolean {
   if (isScreeningIncluded(p)) return false;
+  // Primary source of truth: DB flag on the product
+  if (p.screening_enabled === true) return true;
+  // Legacy fallbacks for older callers that don't pass the flag
   if (p.type && SCREENING_ELIGIBLE_TYPES.has(p.type)) return true;
   if (p.slug && SCREENING_ELIGIBLE_SLUGS.has(p.slug)) return true;
   return false;
