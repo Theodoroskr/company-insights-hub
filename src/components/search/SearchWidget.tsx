@@ -1,11 +1,48 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Loader2, ChevronDown, X } from 'lucide-react';
+import { Search, Loader2, ChevronDown, X, Building2, MapPin, Hash, CornerDownLeft, ArrowUpDown } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../lib/tenant';
 import { useCountries } from '../../lib/countries';
 import StatusBadge from '../ui/StatusBadge';
 import type { Company, Country } from '../../types/database';
+
+// ── Highlight matching characters inside a label ──
+function highlightMatch(text: string, query: string): React.ReactNode {
+  if (!query) return text;
+  const q = query.trim();
+  if (!q) return text;
+  const i = text.toLowerCase().indexOf(q.toLowerCase());
+  if (i === -1) return text;
+  return (
+    <>
+      {text.slice(0, i)}
+      <mark
+        className="bg-transparent font-bold rounded-sm px-0.5"
+        style={{ color: 'var(--brand-accent)', background: 'rgba(56,189,248,0.12)' }}
+      >
+        {text.slice(i, i + q.length)}
+      </mark>
+      {text.slice(i + q.length)}
+    </>
+  );
+}
+
+// ── Pull a useful snippet from a company's raw payload ──
+function pickSnippet(c: Company): { kind: 'address' | 'sector' | 'form'; value: string } | null {
+  if (c.registered_address) return { kind: 'address', value: c.registered_address };
+  const raw = (c.raw_source_json ?? null) as
+    | { nature_of_business?: string; sic_codes?: string[]; registered_office_address?: { address_line_1?: string; locality?: string } }
+    | null;
+  const office = raw?.registered_office_address;
+  if (office?.address_line_1 || office?.locality) {
+    return { kind: 'address', value: [office.address_line_1, office.locality].filter(Boolean).join(', ') };
+  }
+  if (raw?.nature_of_business) return { kind: 'sector', value: raw.nature_of_business };
+  if (raw?.sic_codes?.length) return { kind: 'sector', value: `SIC ${raw.sic_codes.join(', ')}` };
+  if (c.legal_form) return { kind: 'form', value: c.legal_form };
+  return null;
+}
 
 interface SearchWidgetProps {
   defaultQuery?: string;
