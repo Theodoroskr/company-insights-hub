@@ -408,6 +408,14 @@ export default function AdminOrderDetailPage() {
             <div className="bg-card border rounded-xl p-5">
               <h2 className="font-semibold text-sm mb-3" style={{ color: 'var(--text-heading)' }}>Actions</h2>
               <button
+                onClick={reconcileWithApi4All}
+                disabled={reconciling}
+                className="w-full text-sm py-2 mb-2 border rounded-lg hover:bg-muted transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
+              >
+                <Link2 className="h-3.5 w-3.5" />
+                {reconciling ? 'Reconciling…' : 'Reconcile with API4ALL'}
+              </button>
+              <button
                 onClick={() => setRefundModal(true)}
                 className="w-full text-sm py-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
               >
