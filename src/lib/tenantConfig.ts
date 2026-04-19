@@ -197,3 +197,56 @@ export function isCyprusTenant(tenantSlug?: string | null): boolean {
 export function isGlobalTenant(tenantSlug?: string | null): boolean {
   return tenantSlug === 'icw';
 }
+
+// ── Product visibility by country scope ───────────────────────
+// Decides whether a product (given its `country_scope` + `allowed_countries`)
+// should be visible to a tenant identified by its `country_code`.
+//
+// Rules:
+//  - 'global'   → always visible
+//  - 'cy-only'  → only on tenants whose country_code === 'CY'
+//  - 'uk-only'  → only on tenants whose country_code === 'GB' (or 'UK')
+//  - 'eu-only'  → only on EU country tenants
+//  - 'custom'   → tenant country_code must be in `allowed_countries`
+//  - any other tag → falls back to allowed_countries match if provided,
+//                    otherwise hidden
+//
+// `icw` (Infocredit World) has no country_code — it sees only 'global' products.
+export interface ProductVisibilityInput {
+  country_scope?: string | null;
+  allowed_countries?: string[] | null;
+}
+
+const EU_COUNTRY_CODES = new Set([
+  'AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT',
+  'LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE',
+]);
+
+export function isProductVisibleForTenant(
+  product: ProductVisibilityInput,
+  tenantCountryCode?: string | null,
+): boolean {
+  const scope = (product.country_scope ?? 'global').toLowerCase();
+  const country = tenantCountryCode?.toUpperCase() ?? null;
+
+  if (scope === 'global') return true;
+  // Without a tenant country, only global products are visible.
+  if (!country) return false;
+
+  switch (scope) {
+    case 'cy-only':
+      return country === 'CY';
+    case 'uk-only':
+      return country === 'GB' || country === 'UK';
+    case 'eu-only':
+      return EU_COUNTRY_CODES.has(country);
+    case 'custom':
+      return Array.isArray(product.allowed_countries)
+        && product.allowed_countries.map((c) => c.toUpperCase()).includes(country);
+    default:
+      if (Array.isArray(product.allowed_countries) && product.allowed_countries.length > 0) {
+        return product.allowed_countries.map((c) => c.toUpperCase()).includes(country);
+      }
+      return false;
+  }
+}
