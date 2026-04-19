@@ -285,10 +285,14 @@ export default function Navbar() {
             {/* ── Logo ── */}
             <Link
               to="/"
-              className="flex-shrink-0 font-bold tracking-tight"
-              style={{ color: 'var(--brand-primary)', fontSize: '1.05rem' }}
+              className="flex-shrink-0 transition-opacity hover:opacity-80"
+              aria-label={`${tenant?.brand_name ?? 'Companies House'} home`}
             >
-              {tenant?.brand_name ?? 'Companies House'}
+              <BrandMark
+                brandName={tenant?.brand_name ?? 'Companies House'}
+                variant="light"
+                size="md"
+              />
             </Link>
 
             {/* ── Desktop nav ── */}
