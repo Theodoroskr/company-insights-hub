@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState as useStateReact } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { Shield, Database, Zap, Globe, Lock, FileCheck, BadgeCheck, Briefcase, FileText, Map as MapIcon } from 'lucide-react';
+import { ProductIcon } from '../components/ui/ProductIcon';
 import PageLayout from '../components/layout/PageLayout';
 import SearchWidget from '../components/search/SearchWidget';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
@@ -685,7 +686,7 @@ function ProductCard({ product, delay }: { product: Product; delay: number }) {
       }}
     >
       <div className="flex items-start gap-3 mb-3">
-        <span className="text-2xl">{PRODUCT_TYPE_ICONS[product.type] ?? '📋'}</span>
+        <ProductIcon type={product.type} variant="tile" size={22} />
         <h3 className="text-xl font-semibold" style={{ color: 'var(--text-heading)' }}>
           {product.name}
         </h3>

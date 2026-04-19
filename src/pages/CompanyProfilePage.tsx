@@ -174,8 +174,9 @@ function ProductOrderRow({
     <div className="py-3 border-b last:border-0" style={{ borderColor: 'var(--bg-border)' }}>
       {/* Name + delivery */}
       <div className="flex items-start justify-between gap-2">
-        <span className="text-sm font-medium" style={{ color: 'var(--text-heading)' }}>
-          {PRODUCT_ICONS[product.type] ?? '📄'} {product.name}
+        <span className="text-sm font-medium inline-flex items-center gap-2" style={{ color: 'var(--text-heading)' }}>
+          <ProductIcon type={product.type} size={15} />
+          <span>{product.name}</span>
         </span>
         <span
           className="text-xs shrink-0"
