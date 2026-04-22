@@ -111,7 +111,7 @@ export default function HomePage() {
       {/* ═══════════════════════════════════════════════════
           SECTION 1 — HERO (animated gradient mesh)
       ═══════════════════════════════════════════════════ */}
-      <section className="relative px-4 pt-24 pb-28 md:pt-32 md:pb-36">
+      <section className="relative z-20 isolate px-4 pt-24 pb-28 md:pt-32 md:pb-36">
         {/* Animated mesh background — clipped in its own layer so dropdowns can overflow */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
           <div className="hero-mesh">
@@ -127,7 +127,7 @@ export default function HomePage() {
           />
         </div>
 
-        <div className="relative max-w-5xl mx-auto text-center">
+        <div className="relative z-10 max-w-5xl mx-auto text-center">
           {tenantLoading ? (
             <div className="space-y-4 mb-10">
               <div className="h-12 rounded skeleton-shimmer mx-auto w-3/4" style={{ opacity: 0.2 }} />
@@ -179,7 +179,7 @@ export default function HomePage() {
 
           {/* Search — front and center, framed */}
           <div
-            className="relative mx-auto max-w-3xl animate-fade-in-up"
+            className="relative z-30 mx-auto max-w-3xl animate-fade-in-up"
             style={{ animationDelay: '240ms' }}
           >
             {/* Glow */}
@@ -192,7 +192,7 @@ export default function HomePage() {
               }}
             />
             <div
-              className="relative rounded-2xl p-2 backdrop-blur-xl"
+              className="relative z-30 rounded-2xl p-2 backdrop-blur-xl"
               style={{
                 background: 'rgba(255,255,255,0.06)',
                 border: '1px solid rgba(255,255,255,0.14)',
