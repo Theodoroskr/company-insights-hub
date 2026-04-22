@@ -111,20 +111,21 @@ export default function HomePage() {
       {/* ═══════════════════════════════════════════════════
           SECTION 1 — HERO (animated gradient mesh)
       ═══════════════════════════════════════════════════ */}
-      <section className="relative overflow-hidden px-4 pt-24 pb-28 md:pt-32 md:pb-36">
-        {/* Animated mesh background */}
-        <div className="hero-mesh" aria-hidden>
-          <div className="hero-mesh-blob" />
-          <div className="hero-grid-overlay" />
-          {isGlobal && <div className="hero-world-map" />}
-          <div className="hero-noise" />
+      <section className="relative px-4 pt-24 pb-28 md:pt-32 md:pb-36">
+        {/* Animated mesh background — clipped in its own layer so dropdowns can overflow */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
+          <div className="hero-mesh">
+            <div className="hero-mesh-blob" />
+            <div className="hero-grid-overlay" />
+            {isGlobal && <div className="hero-world-map" />}
+            <div className="hero-noise" />
+          </div>
+          {/* Bottom fade into page */}
+          <div
+            className="absolute bottom-0 left-0 right-0 h-32"
+            style={{ background: 'linear-gradient(to bottom, transparent, #ffffff)' }}
+          />
         </div>
-        {/* Bottom fade into page */}
-        <div
-          aria-hidden
-          className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none"
-          style={{ background: 'linear-gradient(to bottom, transparent, #ffffff)' }}
-        />
 
         <div className="relative max-w-5xl mx-auto text-center">
           {tenantLoading ? (
