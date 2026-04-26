@@ -133,7 +133,7 @@ serve(async (req) => {
 
     if (!company) {
       return new Response(JSON.stringify({ company: null, error: 'not_found' }), {
-        status: 404,
+        status: 200,
         headers: { ...CORS, 'Content-Type': 'application/json' },
       });
     }
