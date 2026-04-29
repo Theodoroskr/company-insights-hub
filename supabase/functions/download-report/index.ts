@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
     }
 
     // Otherwise return the raw JSON data
-    const orderItem = report.order_items as {
+    const orderItem = report.order_items as unknown as {
       companies?: { name: string; reg_no: string | null; country_code: string } | null;
       products?: { name: string; type: string } | null;
     } | null;

@@ -135,7 +135,7 @@ Deno.serve(async (req) => {
     // Build API4All order payload
     const api4allItems = orderItems
       .filter((item) => {
-        const product = item.products as { api4all_product_code?: string | null } | null;
+        const product = item.products as unknown as { api4all_product_code?: string | null } | null;
         return product?.api4all_product_code;
       })
       .map((item) => {
