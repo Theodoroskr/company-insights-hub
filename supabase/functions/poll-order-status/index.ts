@@ -7,7 +7,7 @@ const corsHeaders = {
 
 const API4ALL_BASE = 'https://v3.api4all.io/a4a/3.0/api';
 
-async function getApi4AllToken(supabase: ReturnType<typeof createClient>): Promise<string> {
+async function getApi4AllToken(supabase: any): Promise<string> {
   const { data: existingToken } = await supabase
     .from('api4all_tokens')
     .select('access_token, expires_at')
@@ -189,7 +189,6 @@ Deno.serve(async (req) => {
             await supabase
               .from('fulfillment_tasks')
               .update({
-                attempts: supabase.rpc ? undefined : undefined, // handled below
                 last_attempt_at: new Date().toISOString(),
               })
               .eq('order_item_id', item.id)

@@ -63,8 +63,8 @@ Deno.serve(async (req) => {
 
     if (itemErr || !item) throw new Error("order_item not found");
 
-    const product = item.products as { slug?: string; type?: string } | null;
-    const company = item.companies as {
+    const product = item.products as unknown as { slug?: string; type?: string } | null;
+    const company = item.companies as unknown as {
       id: string; country_code?: string; reg_no?: string; name?: string;
     } | null;
 

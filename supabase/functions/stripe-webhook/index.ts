@@ -110,7 +110,7 @@ Deno.serve(async (req) => {
         .eq('order_id', order.id);
 
       const ukReportItemIds = (ukItems ?? [])
-        .filter((it) => (it.products as { slug?: string } | null)?.slug === 'uk-company-report')
+        .filter((it) => (it.products as unknown as { slug?: string } | null)?.slug === 'uk-company-report')
         .map((it) => it.id);
 
       if (ukReportItemIds.length > 0) {

@@ -8,7 +8,7 @@ const corsHeaders = {
 const API4ALL_BASE = 'https://v3.api4all.io/a4a/3.0/api';
 
 async function getApi4AllToken(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   forceRefresh = false,
 ): Promise<string> {
   if (!forceRefresh) {
@@ -135,12 +135,12 @@ Deno.serve(async (req) => {
     // Build API4All order payload
     const api4allItems = orderItems
       .filter((item) => {
-        const product = item.products as { api4all_product_code?: string | null } | null;
+        const product = item.products as unknown as { api4all_product_code?: string | null } | null;
         return product?.api4all_product_code;
       })
       .map((item) => {
-        const product = item.products as { api4all_product_code: string; type: string };
-        const company = item.companies as { icg_code: string; name: string };
+        const product = item.products as unknown as { api4all_product_code: string; type: string };
+        const company = item.companies as unknown as { icg_code: string; name: string };
         return {
           code: company.icg_code,
           reference: item.id,
