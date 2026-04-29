@@ -7,7 +7,7 @@ const corsHeaders = {
 
 const API4ALL_BASE = 'https://v3.api4all.io/a4a/3.0/api';
 
-async function getApi4AllToken(supabase: ReturnType<typeof createClient>): Promise<string> {
+async function getApi4AllToken(supabase: any): Promise<string> {
   const { data: existingToken } = await supabase
     .from('api4all_tokens')
     .select('access_token, expires_at')
@@ -96,8 +96,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    const product = orderItem.products as { type: string; name: string; api4all_product_code: string | null } | null;
-    const company = orderItem.companies as { icg_code: string; name: string; country_code: string } | null;
+    const product = orderItem.products as unknown as { type: string; name: string; api4all_product_code: string | null } | null;
+    const company = orderItem.companies as unknown as { icg_code: string; name: string; country_code: string } | null;
 
     if (!product || !company) {
       return new Response(JSON.stringify({ error: 'Product or company data missing' }), {
