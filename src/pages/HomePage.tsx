@@ -148,7 +148,7 @@ export default function HomePage() {
                   className="w-1.5 h-1.5 rounded-full"
                   style={{ background: '#38BDF8', boxShadow: '0 0 12px #38BDF8' }}
                 />
-                {hero.badge ?? 'Live registry data · 200+ jurisdictions'}
+                {hero.badge ?? 'Company intelligence · 200+ countries'}
               </div>
 
               {/* Display headline */}
