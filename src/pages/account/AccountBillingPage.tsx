@@ -6,9 +6,19 @@ import { CREDIT_BUNDLES, useBilling } from '../../lib/billing';
 import { formatEur } from '../../lib/pricing';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { Link, useSearchParams } from 'react-router-dom';
+import { useCart } from '../../contexts/CartContext';
 
 export default function AccountBillingPage() {
   const b = useBilling();
+  const [params] = useSearchParams();
+  const picked = params.get('bundle');
+  const cart: any = useCart();
+  const hasCart = (cart?.items?.length ?? 0) + (cart?.certificateOrders?.length ?? 0) > 0;
+  const [justBought, setJustBought] = useState(false);
+  useEffect(() => {
+    if (picked) document.getElementById(`bundle-${picked}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [picked]);
   const [tx, setTx] = useState<any[]>([]);
   const [invoices, setInvoices] = useState<any[]>([]);
   const [buying, setBuying] = useState<string | null>(null);
@@ -32,6 +42,7 @@ export default function AccountBillingPage() {
     setBuying(null);
     if (error) return toast({ title: 'Purchase failed', description: error.message, variant: 'destructive' });
     toast({ title: 'Credit added to your account' });
+    setJustBought(true);
     b.refresh(); loadLists();
   };
 
@@ -65,11 +76,22 @@ export default function AccountBillingPage() {
           </div>
         </div>
 
+        {justBought && (
+          <div className={card + ' flex flex-col sm:flex-row sm:items-center gap-3'} style={{ borderColor: 'var(--brand-accent)' }}>
+            <Check className="w-5 h-5" style={{ color: 'var(--status-active)' }} />
+            <p className="flex-1 text-sm">Your credit is ready. At checkout, choose <strong>Pay with account credit</strong> — no card needed.</p>
+            <Link to={hasCart ? '/checkout/details' : '/search'} className="px-4 py-2 rounded text-sm font-semibold text-primary-foreground" style={{ backgroundColor: 'var(--brand-accent)' }}>
+              {hasCart ? 'Continue to checkout' : 'Find a company to order'}
+            </Link>
+          </div>
+        )}
+
         <div>
           <h2 className="font-semibold mb-3" style={{ color: 'var(--text-heading)' }}>Top up with a bundle</h2>
           <div className="grid md:grid-cols-3 gap-4">
             {CREDIT_BUNDLES.map((x) => (
-              <div key={x.tier} className={card + ' flex flex-col'} style={x.tier === 'professional' ? { borderColor: 'var(--brand-accent)' } : undefined}>
+              <div key={x.tier} id={`bundle-${x.tier}`} className={card + ' flex flex-col' + (picked === x.tier ? ' ring-2' : '')} style={(picked ? picked === x.tier : x.tier === 'professional') ? { borderColor: 'var(--brand-accent)', ['--tw-ring-color' as any]: 'var(--brand-accent)' } : undefined}>
+                {picked === x.tier && <p className="text-xs font-semibold mb-1" style={{ color: 'var(--brand-accent)' }}>Your selected bundle</p>}
                 <p className="text-sm font-semibold" style={{ color: 'var(--brand-accent)' }}>{x.name}</p>
                 <p className="text-2xl font-bold mt-1" style={{ color: 'var(--text-heading)' }}>{formatEur(x.pay, 0)}</p>
                 <p className="text-sm text-muted-foreground mt-1">+{x.bonusPct}% bonus · {formatEur(x.bonus)} extra</p>

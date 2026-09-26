@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { Loader2, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -8,6 +8,9 @@ import PageLayout from '@/components/layout/PageLayout';
 
 export default function RegisterPage() {
   const { tenant } = useTenant();
+  const [searchParams] = useSearchParams();
+  const rawReturn = searchParams.get('returnTo') || '/account';
+  const returnTo = rawReturn.startsWith('/') && !rawReturn.startsWith('//') ? rawReturn : '/account';
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -42,7 +45,7 @@ export default function RegisterPage() {
       password,
       options: {
         data: { full_name: fullName },
-        emailRedirectTo: `${window.location.origin}/account`,
+        emailRedirectTo: `${window.location.origin}${returnTo}`,
       },
     });
     setLoading(false);
@@ -119,7 +122,7 @@ export default function RegisterPage() {
               </button>
             )}
             <div className="mt-6">
-              <Link to="/login" className="text-sm" style={{ color: 'var(--brand-accent)' }}>
+              <Link to={`/login?returnTo=${encodeURIComponent(returnTo)}`} className="text-sm" style={{ color: 'var(--brand-accent)' }}>
                 ← Back to Sign In
               </Link>
             </div>
@@ -160,7 +163,7 @@ export default function RegisterPage() {
             <div className="mb-4 text-sm rounded-lg px-4 py-3" style={{ color: '#dc2626', backgroundColor: '#fef2f2', border: '1px solid #fecaca' }}>
               {error}{' '}
               {error.includes('already exists') && (
-                <Link to="/login" className="font-medium underline" style={{ color: '#dc2626' }}>
+                <Link to={`/login?returnTo=${encodeURIComponent(returnTo)}`} className="font-medium underline" style={{ color: '#dc2626' }}>
                   Sign in instead
                 </Link>
               )}
@@ -307,7 +310,7 @@ export default function RegisterPage() {
           {/* Bottom link */}
           <p className="text-sm text-center mt-6" style={{ color: 'var(--text-muted)' }}>
             Already have an account?{' '}
-            <Link to="/login" style={{ color: 'var(--brand-accent)' }}>
+            <Link to={`/login?returnTo=${encodeURIComponent(returnTo)}`} style={{ color: 'var(--brand-accent)' }}>
               Sign in
             </Link>
           </p>

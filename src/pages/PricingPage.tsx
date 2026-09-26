@@ -13,6 +13,14 @@ import type { Product } from '../types/database';
 export default function PricingPage() {
   const { tenant } = useTenant();
   const navigate = useNavigate();
+  const [signedIn, setSignedIn] = React.useState(false);
+  React.useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setSignedIn(!!data.session));
+  }, []);
+  const goBundle = (tier: string | null) => {
+    const target = tier ? `/account/billing?bundle=${tier}` : '/account/billing#invoicing';
+    navigate(signedIn ? target : `/register?returnTo=${encodeURIComponent(target)}`);
+  };
   const brand = tenant?.brand_name ?? 'Companies House';
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -307,17 +315,17 @@ export default function PricingPage() {
                   </li>
                 </ul>
                 <button
-                  onClick={() => navigate('/register')}
+                  onClick={() => goBundle(x.tier)}
                   className="mt-6 w-full py-2.5 rounded-lg text-sm font-semibold transition-opacity hover:opacity-90 flex items-center justify-center gap-2"
                   style={{
                     backgroundColor: x.tier === 'professional' ? 'var(--brand-accent)' : 'var(--brand-primary)',
                     color: '#fff',
                   }}
                 >
-                  Create free account <ArrowRight className="w-4 h-4" />
+                  {signedIn ? 'Buy this bundle' : 'Create free account'} <ArrowRight className="w-4 h-4" />
                 </button>
                 <p className="text-xs text-center mt-2" style={{ color: 'var(--text-muted)' }}>
-                  Buy bundles from My Account after signing up
+                  {signedIn ? 'Paid from My Account · Billing & Credits' : 'Sign up, then pay — your bundle is pre-selected'}
                 </p>
               </div>
             ))}
@@ -343,7 +351,7 @@ export default function PricingPage() {
               </p>
             </div>
             <button
-              onClick={() => navigate('/register')}
+              onClick={() => goBundle(null)}
               className="px-6 py-3 rounded-lg text-sm font-bold text-white transition-all hover:opacity-90 active:scale-[0.98] flex items-center gap-2 shrink-0"
               style={{ backgroundColor: 'var(--brand-accent)' }}
             >
