@@ -1455,7 +1455,8 @@ export default function CompanyProfilePage() {
                 </ul>
 
                 <p className="mt-3 font-semibold" style={{ color: 'var(--text-heading)' }}>
-                  from €{monitoringProduct?.base_price ?? 9}/month
+                  from €{monitoringProduct?.base_price ?? 9}
+                  {(monitoringProduct?.base_price ?? 9) >= 50 ? '/year' : '/month'}
                 </p>
 
                 <button
