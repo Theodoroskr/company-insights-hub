@@ -1,0 +1,154 @@
+import React, { useEffect, useState } from 'react';
+import { Wallet, Building2, Check } from 'lucide-react';
+import AccountLayout from '../../components/layout/AccountLayout';
+import { supabase } from '@/integrations/supabase/client';
+import { CREDIT_BUNDLES, useBilling } from '../../lib/billing';
+import { formatEur } from '../../lib/pricing';
+import { toast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
+
+export default function AccountBillingPage() {
+  const b = useBilling();
+  const [tx, setTx] = useState<any[]>([]);
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [buying, setBuying] = useState<string | null>(null);
+  const [form, setForm] = useState({ company: '', vat: '', spend: '' });
+  const [sending, setSending] = useState(false);
+
+  const loadLists = async () => {
+    const sb = supabase as any;
+    const [t, i] = await Promise.all([
+      sb.from('wallet_transactions').select('*').order('created_at', { ascending: false }).limit(50),
+      sb.from('monthly_invoices').select('*').order('period_start', { ascending: false }),
+    ]);
+    setTx(t.data ?? []); setInvoices(i.data ?? []);
+  };
+  useEffect(() => { loadLists(); }, []);
+
+  const buy = async (tier: string, pay: number) => {
+    if (!confirm(`Buy this bundle for ${formatEur(pay)}? Your card will be charged.`)) return;
+    setBuying(tier);
+    const { error } = await (supabase as any).rpc('purchase_credit_bundle', { _tier: tier });
+    setBuying(null);
+    if (error) return toast({ title: 'Purchase failed', description: error.message, variant: 'destructive' });
+    toast({ title: 'Credit added to your account' });
+    b.refresh(); loadLists();
+  };
+
+  const apply = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSending(true);
+    const { error } = await (supabase as any).rpc('request_billing_account', {
+      _company: form.company, _vat: form.vat || null, _spend: form.spend ? Number(form.spend) : null,
+    });
+    setSending(false);
+    if (error) return toast({ title: 'Could not send', description: error.message, variant: 'destructive' });
+    toast({ title: 'Application sent — we will review it shortly' });
+    b.refresh();
+  };
+
+  const card = 'rounded-lg border p-5 bg-card';
+  const acc = b.account;
+
+  return (
+    <AccountLayout>
+      <div className="max-w-5xl mx-auto p-6 space-y-6">
+        <h1 className="text-2xl font-bold" style={{ color: 'var(--text-heading)' }}>Billing & Credits</h1>
+
+        <div className={card}>
+          <div className="flex items-center gap-3">
+            <Wallet className="w-5 h-5" style={{ color: 'var(--brand-accent)' }} />
+            <div>
+              <p className="text-xs text-muted-foreground">Prepaid credit balance · usable on every country site</p>
+              <p className="text-3xl font-bold" style={{ color: 'var(--text-heading)' }}>{formatEur(b.balance)}</p>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h2 className="font-semibold mb-3" style={{ color: 'var(--text-heading)' }}>Top up with a bundle</h2>
+          <div className="grid md:grid-cols-3 gap-4">
+            {CREDIT_BUNDLES.map((x) => (
+              <div key={x.tier} className={card + ' flex flex-col'} style={x.tier === 'professional' ? { borderColor: 'var(--brand-accent)' } : undefined}>
+                <p className="text-sm font-semibold" style={{ color: 'var(--brand-accent)' }}>{x.name}</p>
+                <p className="text-2xl font-bold mt-1" style={{ color: 'var(--text-heading)' }}>{formatEur(x.pay, 0)}</p>
+                <p className="text-sm text-muted-foreground mt-1">+{x.bonusPct}% bonus · {formatEur(x.bonus)} extra</p>
+                <p className="text-sm mt-2 font-medium">You get {formatEur(x.pay + x.bonus)} credit</p>
+                <button disabled={!!buying} onClick={() => buy(x.tier, x.pay)}
+                  className="mt-4 py-2 rounded text-sm font-semibold text-primary-foreground disabled:opacity-60"
+                  style={{ backgroundColor: 'var(--brand-accent)' }}>
+                  {buying === x.tier ? 'Processing…' : 'Buy bundle'}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className={card}>
+          <div className="flex items-center gap-2 mb-3">
+            <Building2 className="w-5 h-5" style={{ color: 'var(--brand-accent)' }} />
+            <h2 className="font-semibold" style={{ color: 'var(--text-heading)' }}>Enterprise monthly invoicing</h2>
+          </div>
+          {!b.loading && acc?.status === 'approved' ? (
+            <div className="grid sm:grid-cols-3 gap-4 text-sm">
+              <div><p className="text-muted-foreground">Monthly limit</p><p className="font-semibold">{formatEur(acc.monthly_limit_eur)}</p></div>
+              <div><p className="text-muted-foreground">Used this cycle</p><p className="font-semibold">{formatEur(b.unbilled)}</p></div>
+              <div><p className="text-muted-foreground">Payment terms</p><p className="font-semibold">{acc.payment_terms_days} days{acc.po_required ? ' · PO required' : ''}</p></div>
+              <p className="sm:col-span-3 text-xs text-muted-foreground flex items-center gap-1"><Check className="w-3.5 h-3.5" />Approved for {acc.company_name}. Choose "Pay on account" at checkout; you receive one invoice at the end of each month.</p>
+            </div>
+          ) : acc?.status === 'pending' ? (
+            <p className="text-sm text-muted-foreground">Your application for {acc.company_name} is under review.</p>
+          ) : acc?.status === 'suspended' ? (
+            <p className="text-sm text-muted-foreground">Monthly invoicing is currently suspended. Please contact us.</p>
+          ) : (
+            <form onSubmit={apply} className="space-y-3 max-w-md">
+              <p className="text-sm text-muted-foreground">For firms ordering regularly: order now, pay one invoice at month end.{acc?.status === 'rejected' ? ' Your previous application was not approved; you can apply again.' : ''}</p>
+              <input required value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} placeholder="Company name" className="w-full border rounded px-3 py-2 text-sm" />
+              <input value={form.vat} onChange={(e) => setForm({ ...form, vat: e.target.value })} placeholder="VAT number (optional)" className="w-full border rounded px-3 py-2 text-sm" />
+              <input type="number" min={0} value={form.spend} onChange={(e) => setForm({ ...form, spend: e.target.value })} placeholder="Expected monthly spend (€)" className="w-full border rounded px-3 py-2 text-sm" />
+              <button disabled={sending} className="px-4 py-2 rounded text-sm font-semibold text-primary-foreground disabled:opacity-60" style={{ backgroundColor: 'var(--brand-accent)' }}>
+                {sending ? 'Sending…' : 'Apply for monthly invoicing'}
+              </button>
+            </form>
+          )}
+        </div>
+
+        {invoices.length > 0 && (
+          <div className={card}>
+            <h2 className="font-semibold mb-3" style={{ color: 'var(--text-heading)' }}>Monthly invoices</h2>
+            <table className="w-full text-sm">
+              <thead><tr className="text-left text-xs text-muted-foreground"><th className="py-2">Invoice</th><th>Period</th><th>Orders</th><th>Total</th><th>Due</th><th>Status</th></tr></thead>
+              <tbody>{invoices.map((i) => (
+                <tr key={i.id} className="border-t">
+                  <td className="py-2 font-medium">{i.invoice_ref}</td>
+                  <td>{format(new Date(i.period_start), 'MMM yyyy')}</td>
+                  <td>{i.order_count}</td>
+                  <td>{formatEur(i.total)}</td>
+                  <td>{format(new Date(i.due_date), 'd MMM yyyy')}</td>
+                  <td className="capitalize">{i.status}</td>
+                </tr>))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        <div className={card}>
+          <h2 className="font-semibold mb-3" style={{ color: 'var(--text-heading)' }}>Credit history</h2>
+          {tx.length === 0 ? <p className="text-sm text-muted-foreground">No activity yet.</p> : (
+            <table className="w-full text-sm">
+              <thead><tr className="text-left text-xs text-muted-foreground"><th className="py-2">Date</th><th>Description</th><th className="text-right">Amount</th><th className="text-right">Balance</th></tr></thead>
+              <tbody>{tx.map((t) => (
+                <tr key={t.id} className="border-t">
+                  <td className="py-2">{format(new Date(t.created_at), 'd MMM yyyy')}</td>
+                  <td>{t.note}{Number(t.bonus_eur) > 0 ? ` (incl. ${formatEur(t.bonus_eur)} bonus)` : ''}</td>
+                  <td className="text-right tabular-nums">{Number(t.amount_eur) > 0 ? '+' : ''}{formatEur(t.amount_eur)}</td>
+                  <td className="text-right tabular-nums">{formatEur(t.balance_after)}</td>
+                </tr>))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+    </AccountLayout>
+  );
+}
