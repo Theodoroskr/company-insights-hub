@@ -81,12 +81,8 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-    const { data: profile } = await userClient
-      .from('profiles')
-      .select('role')
-      .eq('id', userData.user.id)
-      .maybeSingle();
-    if (!profile || !['admin', 'super_admin'].includes(profile.role as string)) {
+    const { data: staffRole } = await userClient.rpc('get_my_role');
+    if (!staffRole || !['admin', 'super_admin', 'support'].includes(String(staffRole))) {
       return new Response(JSON.stringify({ error: 'Forbidden' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
