@@ -773,6 +773,11 @@ export default function CompanyProfilePage() {
 
       <div className="max-w-6xl mx-auto px-4 py-8">
         <Breadcrumb companyName={company.name} />
+        {company.country_code?.toUpperCase() === 'GB' && (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-2 mb-2">
+            <Link to="/uk" className="text-xs font-medium underline" style={{ color: 'var(--primary)' }}>🇬🇧 All UK company reports</Link>
+          </div>
+        )}
 
         <div className="flex flex-col lg:flex-row gap-8">
           {/* ── MAIN CONTENT ── */}
