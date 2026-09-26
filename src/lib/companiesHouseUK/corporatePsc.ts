@@ -15,6 +15,8 @@ export interface RawPscLike {
 }
 
 export interface CorporatePsc {
+  /** Name exactly as filed at Companies House */
+  sourceName: string;
   name: string;
   regNo: string;
   naturesOfControl: string[];
@@ -50,6 +52,7 @@ export async function resolveCorporatePscs(
   if (corporates.length === 0) return [];
 
   const entries: CorporatePsc[] = corporates.map((p) => ({
+    sourceName: p.name ?? '—',
     name: p.name ?? '—',
     regNo: normaliseUkCompanyNumber(p.identification?.registration_number) ?? '',
     naturesOfControl: p.natures_of_control ?? [],
