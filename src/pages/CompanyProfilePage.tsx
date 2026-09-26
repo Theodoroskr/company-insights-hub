@@ -492,7 +492,7 @@ export default function CompanyProfilePage() {
       const productsRes = await supabase
         .from('products')
         .select('*')
-        .or(`tenant_id.eq.${tenant!.id},country_scope.eq.global`)
+        .or(`tenant_id.eq.${tenant!.id},country_scope.eq.global,allowed_countries.cs.{${comp.country_code}}`)
         .eq('is_active', true)
         .order('display_order', { ascending: true });
 
@@ -1054,14 +1054,6 @@ export default function CompanyProfilePage() {
                   isOpen={kybModalOpen}
                   onClose={() => { setKybModalOpen(false); setKybModalProductOverride(null); }}
                   preselectedProduct={(kybModalProductOverride ?? kybProduct)!}
-                  preselectedCompany={company as unknown as import('../types/database').Company}
-                />
-              )}
-              {structureProduct && (
-                <OrderReportModal
-                  isOpen={structureModalOpen}
-                  onClose={() => setStructureModalOpen(false)}
-                  preselectedProduct={structureProduct}
                   preselectedCompany={company as unknown as import('../types/database').Company}
                 />
               )}
