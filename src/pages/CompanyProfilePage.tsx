@@ -27,6 +27,8 @@ import { isProductVisibleForTenant } from '../lib/tenantConfig';
 import { useCountries } from '../lib/countries';
 import { useCart, SCREENING_ADDON_PRICE_EUR } from '../contexts/CartContext';
 import { supabase } from '@/integrations/supabase/client';
+import { companiesHouseUK } from '@/lib/companiesHouseUK/client';
+import { resolveCorporatePscs, type RawPscLike } from '@/lib/companiesHouseUK/corporatePsc';
 import { legalFormToEntityType } from '@/data/cyprusCertificates';
 import { useCertificateCountries, certificatesAvailableFor } from '@/lib/certificateAvailability';
 import type { Company, Product, ProductSpeed, DirectorEntry } from '../types/database';
