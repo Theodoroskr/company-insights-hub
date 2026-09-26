@@ -253,7 +253,7 @@ export default function UKCompanySections({
     <>
       <div className="flex flex-col gap-4">
       {/* Filings & Documents (UK) */}
-      <div className="order-3">
+      <div className="order-4">
       <SectionCard>
         <Collapsible open={filingsOpen} onOpenChange={onFilingsOpenChange}>
         <CollapsibleTrigger className="group flex w-full items-center justify-between gap-3 text-left">
@@ -377,7 +377,7 @@ export default function UKCompanySections({
       </div>
 
       {/* Charges & Mortgages */}
-      <div className="order-2">
+      <div className="order-3">
       <SectionCard>
         <SectionTitle icon={<Shield className="w-4 h-4" />} count={chargesTotal}>
           Charges &amp; Mortgages
