@@ -3,6 +3,7 @@ import AdminLayout from '../../components/layout/AdminLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/lib/tenant';
 import { toast } from '@/hooks/use-toast';
+import PricingSettingsCard from '@/components/admin/PricingSettingsCard';
 
 interface TenantForm {
   brand_name: string;
@@ -80,6 +81,8 @@ export default function AdminSettingsPage() {
     <AdminLayout>
       <div className="p-6 max-w-4xl mx-auto space-y-6">
         <h1 className="text-2xl font-bold" style={{ color: 'var(--text-heading)' }}>Settings</h1>
+
+        <PricingSettingsCard />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Tenant Settings Form */}

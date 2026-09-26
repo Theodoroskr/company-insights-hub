@@ -1,11 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-export const CREDIT_BUNDLES = [
-  { tier: 'starter', name: 'Starter', pay: 250, bonusPct: 5, bonus: 12.5 },
-  { tier: 'professional', name: 'Professional', pay: 500, bonusPct: 10, bonus: 50 },
-  { tier: 'corporate', name: 'Corporate', pay: 1000, bonusPct: 15, bonus: 150 },
-] as const;
+export { CREDIT_BUNDLES } from './pricing';
 
 export interface BillingAccount {
   user_id: string;

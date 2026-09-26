@@ -110,6 +110,42 @@ export function priceCertificateOrder(order: CertificateOrderInput, pricing: Cou
   return { certificates, serviceDelivery, apostille, urgent, courier, subtotal, vat, total: round2(subtotal + vat) };
 }
 
+// ---- Admin-editable settings (bundle tiers + screening add-on), loaded before app render ----
+export interface CreditBundle { tier: string; name: string; pay: number; bonusPct: number; bonus: number }
+const toBundle = (t: { tier: string; pay: number; bonus_pct: number }): CreditBundle => ({
+  tier: t.tier, name: t.tier.charAt(0).toUpperCase() + t.tier.slice(1), pay: Number(t.pay),
+  bonusPct: Number(t.bonus_pct), bonus: round2(Number(t.pay) * Number(t.bonus_pct) / 100),
+});
+export const DEFAULT_BUNDLE_TIERS = [
+  { tier: 'starter', pay: 250, bonus_pct: 5 },
+  { tier: 'professional', pay: 500, bonus_pct: 10 },
+  { tier: 'corporate', pay: 1000, bonus_pct: 15 },
+];
+/** Mutated in place by loadPricingSettings so imports stay valid. */
+export const CREDIT_BUNDLES: CreditBundle[] = DEFAULT_BUNDLE_TIERS.map(toBundle);
+export let SCREENING_ADDON_PRICE_EUR = BASE.screeningAddon;
+
+export function applyPricingSettings(row: { bundle_tiers?: any; screening_addon_eur?: any } | null) {
+  if (!row) return;
+  if (Array.isArray(row.bundle_tiers) && row.bundle_tiers.length) {
+    CREDIT_BUNDLES.splice(0, CREDIT_BUNDLES.length, ...row.bundle_tiers.map(toBundle));
+  }
+  const sc = Number(row.screening_addon_eur);
+  if (Number.isFinite(sc) && sc >= 0) {
+    SCREENING_ADDON_PRICE_EUR = sc;
+    BASE.screeningAddon = sc;
+    Object.values(PRICING_BY_TENANT).forEach((p) => { p.screeningAddon = sc; });
+  }
+}
+
+export async function loadPricingSettings() {
+  try {
+    const { supabase } = await import('@/integrations/supabase/client');
+    const { data } = await (supabase as any).from('pricing_settings').select('*').eq('id', 'global').maybeSingle();
+    applyPricingSettings(data);
+  } catch { /* fall back to defaults */ }
+}
+
 export function formatEur(n: number, decimals = 2): string {
   return `€${Number(n).toFixed(decimals)}`;
 }

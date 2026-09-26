@@ -4,21 +4,25 @@ import { supabase } from '@/integrations/supabase/client';
 import { formatEur } from '../../lib/pricing';
 import { toast } from '@/hooks/use-toast';
 import { format, startOfMonth, subMonths } from 'date-fns';
+import CustomerWalletPanel from '../../components/admin/CustomerWalletPanel';
 
 export default function AdminBillingPage() {
   const [accounts, setAccounts] = useState<any[]>([]);
   const [invoices, setInvoices] = useState<any[]>([]);
+  const [wallets, setWallets] = useState<any[]>([]);
+  const [walletUser, setWalletUser] = useState<string | null>(null);
   const [emails, setEmails] = useState<Record<string, string>>({});
   const [period, setPeriod] = useState(format(startOfMonth(subMonths(new Date(), 1)), 'yyyy-MM'));
   const sb = supabase as any;
 
   const load = async () => {
-    const [a, i] = await Promise.all([
+    const [a, i, w] = await Promise.all([
       sb.from('billing_accounts').select('*').order('created_at', { ascending: false }),
       sb.from('monthly_invoices').select('*').order('created_at', { ascending: false }).limit(200),
+      sb.from('user_wallets').select('*').order('updated_at', { ascending: false }).limit(500),
     ]);
-    setAccounts(a.data ?? []); setInvoices(i.data ?? []);
-    const ids = Array.from(new Set([...(a.data ?? []), ...(i.data ?? [])].map((r: any) => r.user_id)));
+    setAccounts(a.data ?? []); setInvoices(i.data ?? []); setWallets(w.data ?? []);
+    const ids = Array.from(new Set([...(a.data ?? []), ...(i.data ?? []), ...(w.data ?? [])].map((r: any) => r.user_id)));
     if (ids.length) {
       const { data } = await supabase.from('profiles').select('id, email').in('id', ids as string[]);
       setEmails(Object.fromEntries((data ?? []).map((p) => [p.id, p.email ?? ''])));
@@ -48,6 +52,30 @@ export default function AdminBillingPage() {
     <AdminLayout>
       <div className="p-6 max-w-7xl mx-auto space-y-6">
         <h1 className="text-2xl font-bold" style={{ color: 'var(--text-heading)' }}>Enterprise Billing</h1>
+
+        <div className="bg-card border rounded-xl overflow-x-auto">
+          <div className="px-4 pt-4 font-semibold text-sm" style={{ color: 'var(--text-heading)' }}>Prepaid credit</div>
+          <table className="w-full text-sm">
+            <thead><tr className="border-b bg-muted/30 text-left text-xs text-muted-foreground">
+              {['Customer', 'Balance', 'Expires', 'Last activity', ''].map((h) => <th key={h} className="px-3 py-2">{h}</th>)}
+            </tr></thead>
+            <tbody>
+              {wallets.length === 0 && <tr><td colSpan={5} className="px-3 py-8 text-center text-muted-foreground">No credit balances yet</td></tr>}
+              {wallets.map((w) => (
+                <React.Fragment key={w.user_id}>
+                  <tr className="border-b last:border-0">
+                    <td className="px-3 py-2">{emails[w.user_id] ?? w.user_id}</td>
+                    <td className="px-3 py-2 font-semibold tabular-nums">{formatEur(Number(w.balance_eur))}</td>
+                    <td className="px-3 py-2">{w.expires_at ? format(new Date(w.expires_at), 'd MMM yyyy') : '—'}</td>
+                    <td className="px-3 py-2">{format(new Date(w.updated_at), 'd MMM yyyy')}</td>
+                    <td className="px-3 py-2"><button onClick={() => setWalletUser(walletUser === w.user_id ? null : w.user_id)} className="text-xs font-semibold" style={{ color: 'var(--brand-accent)' }}>{walletUser === w.user_id ? 'Close' : 'Adjust / history'}</button></td>
+                  </tr>
+                  {walletUser === w.user_id && <tr><td colSpan={5} className="px-4 py-4 bg-muted/10"><CustomerWalletPanel userId={w.user_id} onChanged={load} /></td></tr>}
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
         <div className="bg-card border rounded-xl overflow-x-auto">
           <table className="w-full text-sm">
