@@ -1,13 +1,13 @@
 // ============================================================
 // BrandMark
 // Infocredit World — an Infocredit Group platform.
-// Uses the official Infocredit Group wordmark logo, with a
-// product label ("World") and a small "An Infocredit Group
-// platform" endorsement line. Adapts to light/dark surfaces.
+// Renders the official Infocredit World wordmark (uploaded
+// infocreditworld-wordmark.svg, inlined so the navy/blue colors
+// can adapt to light and dark surfaces) plus an optional
+// "An Infocredit Group platform" endorsement line.
 // ============================================================
 
 import React from 'react';
-import infocreditLogo from '../../assets/infocredit-group-logo.png';
 
 interface BrandMarkProps {
   brandName: string;            // kept for API compatibility (unused for visuals)
@@ -18,10 +18,37 @@ interface BrandMarkProps {
 }
 
 const SIZE = {
-  sm: { logoH: 22, product: '0.95rem', endorsement: '0.55rem', tracking: '0.18em' },
-  md: { logoH: 30, product: '1.2rem',  endorsement: '0.6rem',  tracking: '0.22em' },
-  lg: { logoH: 40, product: '1.6rem',  endorsement: '0.65rem', tracking: '0.24em' },
+  sm: { logoH: 22, endorsement: '0.55rem', tracking: '0.18em' },
+  md: { logoH: 30, endorsement: '0.6rem',  tracking: '0.22em' },
+  lg: { logoH: 40, endorsement: '0.65rem', tracking: '0.24em' },
 } as const;
+
+// Inline wordmark so the brand colors can flip on dark surfaces
+// (navy text → white) while the blue accent stays blue.
+function Wordmark({ height, isDark }: { height: number; isDark: boolean }) {
+  const navy = isDark ? '#FFFFFF' : '#14294C';
+  const blue = '#00A9E8';
+  const width = (height / 88) * 600;
+
+  return (
+    <svg
+      viewBox="0 0 600 88"
+      width={width}
+      height={height}
+      role="img"
+      aria-label="Infocredit World"
+      style={{ display: 'block', flexShrink: 0 }}
+    >
+      <title>infocreditworld</title>
+      <rect x="2" y="7" width="10" height="10" fill={blue} />
+      <rect x="4" y="25" width="7" height="40" fill={navy} />
+      <text x="16" y="63" fontFamily="Arial, Helvetica, sans-serif" fontSize="62" letterSpacing="-2.5">
+        <tspan fill={navy}>nfocredit</tspan>
+        <tspan fill={blue} fontWeight="700">world</tspan>
+      </text>
+    </svg>
+  );
+}
 
 export default function BrandMark({
   variant = 'light',
@@ -32,50 +59,22 @@ export default function BrandMark({
   const s = SIZE[size];
   const isDark = variant === 'dark';
 
-  const productColor     = isDark ? '#FFFFFF' : 'var(--brand-primary, #0F2444)';
   const endorsementColor = isDark ? 'rgba(255,255,255,0.6)' : 'rgba(15,36,68,0.55)';
   const dividerColor     = isDark ? 'rgba(255,255,255,0.25)' : 'rgba(15,36,68,0.18)';
 
   return (
     <span className={`inline-flex items-center gap-3 select-none ${className}`}>
-      <img
-        src={infocreditLogo}
-        alt="Infocredit Group"
-        height={s.logoH}
-        loading="eager"
-        decoding="async"
-        style={{
-          height: s.logoH,
-          width: 'auto',
-          objectFit: 'contain',
-          // Invert the navy wordmark to white on dark surfaces; preserve
-          // the blue accent square via a hue rotation compensation.
-          filter: isDark ? 'brightness(0) invert(1)' : 'none',
-          opacity: isDark ? 0.95 : 1,
-        }}
-      />
-      <span
-        aria-hidden
-        style={{
-          width: 1,
-          height: s.logoH * 0.75,
-          background: dividerColor,
-        }}
-      />
-      <span className="flex flex-col leading-none">
-        <span
-          style={{
-            fontFamily: '"Playfair Display", Georgia, "Times New Roman", serif',
-            fontWeight: 700,
-            fontSize: s.product,
-            color: productColor,
-            letterSpacing: '-0.01em',
-            lineHeight: 1,
-          }}
-        >
-          World
-        </span>
-        {showEndorsement && (
+      <Wordmark height={s.logoH} isDark={isDark} />
+      {showEndorsement && (
+        <>
+          <span
+            aria-hidden
+            style={{
+              width: 1,
+              height: s.logoH * 0.75,
+              background: dividerColor,
+            }}
+          />
           <span
             style={{
               fontFamily: 'Inter, system-ui, sans-serif',
@@ -84,14 +83,13 @@ export default function BrandMark({
               color: endorsementColor,
               letterSpacing: s.tracking,
               textTransform: 'uppercase',
-              marginTop: '0.4em',
               whiteSpace: 'nowrap',
             }}
           >
             An Infocredit Group Platform
           </span>
-        )}
-      </span>
+        </>
+      )}
     </span>
   );
 }
