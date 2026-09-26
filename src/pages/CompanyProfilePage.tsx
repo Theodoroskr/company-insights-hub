@@ -1,4 +1,5 @@
 import { formatDelivery } from '@/lib/delivery';
+import { useReportDates, getAvailability, formatArchiveDate, URGENT_LABEL } from '@/hooks/useReportAvailability';
 import React, { useEffect, useState, useCallback } from 'react';
 import { priceProduct } from '../lib/pricing';
 import { useParams, useNavigate, Link } from 'react-router-dom';
@@ -167,6 +168,8 @@ function ProductOrderRow({
   const currentSpeed = speeds[0];
   const price = priceProduct(product, 0, currentSpeed?.code).net;
   const [modalOpen, setModalOpen] = useState(false);
+  const dates = useReportDates(company.icg_code, company.country_code);
+  const availability = getAvailability(product, dates);
 
   const companyForModal = company as unknown as import('../types/database').Company;
 
@@ -191,6 +194,13 @@ function ProductOrderRow({
           {product.is_instant ? '⚡ Instant' : formatDelivery(product.delivery_sla_hours)}
         </span>
       </div>
+      {availability && availability.kind !== 'instant' && (
+        <div className="mt-1 text-xs" style={{ color: availability.kind === 'archive' ? 'var(--status-active)' : 'var(--text-muted)' }}>
+          {availability.kind === 'archive'
+            ? `⚡ Instant copy available · last investigated ${formatArchiveDate(availability.date)}`
+            : `📋 On update · ${URGENT_LABEL}`}
+        </div>
+      )}
 
       {/* Price pill + buttons */}
       <div className="mt-2.5 flex items-center gap-2">
@@ -272,7 +282,7 @@ function ProductSection({
       </h3>
       <div
         className="overflow-hidden transition-all duration-300"
-        style={{ maxHeight: expanded ? `${products.length * 80}px` : `${defaultVisible * 80}px` }}
+        style={{ maxHeight: expanded ? `${products.length * 104}px` : `${defaultVisible * 104}px` }}
       >
         {visible.map((product) => (
           <ProductOrderRow key={product.id} product={product} company={company} />

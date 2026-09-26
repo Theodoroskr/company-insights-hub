@@ -140,7 +140,9 @@ export default function CheckoutPaymentPage() {
               order_id: orderData.id,
               product_id: item.product.id,
               company_id: item.company.id,
-              speed: item.speedCode,
+              // Fresh investigations are always ordered Urgent; archive copies are instant
+              speed: item.freshInvestigation === false ? 'Normal' : 'Urgent',
+              fresh_investigation: item.freshInvestigation !== false,
               unit_price: item.price,
               vat_amount: item.vatAmount,
               fulfillment_status: 'pending',
