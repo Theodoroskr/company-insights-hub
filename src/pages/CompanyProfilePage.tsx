@@ -25,7 +25,7 @@ import CompanyChangeTimeline from '../components/company/CompanyChangeTimeline';
 import { useTenant } from '../lib/tenant.tsx';
 import { isProductVisibleForTenant } from '../lib/tenantConfig';
 import { useCountries } from '../lib/countries';
-import { useCart } from '../contexts/CartContext';
+import { useCart, SCREENING_ADDON_PRICE_EUR } from '../contexts/CartContext';
 import { supabase } from '@/integrations/supabase/client';
 import { legalFormToEntityType } from '@/data/cyprusCertificates';
 import { useCertificateCountries, certificatesAvailableFor } from '@/lib/certificateAvailability';
@@ -1299,7 +1299,8 @@ export default function CompanyProfilePage() {
                     </h3>
                     <p className="text-sm max-w-md mx-auto mb-5" style={{ color: 'var(--text-muted)' }}>
                       Sanctions, PEP and adverse media checks on this company, its officers and owners.
-                      Available once you order a report for this company.
+                      Add AML &amp; Compliance screening (+€{SCREENING_ADDON_PRICE_EUR}) to any report at checkout,
+                      or unlock it with the AML &amp; Compliance report.
                     </p>
                     <button
                       className="btn-primary px-5 py-2.5 rounded-md text-sm font-semibold"
