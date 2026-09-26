@@ -40,6 +40,7 @@ import CountryDashboardPage from "./pages/CountryDashboardPage";
 import AccountDashboard from "./pages/account/AccountDashboard";
 import AccountOrdersPage from "./pages/account/AccountOrdersPage";
 import AccountOrderDetailPage from "./pages/account/AccountOrderDetailPage";
+import AccountReportViewPage from "./pages/account/AccountReportViewPage";
 import AccountDownloadsPage from "./pages/account/AccountDownloadsPage";
 import AccountMonitoringPage from "./pages/account/AccountMonitoringPage";
 import AccountProfilePage from "./pages/account/AccountProfilePage";
@@ -115,6 +116,7 @@ const App = () => (
               <Route path="/account/profile" element={<ProtectedRoute><AccountProfilePage /></ProtectedRoute>} />
               <Route path="/account/orders" element={<ProtectedRoute><AccountOrdersPage /></ProtectedRoute>} />
               <Route path="/account/orders/:id" element={<ProtectedRoute><AccountOrderDetailPage /></ProtectedRoute>} />
+              <Route path="/account/reports/:itemId" element={<ProtectedRoute><AccountReportViewPage /></ProtectedRoute>} />
               <Route path="/account/invoices" element={<ProtectedRoute><AccountInvoicesPage /></ProtectedRoute>} />
               <Route path="/account/downloads" element={<ProtectedRoute><AccountDownloadsPage /></ProtectedRoute>} />
               <Route path="/account/monitoring" element={<ProtectedRoute><AccountMonitoringPage /></ProtectedRoute>} />

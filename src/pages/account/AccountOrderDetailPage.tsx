@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { ArrowLeft, Download, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Download, Eye, ShieldCheck } from 'lucide-react';
 import AccountLayout from '../../components/layout/AccountLayout';
 import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../lib/tenant';
@@ -20,7 +20,7 @@ interface OrderDetail {
     vat_amount: number | null;
     sla_deadline: string | null;
     verified_at: string | null;
-    product: { name: string; delivery_sla_hours: number | null } | null;
+    product: { name: string; slug: string | null; delivery_sla_hours: number | null } | null;
     company: { name: string; reg_no: string | null; slug: string | null } | null;
     report: { download_token: string | null; download_expires_at: string | null; pdf_storage_path: string | null } | null;
   }[];
@@ -55,7 +55,7 @@ export default function AccountOrderDetailPage() {
           id, order_ref, created_at, status, total, guest_email,
           order_items (
             id, fulfillment_status, unit_price, vat_amount, sla_deadline, verified_at,
-            products ( name, delivery_sla_hours ),
+            products ( name, slug, delivery_sla_hours ),
             companies ( name, reg_no, slug ),
             generated_reports ( download_token, download_expires_at, pdf_storage_path )
           )
@@ -213,6 +213,17 @@ export default function AccountOrderDetailPage() {
                           </span>
                         )}
                       </div>
+                      <div className="flex items-center gap-2">
+                      {item.product?.slug !== 'edd-report' && (
+                        <Link
+                          to={`/account/reports/${item.id}`}
+                          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold border rounded"
+                          style={{ borderColor: 'var(--brand-accent)', color: 'var(--brand-accent)' }}
+                        >
+                          <Eye className="w-4 h-4" />
+                          View online
+                        </Link>
+                      )}
                       <button
                         type="button"
                         className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded transition-all active:scale-95"
@@ -226,6 +237,7 @@ export default function AccountOrderDetailPage() {
                         <Download className="w-4 h-4" />
                         Download Report
                       </button>
+                      </div>
                     </div>
                   )}
                 </div>
