@@ -48,7 +48,7 @@ function StepBar({ current }: { current: number }) {
 
 export default function CheckoutPaymentPage() {
   const { tenant } = useTenant();
-  const { items, certificateOrders, subtotal: cartSubtotal, grandTotal, clearCart } = useCart();
+  const { items, certificateOrders, bundleOrders, subtotal: cartSubtotal, grandTotal, clearCart } = useCart();
   const { currency, rate, format } = useCurrency();
   const navigate = useNavigate();
 
@@ -68,7 +68,7 @@ export default function CheckoutPaymentPage() {
     else navigate('/checkout/details');
   }, [navigate]);
 
-  if (items.length === 0 && certificateOrders.length === 0) {
+  if (items.length === 0 && certificateOrders.length === 0 && bundleOrders.length === 0) {
     return (
       <PageLayout>
         <div className="max-w-xl mx-auto py-20 text-center">
@@ -106,6 +106,12 @@ export default function CheckoutPaymentPage() {
     setIsPlacing(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
+
+      // Credit bundles top up your account — they need a signed-in user and card payment
+      if (bundleOrders.length > 0) {
+        if (!session) throw new Error('Please sign in to buy credit bundles.');
+        if (method !== 'card') throw new Error('Credit bundles must be paid by card.');
+      }
 
       // Generate order reference
       const orderRef = `ICG-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -196,6 +202,12 @@ export default function CheckoutPaymentPage() {
         throw new Error(orderItemError.error.message || 'Failed to create order items');
       }
 
+      // Grant credit for purchased bundles (server-side, adds to wallet)
+      for (const b of bundleOrders) {
+        const { error: bundleErr } = await (supabase as any).rpc('purchase_credit_bundle', { _tier: b.tier });
+        if (bundleErr) throw new Error(bundleErr.message);
+      }
+
       // Credit / on-account payment is settled server-side before fulfilment starts
       if (method !== 'card') {
         const { error: payErr } = method === 'wallet'
@@ -248,7 +260,7 @@ export default function CheckoutPaymentPage() {
           // Slowest item decides the promised delivery time
           slaHours: Math.max(certificateOrders.length ? 72 : 0, ...items.map((i) => (i.product?.is_instant ? 0 : i.product?.delivery_sla_hours ?? 24))),
           isInstant: certificateOrders.length === 0 && items.every((i) => i.product?.is_instant),
-          productNames: [...items.map((i) => i.product?.name), ...certificateOrders.flatMap((o) => o.certificates.map((c) => `${c.name} — ${o.companyName}`))].filter(Boolean),
+          productNames: [...items.map((i) => i.product?.name), ...certificateOrders.flatMap((o) => o.certificates.map((c) => `${c.name} — ${o.companyName}`)), ...bundleOrders.map((b) => `${b.name} credit bundle`)].filter(Boolean),
         })
       );
 
@@ -412,6 +424,15 @@ export default function CheckoutPaymentPage() {
               </h3>
 
               <div className="space-y-2 mb-3">
+                {bundleOrders.map((b) => (
+                  <div key={b.id} className="text-sm">
+                    <div className="flex justify-between gap-2">
+                      <span className="truncate font-medium" style={{ color: 'var(--text-body)' }}>💳 {b.name} credit bundle</span>
+                      <span className="shrink-0" style={{ color: 'var(--text-heading)' }}>{format(b.pay)}</span>
+                    </div>
+                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>+{format(b.bonus)} bonus credit added after payment</span>
+                  </div>
+                ))}
                 {certificateOrders.flatMap((o) => o.certificates.map((c) => (
                   <div key={o.id + c.slug} className="text-sm truncate font-medium" style={{ color: 'var(--text-body)' }}>
                     {c.name} — {o.companyName}

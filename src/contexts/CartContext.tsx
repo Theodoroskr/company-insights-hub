@@ -81,9 +81,21 @@ export interface CertificateOrder {
   courierDelivery: boolean;
 }
 
+/** Prepaid credit bundle added to the cart; credit is granted after payment succeeds */
+export interface BundleOrder {
+  id: string;
+  tier: string;
+  name: string;
+  pay: number;
+  bonus: number;
+}
+
 interface CartContextValue {
   items: CartItem[];
   certificateOrders: CertificateOrder[];
+  bundleOrders: BundleOrder[];
+  addBundle: (bundle: Omit<BundleOrder, 'id'>) => void;
+  removeBundle: (id: string) => void;
   addItem: (
     product: Product,
     company: CartItem['company'],
@@ -107,6 +119,9 @@ interface CartContextValue {
 const CartContext = createContext<CartContextValue>({
   items: [],
   certificateOrders: [],
+  bundleOrders: [],
+  addBundle: () => {},
+  removeBundle: () => {},
   addItem: () => {},
   removeItem: () => {},
   updateSpeed: () => {},
@@ -123,6 +138,7 @@ const CartContext = createContext<CartContextValue>({
 
 const STORAGE_KEY = 'ch_cart_v1';
 const CERT_STORAGE_KEY = 'ch_cert_cart_v1';
+const BUNDLE_STORAGE_KEY = 'ch_bundle_cart_v1';
 
 function calcPrice(
   product: Product,
@@ -172,6 +188,30 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try { localStorage.setItem(CERT_STORAGE_KEY, JSON.stringify(certificateOrders)); } catch {}
   }, [certificateOrders]);
+
+  const [bundleOrders, setBundleOrders] = useState<BundleOrder[]>(() => {
+    try {
+      const raw = localStorage.getItem(BUNDLE_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    try { localStorage.setItem(BUNDLE_STORAGE_KEY, JSON.stringify(bundleOrders)); } catch {}
+  }, [bundleOrders]);
+
+  const addBundle = useCallback((bundle: Omit<BundleOrder, 'id'>) => {
+    setBundleOrders((prev) => {
+      if (prev.find((b) => b.tier === bundle.tier)) return prev;
+      return [...prev, { ...bundle, id: `bundle_${bundle.tier}` }];
+    });
+  }, []);
+
+  const removeBundle = useCallback((id: string) => {
+    setBundleOrders((prev) => prev.filter((b) => b.id !== id));
+  }, []);
 
   // Recompute report-line VAT when the tenant (and therefore vatRate) changes
   useEffect(() => {
@@ -277,6 +317,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const clearCart = useCallback(() => {
     setItems([]);
     setCertificateOrders([]);
+    setBundleOrders([]);
   }, []);
 
   // Combined totals
@@ -297,12 +338,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
     { subtotal: 0, vat: 0 }
   );
 
-  const subtotal = reportSubtotal + certTotals.subtotal + screeningTotal;
+  // Credit bundles: no VAT (prepaid account credit)
+  const bundleTotal = bundleOrders.reduce((s, b) => s + b.pay, 0);
+
+  const subtotal = reportSubtotal + certTotals.subtotal + screeningTotal + bundleTotal;
   const totalVat = reportVat + certTotals.vat;
   const grandTotal = subtotal + totalVat;
 
   const totalItems =
     items.length +
+    bundleOrders.length +
     certificateOrders.reduce((s, o) => s + o.certificates.length, 0);
 
   return (
@@ -310,6 +355,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       value={{
         items,
         certificateOrders,
+        bundleOrders,
+        addBundle,
+        removeBundle,
         addItem,
         removeItem,
         updateSpeed,
