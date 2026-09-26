@@ -4,7 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { priceProduct, formatEur } from '../lib/pricing';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { Check, ShoppingCart, Lock, ShieldCheck } from 'lucide-react';
+import { Check, ShoppingCart, Lock, ShieldCheck, Printer } from 'lucide-react';
 import PageLayout from '../components/layout/PageLayout';
 import StatusBadge from '../components/ui/StatusBadge';
 import GatedContent from '../components/ui/GatedContent';
