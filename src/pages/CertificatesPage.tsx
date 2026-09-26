@@ -652,7 +652,7 @@ export default function CertificatesPage() {
                     }}
                   >
                     <FileText className="w-3.5 h-3.5" />
-                    Add Structure Report — €45
+                    Add Cyprus Company Profile — €65
                   </button>
                 </div>
               </div>
