@@ -298,6 +298,10 @@ export default function Navbar() {
 
             {/* ── Desktop nav ── */}
             <div className="hidden md:flex items-center gap-1">
+              <Link to="/uk" className="px-3 py-2 text-sm font-medium rounded transition-colors order-last" style={{ color: 'var(--text-body)' }}>
+                UK Companies
+              </Link>
+
 
               {/* Products mega menu */}
               <div className="relative">
@@ -345,7 +349,7 @@ export default function Navbar() {
                       {/* Certificates column */}
                       <div className="py-3">
                         <p className="px-4 pb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
-                          Certificates
+                          Certificates · 🇨🇾 Cyprus
                         </p>
                         <Link
                           to="/certificates"
@@ -752,8 +756,12 @@ function MobileMenu({
             </MobileAccordion>
           )}
 
+          <Link to="/uk" onClick={onClose} className={mobileLinkClass} style={{ color: 'var(--text-body)' }}>
+            <span className="text-sm">🇬🇧</span> UK Companies
+          </Link>
+
           {/* Certificates accordion */}
-          <MobileAccordion title="Certificates">
+          <MobileAccordion title="Cyprus Certificates">
             <Link to="/certificates" onClick={onClose} className={mobileLinkClass} style={{ color: 'var(--text-body)' }}>
               <span className="text-sm">🏢</span> Company Certificates
             </Link>
