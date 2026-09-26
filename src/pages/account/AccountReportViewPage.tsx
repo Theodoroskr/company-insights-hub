@@ -5,6 +5,8 @@ import { ArrowLeft, Printer } from 'lucide-react';
 import AccountLayout from '../../components/layout/AccountLayout';
 import UKComplianceScreeningPanel from '../../components/company/UKComplianceScreeningPanel';
 import { supabase } from '../../lib/supabase';
+import { useTenant } from '../../lib/tenant';
+import { ReportDisclaimerFooter } from '../../lib/reportDisclaimer';
 
 /** Reports that are delivered only as analyst documents, never shown online. */
 export const OFFLINE_ONLY_SLUGS = ['edd-report'];
