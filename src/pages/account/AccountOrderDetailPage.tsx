@@ -213,6 +213,17 @@ export default function AccountOrderDetailPage() {
                           </span>
                         )}
                       </div>
+                      <div className="flex items-center gap-2">
+                      {item.product?.slug !== 'edd-report' && (
+                        <Link
+                          to={`/account/reports/${item.id}`}
+                          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold border rounded"
+                          style={{ borderColor: 'var(--brand-accent)', color: 'var(--brand-accent)' }}
+                        >
+                          <Eye className="w-4 h-4" />
+                          View online
+                        </Link>
+                      )}
                       <button
                         type="button"
                         className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded transition-all active:scale-95"
@@ -226,6 +237,7 @@ export default function AccountOrderDetailPage() {
                         <Download className="w-4 h-4" />
                         Download Report
                       </button>
+                      </div>
                     </div>
                   )}
                 </div>
