@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { User, FileText, Receipt, Download, Bookmark, LayoutDashboard } from 'lucide-react';
+import { User, FileText, Receipt, Download, Bookmark, LayoutDashboard, Wallet } from 'lucide-react';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import { supabase } from '../../lib/supabase';
@@ -18,6 +18,7 @@ const NAV_ITEMS: NavItem[] = [
   { icon: <Bookmark className="w-4 h-4" />, label: 'Saved Companies', to: '/account/saved' },
   { icon: <Download className="w-4 h-4" />, label: 'Downloads', to: '/account/downloads' },
   { icon: <Receipt className="w-4 h-4" />, label: 'Invoices', to: '/account/invoices' },
+  { icon: <Wallet className="w-4 h-4" />, label: 'Billing & Credits', to: '/account/billing' },
 ];
 
 interface AccountLayoutProps {

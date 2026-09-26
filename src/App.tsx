@@ -46,6 +46,8 @@ import AccountMonitoringPage from "./pages/account/AccountMonitoringPage";
 import AccountProfilePage from "./pages/account/AccountProfilePage";
 import AccountInvoicesPage from "./pages/account/AccountInvoicesPage";
 import AccountSavedPage from "./pages/account/AccountSavedPage";
+import AccountBillingPage from "./pages/account/AccountBillingPage";
+import AdminBillingPage from "./pages/admin/AdminBillingPage";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -120,6 +122,7 @@ const App = () => (
               <Route path="/account/invoices" element={<ProtectedRoute><AccountInvoicesPage /></ProtectedRoute>} />
               <Route path="/account/downloads" element={<ProtectedRoute><AccountDownloadsPage /></ProtectedRoute>} />
               <Route path="/account/monitoring" element={<ProtectedRoute><AccountMonitoringPage /></ProtectedRoute>} />
+              <Route path="/account/billing" element={<ProtectedRoute><AccountBillingPage /></ProtectedRoute>} />
               <Route path="/account/saved" element={<ProtectedRoute><AccountSavedPage /></ProtectedRoute>} />
 
               {/* ── Legacy dashboard redirects ── */}
@@ -133,6 +136,7 @@ const App = () => (
               <Route path="/admin/orders/:id" element={<AdminRoute section="orders"><AdminOrderDetailPage /></AdminRoute>} />
               <Route path="/admin/fulfillment" element={<AdminRoute section="fulfillment"><AdminFulfillmentPage /></AdminRoute>} />
               <Route path="/admin/products" element={<AdminRoute section="products"><AdminProductsPage /></AdminRoute>} />
+              <Route path="/admin/billing" element={<AdminRoute section="customers"><AdminBillingPage /></AdminRoute>} />
               <Route path="/admin/customers" element={<AdminRoute section="customers"><AdminCustomersPage /></AdminRoute>} />
               <Route path="/admin/promo-codes" element={<AdminRoute section="promo_codes"><AdminPromoCodesPage /></AdminRoute>} />
               <Route path="/admin/source-health" element={<AdminRoute section="source_health"><AdminSourceHealthPage /></AdminRoute>} />
