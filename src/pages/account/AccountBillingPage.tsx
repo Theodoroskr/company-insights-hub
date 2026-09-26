@@ -21,8 +21,6 @@ export default function AccountBillingPage() {
   const navigate = useNavigate();
   const [tx, setTx] = useState<any[]>([]);
   const [invoices, setInvoices] = useState<any[]>([]);
-  const [form, setForm] = useState({ company: '', vat: '', spend: '' });
-  const [sending, setSending] = useState(false);
 
   const loadLists = async () => {
     const sb = supabase as any;
@@ -40,18 +38,6 @@ export default function AccountBillingPage() {
     cart.addBundle({ tier: bundle.tier, name: bundle.name, pay: bundle.pay, bonus: bundle.bonus });
     toast({ title: `${bundle.name} bundle added to your cart` });
     navigate('/cart');
-  };
-
-  const apply = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSending(true);
-    const { error } = await (supabase as any).rpc('request_billing_account', {
-      _company: form.company, _vat: form.vat || null, _spend: form.spend ? Number(form.spend) : null,
-    });
-    setSending(false);
-    if (error) return toast({ title: 'Could not send', description: error.message, variant: 'destructive' });
-    toast({ title: 'Application sent — we will review it shortly' });
-    b.refresh();
   };
 
   const card = 'rounded-lg border p-5 bg-card';
