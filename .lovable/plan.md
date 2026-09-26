@@ -1,25 +1,37 @@
-# Make the Compliance & AML tab stand out
+# UK Filing History — manageable timeline for large registries
 
-## Goal
-The Compliance & AML tab currently looks like an ordinary muted tab (a faint 7% tint pill), so visitors miss the paid screening upsell. Give it a clearly premium, attention-drawing treatment — locked and unlocked states — using only the tenant brand CSS variables so every instance shows its own colors.
+## Problem
+Companies like Barclays have 1,398 filings. Today the page shows only the latest 10 as a flat, repetitive list ("Mortgage create with deed…" repeated), with a total count and one link to the official register. There is no way to browse older filings or filter by type.
 
-## Design (default chosen: "filled lock chip + accent border + soft glow")
-- The tab keeps its place in the strip next to Overview, but reads as a distinct premium pill:
-  - White pill surface with a 1px brand-accent border (35% strength) and a soft accent-tinted shadow.
-  - Lock icon inside a small filled brand-accent chip (white icon on accent) when locked; shield icon in the same chip when screening is unlocked.
-  - A tiny pulsing accent dot in the pill's corner while locked (subtle "worth attention" cue), removed when unlocked.
-  - On hover the border and glow deepen slightly.
-  - When the tab is selected (active), it gains a stronger accent underline like Overview does.
-- Overview tab stays exactly as it is.
-- All colors via `var(--brand-accent)` + `color-mix` — no hardcoded hex; pulse disabled under `prefers-reduced-motion`.
+## What we will build
 
-## Changes
-1. `src/index.css` — replace the current `.compliance-tab-pill` block with the stronger treatment (surface, border, glow, hover, active states) and add rules for the lock chip and pulsing dot (`.compliance-tab-pill .lock-chip`, `.compliance-tab-pill .pulse-dot`).
-2. `src/pages/CompanyProfilePage.tsx` — update the Compliance & AML tab button markup (lines ~881–892): keep `Lock`/`ShieldCheck` logic, wrap the icon in the chip span, add the pulse dot span when locked, and add the active underline style via `aria-selected` CSS instead of inline classes.
+### 1. Category filter chips
+Above the list, small filter chips based on the filing categories Companies House returns:
+- All
+- Mortgages & charges
+- Accounts
+- Officers
+- Resolutions
+- Other
 
-## Scope
-- Company profile pages on all six instances (same shared component) — no other pages, no data or checkout changes.
+Clicking a chip filters the list instantly. Counts shown per chip where known.
+
+### 2. Paged timeline instead of a fixed top-10
+- Show the latest 25 filings, grouped under year headings (2026, 2025, …) so long histories read as a timeline.
+- A "Load more" button fetches the next page from Companies House (the API supports paging), instead of dumping all 1,398 rows at once.
+- The header keeps the total count ("UK Filing History · 1,398 records").
+
+### 3. Links behaviour (answering your question: links or just timeline?)
+- **Both, in the right places.** The timeline stays the primary view on our page.
+- Each filing row links to its original PDF on the official Companies House viewer — but only after the visitor has bought the UK Company Report (current rule, unchanged). Before purchase, rows stay locked behind the report prompt.
+- The "View on official register" link at the bottom stays, so anyone can always jump to the full 1,398-record register on Companies House.
+
+## Technical details
+- File: `src/components/company/UKCompanySections.tsx` (filing section only; charges and PSC sections untouched).
+- `companiesHouseUK.filingHistory(companyNumber, …)` gains page/category parameters; the edge function already proxies Companies House, which supports `items_per_page`, `start_index` and `category` filters — so filtering happens server-side, not by downloading everything.
+- Year grouping derived from each filing's date; no new dependencies.
+- Gating (`GatedContent`) and the existing unlock behaviour stay exactly as they are.
 
 ## Verification
-- Typecheck clean.
-- Playwright on the Barclays company page: screenshot the tab strip locked, and unlocked after restoring the signed-in session; confirm the pill clearly stands out, the pulse dot shows when locked, and the shield + underline show when unlocked and selected.
+- Open the Barclays page: header shows 1,398 records, chips filter, Load more pages through older years, PDF links work when unlocked, official-register link intact.
+- Type check clean.
