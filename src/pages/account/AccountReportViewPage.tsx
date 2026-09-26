@@ -138,7 +138,13 @@ export default function AccountReportViewPage() {
           </div>
           {Object.keys(topFields).length > 0 && <Section title="Summary" value={topFields} />}
           {sections.map(([k, v]) => <Section key={k} title={label(k)} value={v} />)}
+          {state.screening && itemId && (
+            <div className="mb-4 break-inside-avoid">
+              <UKComplianceScreeningPanel orderItemId={itemId} isEnhanced />
+            </div>
+          )}
         </>
+
       )}
     </AccountLayout>
   );
