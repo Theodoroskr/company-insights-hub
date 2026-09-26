@@ -1303,7 +1303,19 @@ export default function CompanyProfilePage() {
 
             </>
             ) : (
-              isUnlocked && unlockedOrderItemId ? (
+              screeningPending && !hasEnhancedKyb ? (
+                <SectionCard>
+                  <div className="text-center py-8">
+                    <p className="text-3xl mb-3">⏳</p>
+                    <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-heading)' }}>
+                      AML &amp; Compliance screening purchased
+                    </h3>
+                    <p className="text-sm max-w-md mx-auto" style={{ color: 'var(--text-muted)' }}>
+                      Your screening runs automatically as soon as the report is ready. Results will appear here.
+                    </p>
+                  </div>
+                </SectionCard>
+              ) : isUnlocked && unlockedOrderItemId ? (
                 <UKComplianceScreeningPanel
                   orderItemId={unlockedOrderItemId}
                   isEnhanced={hasEnhancedKyb}
