@@ -1120,7 +1120,7 @@ export default function CompanyProfilePage() {
 
                     {!isUnlocked && (
                       <p className="text-sm italic mt-3" style={{ color: 'var(--text-muted)' }}>
-                        Partial names shown. Full names, addresses, appointment dates and history
+                        Partial names shown. Full names, addresses and appointment dates
                         included in Structure Report.
                       </p>
                     )}
@@ -1129,7 +1129,7 @@ export default function CompanyProfilePage() {
                     <div className="mt-3">
                       <GatedContent
                         isUnlocked={isUnlocked}
-                        message="Order Structure Report to view full appointment history and addresses"
+                        message="Order Structure Report to view full appointment details and addresses"
                         ctaLabel="Order Structure Report"
                         onCta={openStructureModal}
                       >
@@ -1166,7 +1166,7 @@ export default function CompanyProfilePage() {
                 </div>
                 <GatedContent
                   isUnlocked={false}
-                  message="Order Structure Report to view full shareholder history, share percentages and addresses"
+                  message="Order Structure Report to view full shareholder details, share percentages and addresses"
                   ctaLabel="Order Structure Report"
                   onCta={openStructureModal}
                 >
@@ -1291,7 +1291,7 @@ export default function CompanyProfilePage() {
                 </p>
                 <GatedContent
                   isUnlocked={isUnlocked}
-                  message="Order Structure Report to view all filings and download documents"
+                  message="Order Structure Report to view all filings"
                   ctaLabel="Order Structure Report"
                   onCta={openStructureModal}
                 >
