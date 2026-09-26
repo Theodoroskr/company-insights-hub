@@ -37,6 +37,10 @@ async function appendDisclaimerPage(pdfBytes: Uint8Array, disclaimer: string): P
   const font = await doc.embedFont(StandardFonts.Helvetica);
   const bold = await doc.embedFont(StandardFonts.HelveticaBold);
 
+  // Original report content first; the disclaimer page is appended at the end.
+  const originalPages = await doc.copyPages(existing, existing.getPageIndices());
+  originalPages.forEach((p) => doc.addPage(p));
+
   const page = doc.addPage([595.28, 841.89]);
   const margin = 56;
   const maxWidth = page.getWidth() - margin * 2;
