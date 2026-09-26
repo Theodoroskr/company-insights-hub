@@ -308,6 +308,7 @@ export default function PricingPage() {
                   <li className="flex items-start gap-2 text-sm" style={{ color: 'var(--text-body)' }}>
                     <Check className="w-4 h-4 shrink-0 mt-0.5" style={{ color: 'var(--status-active)' }} />
                     <span>You get <strong>{formatEur(x.pay + x.bonus)}</strong> to spend</span>
+                    <span>Credit valid for <strong>1 year</strong> from purchase</span>
                   </li>
                   <li className="flex items-start gap-2 text-sm" style={{ color: 'var(--text-body)' }}>
                     <Check className="w-4 h-4 shrink-0 mt-0.5" style={{ color: 'var(--status-active)' }} />
