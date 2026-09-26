@@ -1,3 +1,4 @@
+import { formatDelivery } from '@/lib/delivery';
 import React, { useEffect, useState, useCallback } from 'react';
 import { priceProduct } from '../lib/pricing';
 import { useParams, useNavigate, Link } from 'react-router-dom';

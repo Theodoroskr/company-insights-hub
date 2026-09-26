@@ -4,12 +4,14 @@ import { Helmet } from 'react-helmet-async';
 import { CheckCircle } from 'lucide-react';
 import PageLayout from '../components/layout/PageLayout';
 import { useTenant } from '../lib/tenant';
+import { formatDelivery, expectedDeliveryDate } from '../lib/delivery';
 
 interface SuccessData {
   orderRef: string;
   email: string;
   slaHours: number;
   isInstant: boolean;
+  productNames?: string[];
 }
 
 export default function CheckoutSuccessPage() {
@@ -28,6 +30,8 @@ export default function CheckoutSuccessPage() {
   const email = data?.email ?? 'your email';
   const slaHours = data?.slaHours ?? 24;
   const isInstant = data?.isInstant ?? false;
+  const productNames = data?.productNames ?? [];
+  const dueDate = isInstant ? null : expectedDeliveryDate(slaHours);
 
   return (
     <PageLayout>
@@ -41,7 +45,7 @@ export default function CheckoutSuccessPage() {
         <div className="flex justify-center mb-6">
           <div
             className="w-20 h-20 rounded-full flex items-center justify-center animate-fade-in-up"
-            style={{ backgroundColor: '#f0fdf4' }}
+            style={{ backgroundColor: 'var(--bg-subtle)' }}
           >
             <CheckCircle className="w-12 h-12" style={{ color: 'var(--status-active)' }} />
           </div>
@@ -62,6 +66,14 @@ export default function CheckoutSuccessPage() {
           className="mt-5 mb-6 rounded-lg p-5 text-sm space-y-2 text-left"
           style={{ backgroundColor: 'var(--bg-subtle)', border: '1px solid var(--bg-border)' }}
         >
+          {productNames.length > 0 && (
+            <div className="flex gap-3">
+              <span>📋</span>
+              <span style={{ color: 'var(--text-body)' }}>
+                You ordered: <strong>{productNames.join(', ')}</strong>
+              </span>
+            </div>
+          )}
           <div className="flex gap-3">
             <span>📧</span>
             <span style={{ color: 'var(--text-body)' }}>
@@ -79,9 +91,20 @@ export default function CheckoutSuccessPage() {
             <span>{isInstant ? '⚡' : '🕐'}</span>
             <span style={{ color: 'var(--text-body)' }}>
               Estimated delivery:{' '}
-              <strong>{isInstant ? 'Instant' : `${slaHours} hours`}</strong>
+              <strong>{formatDelivery(slaHours, isInstant)}</strong>
+              {dueDate && (
+                <> — by <strong>{dueDate.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</strong></>
+              )}
             </span>
           </div>
+          {dueDate && (
+            <div className="flex gap-3">
+              <span>👤</span>
+              <span style={{ color: 'var(--text-body)' }}>
+                A dedicated analyst will contact you within 1 business day to confirm your requirements.
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
