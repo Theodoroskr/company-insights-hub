@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ShieldCheck, ShieldAlert, ShieldX, ChevronDown, ChevronUp, Loader2, ExternalLink, Building2, User, Users } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, ShieldX, ChevronDown, ChevronUp, Loader2, Building2, User, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Props {
