@@ -95,8 +95,11 @@ export default function OrderReportModal({
             available_speeds: Array.isArray(p.available_speeds) ? p.available_speeds : [],
           }));
           setProducts(prods);
-          if (!selectedProduct && prods.length > 0) {
-            setSelectedProduct(prods[0]);
+          if (!selectedProduct) {
+            const visible = prods.filter((p) =>
+              isProductVisibleForTenant(p, selectedCompany?.country_code),
+            );
+            if (visible.length > 0) setSelectedProduct(visible[0]);
           }
         }
         setIsLoadingProducts(false);
