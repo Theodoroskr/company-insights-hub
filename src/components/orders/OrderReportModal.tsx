@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/lib/tenant.tsx';
+import { isProductVisibleForTenant } from '@/lib/tenantConfig';
 import { useCart, isScreeningEligible, isScreeningIncluded, SCREENING_ADDON_PRICE_EUR, type CartItem } from '@/contexts/CartContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { ShieldCheck } from 'lucide-react';
@@ -53,8 +54,13 @@ export default function OrderReportModal({
   const isCertificateMode = preselectedProduct?.type === 'certificate' || 
     (!preselectedProduct && selectedProduct?.type === 'certificate');
 
-  const certificates = products.filter((p) => p.type === 'certificate');
-  const nonCertificates = products.filter((p) => p.type !== 'certificate');
+  // Scope the catalogue to the selected company's jurisdiction so e.g.
+  // UK-only reports never appear for a Cyprus company.
+  const visibleProducts = products.filter((p) =>
+    isProductVisibleForTenant(p, selectedCompany?.country_code),
+  );
+  const certificates = visibleProducts.filter((p) => p.type === 'certificate');
+  const nonCertificates = visibleProducts.filter((p) => p.type !== 'certificate');
 
   // Sync preselected values when modal opens
   useEffect(() => {
