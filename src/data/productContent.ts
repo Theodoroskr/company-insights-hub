@@ -326,6 +326,26 @@ const globalCredit: ProductContent = {
   deliveryNote: 'Reports are generated instantly via our global API network. Data is sourced from official registries and licensed data providers across 200+ countries.',
 };
 
+// ── Enhanced Due Diligence (EDD) Report ───────────────────────
+
+const eddReport: ProductContent = {
+  description: [
+    'The Enhanced Due Diligence (EDD) Report is an in-depth, analyst-led investigation designed for higher-risk counterparties, complex ownership structures and regulated onboarding requirements — available for companies in any country.',
+    'Where standard reports stop at registry data, the EDD Report goes further: our analysts map the full ownership chain, screen all related parties against global watchlists, review local-language media and verify the company\'s real-world presence.',
+  ],
+  sectionHeading: 'THE EDD REPORT MAY INCLUDE THE FOLLOWING:',
+  accordionItems: [
+    { title: 'Ownership Chain & UBO Mapping', body: 'Full mapping of the ownership structure up to the Ultimate Beneficial Owners, including indirect and layered holdings across jurisdictions.' },
+    { title: 'Sanctions, Enforcement & PEP Screening', body: 'Screening of the company, its directors, shareholders and UBOs against global sanctions lists, enforcement lists and Politically Exposed Persons (PEP) databases.' },
+    { title: 'Adverse Media & Local-Language Checks', body: 'Systematic review of adverse news using specialised subscription databases and local-language media sources in the company\'s country of registration.' },
+    { title: 'Historical Changes', body: 'Review of historical filings including changes in registered name, address, directors, shareholders and company secretary.' },
+    { title: 'Reputation & Trade References', body: 'Interviews with business associates, clients and suppliers to obtain trade references and assess the company\'s market reputation.' },
+    { title: 'Site Verification', body: 'Where feasible, a researcher visits the registered address to verify the company is active and operational, gathering evidence of premises, branding and employees.' },
+    { title: 'Analyst Summary & Risk Assessment', body: 'A dedicated researcher compiles all findings into one comprehensive report with a concise risk assessment and our conclusions.' },
+  ],
+  deliveryNote: 'Prior to the investigation, our team assesses your information requirements. A dedicated researcher oversees all activities and compiles the results into one comprehensive report, delivered within 5 business days.',
+};
+
 // ── Tab definitions ───────────────────────────────────────────
 
 export interface TabDef {
