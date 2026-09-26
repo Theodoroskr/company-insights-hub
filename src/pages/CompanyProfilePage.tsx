@@ -1338,15 +1338,25 @@ export default function CompanyProfilePage() {
                 );
               })()}
 
-              {Array.isArray(company.directors_json) && company.directors_json.length > 0 && (
+              <div className="flex flex-col gap-2 mt-4">
                 <Link
-                  to={`/company/search?q=${encodeURIComponent(company.directors_json[0].name)}`}
-                  className="inline-block text-sm mt-4 hover:underline"
+                  to={`/company/search?q=${encodeURIComponent(company.name.split(/\s+/)[0])}${company.country_code ? `&country=${company.country_code.toLowerCase()}` : ''}`}
+                  className="inline-block text-sm hover:underline"
                   style={{ color: 'var(--brand-accent)' }}
                 >
-                  Search companies linked to {company.directors_json[0].name} →
+                  Search other companies in the {company.name.split(/\s+/)[0]} group →
                 </Link>
-              )}
+                {Array.isArray(company.directors_json) && company.directors_json.length > 0 && (
+                  <Link
+                    to={`/company/search?q=${encodeURIComponent(company.directors_json[0].name)}`}
+                    className="inline-block text-sm hover:underline"
+                    style={{ color: 'var(--brand-accent)' }}
+                  >
+                    Search companies linked to {company.directors_json[0].name} →
+                  </Link>
+                )}
+              </div>
+            </SectionCard>
             </SectionCard>
 
             </>
