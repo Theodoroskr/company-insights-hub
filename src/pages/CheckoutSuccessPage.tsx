@@ -72,66 +72,127 @@ export default function CheckoutSuccessPage() {
           className="mt-5 mb-6 rounded-lg p-5 text-sm space-y-2 text-left"
           style={{ backgroundColor: 'var(--bg-subtle)', border: '1px solid var(--bg-border)' }}
         >
-          {productNames.length > 0 && (
-            <div className="flex gap-3">
-              <span>📋</span>
-              <span style={{ color: 'var(--text-body)' }}>
-                You ordered: <strong>{productNames.join(', ')}</strong>
-              </span>
-            </div>
-          )}
-          <div className="flex gap-3">
-            <span>📧</span>
-            <span style={{ color: 'var(--text-body)' }}>
-              Your report will be delivered to{' '}
-              <strong>{email}</strong>
-            </span>
-          </div>
-          <div className="flex gap-3">
-            <span>📅</span>
-            <span style={{ color: 'var(--text-body)' }}>
-              Download link valid for <strong>30 days</strong> from delivery
-            </span>
-          </div>
-          <div className="flex gap-3">
-            <span>{isInstant ? '⚡' : '🕐'}</span>
-            <span style={{ color: 'var(--text-body)' }}>
-              Estimated delivery:{' '}
-              <strong>{formatDelivery(slaHours, isInstant)}</strong>
-              {dueDate && (
-                <> — by <strong>{dueDate.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</strong></>
+          {creditOnly ? (
+            <>
+              {bundles.map((b) => (
+                <div className="flex gap-3" key={b.name}>
+                  <span>💳</span>
+                  <span style={{ color: 'var(--text-body)' }}>
+                    <strong>{b.name} credit bundle</strong> — {eur(b.pay + b.bonus)} added
+                    {b.bonus > 0 && <> ({eur(b.pay)} + {eur(b.bonus)} bonus)</>}
+                  </span>
+                </div>
+              ))}
+              <div className="flex gap-3">
+                <span>✨</span>
+                <span style={{ color: 'var(--text-body)' }}>
+                  Your credit is ready to use on <strong>every country site</strong> · valid for <strong>one year</strong>
+                </span>
+              </div>
+              <div className="flex gap-3">
+                <span>📧</span>
+                <span style={{ color: 'var(--text-body)' }}>
+                  Receipt sent to <strong>{email}</strong>
+                </span>
+              </div>
+            </>
+          ) : (
+            <>
+              {productNames.length > 0 && (
+                <div className="flex gap-3">
+                  <span>📋</span>
+                  <span style={{ color: 'var(--text-body)' }}>
+                    You ordered: <strong>{productNames.join(', ')}</strong>
+                  </span>
+                </div>
               )}
-            </span>
-          </div>
-          {dueDate && (
-            <div className="flex gap-3">
-              <span>👤</span>
-              <span style={{ color: 'var(--text-body)' }}>
-                A dedicated analyst will contact you within 1 business day to confirm your requirements.
-              </span>
-            </div>
+              {bundles.length > 0 && (
+                <div className="flex gap-3">
+                  <span>💳</span>
+                  <span style={{ color: 'var(--text-body)' }}>
+                    <strong>{eur(totalCredit)}</strong> credit added to your account — ready to use on every country site
+                  </span>
+                </div>
+              )}
+              <div className="flex gap-3">
+                <span>📧</span>
+                <span style={{ color: 'var(--text-body)' }}>
+                  Your report will be delivered to{' '}
+                  <strong>{email}</strong>
+                </span>
+              </div>
+              <div className="flex gap-3">
+                <span>📅</span>
+                <span style={{ color: 'var(--text-body)' }}>
+                  Download link valid for <strong>30 days</strong> from delivery
+                </span>
+              </div>
+              <div className="flex gap-3">
+                <span>{isInstant ? '⚡' : '🕐'}</span>
+                <span style={{ color: 'var(--text-body)' }}>
+                  Estimated delivery:{' '}
+                  <strong>{formatDelivery(slaHours, isInstant)}</strong>
+                  {dueDate && (
+                    <> — by <strong>{dueDate.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</strong></>
+                  )}
+                </span>
+              </div>
+              {dueDate && (
+                <div className="flex gap-3">
+                  <span>👤</span>
+                  <span style={{ color: 'var(--text-body)' }}>
+                    A dedicated analyst will contact you within 1 business day to confirm your requirements.
+                  </span>
+                </div>
+              )}
+            </>
           )}
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link
-            to="/account/orders"
-            className="px-5 py-2.5 rounded text-sm font-semibold text-white transition-all active:scale-95"
-            style={{ backgroundColor: 'var(--brand-accent)', borderRadius: '6px' }}
-          >
-            Track my order →
-          </Link>
-          <Link
-            to="/"
-            className="px-5 py-2.5 rounded text-sm font-medium border transition-all active:scale-95"
-            style={{
-              borderColor: 'var(--bg-border)',
-              color: 'var(--text-body)',
-              backgroundColor: '#fff',
-            }}
-          >
-            Order another report
-          </Link>
+          {creditOnly ? (
+            <>
+              <Link
+                to="/account/billing"
+                className="px-5 py-2.5 rounded text-sm font-semibold text-white transition-all active:scale-95"
+                style={{ backgroundColor: 'var(--brand-accent)', borderRadius: '6px' }}
+              >
+                View my credit →
+              </Link>
+              <Link
+                to="/"
+                className="px-5 py-2.5 rounded text-sm font-medium border transition-all active:scale-95"
+                style={{
+                  borderColor: 'var(--bg-border)',
+                  color: 'var(--text-body)',
+                  backgroundColor: '#fff',
+                }}
+              >
+                Order a report
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/account/orders"
+                className="px-5 py-2.5 rounded text-sm font-semibold text-white transition-all active:scale-95"
+                style={{ backgroundColor: 'var(--brand-accent)', borderRadius: '6px' }}
+              >
+                Track my order →
+              </Link>
+              <Link
+                to="/"
+                className="px-5 py-2.5 rounded text-sm font-medium border transition-all active:scale-95"
+                style={{
+                  borderColor: 'var(--bg-border)',
+                  color: 'var(--text-body)',
+                  backgroundColor: '#fff',
+                }}
+              >
+                Order another report
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </PageLayout>
