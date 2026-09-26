@@ -21,6 +21,8 @@ import {
 import PageLayout from '../components/layout/PageLayout';
 import { useCart } from '../contexts/CartContext';
 import { useTenant } from '../lib/tenant';
+import { Link } from 'react-router-dom';
+import { useCertificateCountries, certificatesAvailableFor } from '../lib/certificateAvailability';
 import {
   certificatesByEntity,
   entityTypeLabels,
@@ -247,6 +249,7 @@ function BundleCard({
 export default function CertificatesPage() {
   const { tenant } = useTenant();
   const { addCertificateOrder } = useCart();
+  const certCountries = useCertificateCountries();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const brand = tenant?.brand_name ?? 'Companies House Cyprus';
@@ -359,6 +362,19 @@ export default function CertificatesPage() {
     });
     navigate('/cart');
   };
+
+  if (certCountries.size > 0 && !certificatesAvailableFor(tenant?.country_code, certCountries)) {
+    return (
+      <PageLayout>
+        <Helmet><title>Certificates | {brand}</title><meta name="robots" content="noindex" /></Helmet>
+        <div className="max-w-xl mx-auto py-20 px-4 text-center">
+          <h1 className="text-2xl font-semibold mb-3" style={{ color: 'var(--text-heading)' }}>Certificates are not yet available in this country</h1>
+          <p className="text-sm mb-5" style={{ color: 'var(--text-muted)' }}>You can still order company reports for any business.</p>
+          <Link to="/pricing" className="text-sm font-medium" style={{ color: 'var(--brand-accent)' }}>Browse reports →</Link>
+        </div>
+      </PageLayout>
+    );
+  }
 
   return (
     <PageLayout>

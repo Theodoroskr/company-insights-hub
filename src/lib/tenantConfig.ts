@@ -326,7 +326,12 @@ export function isProductVisibleForTenant(
   const scope = (product.country_scope ?? 'global').toLowerCase();
   const country = tenantCountryCode?.toUpperCase() ?? null;
 
-  if (scope === 'global') return true;
+  if (scope === 'global') {
+    // Cyprus and UK companies have dedicated local reports — hide the global duplicates
+    const slug = (product as { slug?: string }).slug;
+    if (slug && GLOBAL_ONLY_SLUGS.has(slug) && (country === 'CY' || country === 'GB' || country === 'UK')) return false;
+    return true;
+  }
   // Without a tenant country, only global products are visible.
   if (!country) return false;
 

@@ -52,7 +52,7 @@ function StepBar({ current }: { current: number }) {
 }
 
 function OrderSummary({ compact = false }: { compact?: boolean }) {
-  const { items, subtotal, totalVat, grandTotal } = useCart();
+  const { items, certificateOrders, subtotal, totalVat, grandTotal } = useCart();
   const { format } = useCurrency();
   return (
     <div
@@ -63,6 +63,11 @@ function OrderSummary({ compact = false }: { compact?: boolean }) {
         Order Summary
       </h3>
       <div className="space-y-2 mb-3">
+        {certificateOrders.flatMap((o) => o.certificates.map((c) => (
+          <div key={o.id + c.slug} className="flex justify-between text-sm gap-2">
+            <span className="truncate" style={{ color: 'var(--text-body)' }}>{c.name} — {o.companyName}</span>
+          </div>
+        )))}
         {items.map((item) => (
           <div key={item.id} className="flex justify-between text-sm gap-2">
             <span className="truncate" style={{ color: 'var(--text-body)' }}>
@@ -94,7 +99,7 @@ function OrderSummary({ compact = false }: { compact?: boolean }) {
 
 export default function CheckoutDetailsPage() {
   const { tenant } = useTenant();
-  const { items, grandTotal, totalVat } = useCart();
+  const { items, certificateOrders, subtotal: cartSubtotal, grandTotal, totalVat } = useCart();
   const navigate = useNavigate();
   const countryOptions = useCountries();
 
@@ -144,7 +149,7 @@ export default function CheckoutDetailsPage() {
   const isEU = EU_COUNTRY_CODES.has(form.country.toUpperCase());
   const vatExempt = !isEU || (form.isBusiness && form.vatValidated === true);
   const effectiveVat = vatExempt ? 0 : totalVat;
-  const effectiveTotal = items.reduce((s, i) => s + i.price, 0) + effectiveVat;
+  const effectiveTotal = cartSubtotal + effectiveVat;
 
   const set = (key: keyof typeof form, val: unknown) => {
     setForm((f) => ({ ...f, [key]: val }));
@@ -185,7 +190,7 @@ export default function CheckoutDetailsPage() {
     navigate('/checkout/payment');
   };
 
-  if (items.length === 0) {
+  if (items.length === 0 && certificateOrders.length === 0) {
     return (
       <PageLayout>
         <div className="max-w-xl mx-auto py-20 text-center">
