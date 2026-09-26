@@ -106,33 +106,18 @@ export default function SearchWidget({
       setIsSearching(true);
       try {
         const primaryCountry = selectedCountry || tenant.country_code || 'cy';
-        // On the global Infocredit World tenant, when no country is explicitly
-        // selected, also query Companies House UK and merge the results so UK
-        // companies surface alongside API4ALL results.
-        const shouldMergeUK =
-          isGlobal && !selectedCountry && primaryCountry !== 'gb';
+        // On the global tenant with no country chosen, search all core registries
+        // in parallel (a "GLOBAL" code isn't a real registry).
+        const countriesToSearch =
+          isGlobal && !selectedCountry
+            ? ['gb', 'cy', 'gr', 'mt', 'ro', 'ae']
+            : [primaryCountry];
 
-        const calls: Array<Promise<{ data: any; error: any }>> = [
+        const calls: Array<Promise<{ data: any; error: any }>> = countriesToSearch.map((cc) =>
           supabase.functions.invoke('search-companies', {
-            body: {
-              q: debouncedQuery,
-              country: primaryCountry,
-              tenant_id: tenant.id,
-            },
+            body: { q: debouncedQuery, country: cc, tenant_id: tenant.id },
           }),
-        ];
-
-        if (shouldMergeUK) {
-          calls.push(
-            supabase.functions.invoke('search-companies', {
-              body: {
-                q: debouncedQuery,
-                country: 'gb',
-                tenant_id: tenant.id,
-              },
-            }),
-          );
-        }
+        );
 
         const responses = await Promise.all(calls);
         const merged: Company[] = [];
