@@ -7,7 +7,8 @@ import { useCart, SCREENING_ADDON_PRICE_EUR } from '../contexts/CartContext';
 import { useTenant } from '../lib/tenant';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { supabase } from '@/integrations/supabase/client';
-import { getCountryPricing, priceCertificateOrder } from '../lib/pricing';
+import { getCountryPricing, priceCertificateOrder, formatEur } from '../lib/pricing';
+import { useBilling } from '../lib/billing';
 
 const CHECKOUT_STEPS = ['Cart', 'Details', 'Payment', 'Confirmation'];
 
@@ -54,6 +55,9 @@ export default function CheckoutPaymentPage() {
   const [details, setDetails] = useState<Record<string, unknown> | null>(null);
   const [isPlacing, setIsPlacing] = useState(false);
   const [cardError, setCardError] = useState('');
+  const billing = useBilling();
+  const [method, setMethod] = useState<'card' | 'wallet' | 'invoice'>('card');
+  const [po, setPo] = useState('');
 
   // Simulated card form fields
   const [card, setCard] = useState({ number: '', expiry: '', cvc: '', name: '' });
@@ -91,10 +95,13 @@ export default function CheckoutPaymentPage() {
   const handlePlaceOrder = async () => {
     setCardError('');
     const rawNumber = card.number.replace(/\s/g, '');
-    if (rawNumber.length < 16) { setCardError('Please enter a valid card number'); return; }
-    if (!card.expiry || card.expiry.length < 4) { setCardError('Please enter a valid expiry date'); return; }
-    if (!card.cvc || card.cvc.length < 3) { setCardError('Please enter a valid CVC'); return; }
-    if (!card.name.trim()) { setCardError('Please enter the cardholder name'); return; }
+    if (method === 'card') {
+      if (rawNumber.length < 16) { setCardError('Please enter a valid card number'); return; }
+      if (!card.expiry || card.expiry.length < 4) { setCardError('Please enter a valid expiry date'); return; }
+      if (!card.cvc || card.cvc.length < 3) { setCardError('Please enter a valid CVC'); return; }
+      if (!card.name.trim()) { setCardError('Please enter the cardholder name'); return; }
+    }
+    if (method === 'invoice' && billing.account?.po_required && !po.trim()) { setCardError('Please enter your PO reference'); return; }
 
     setIsPlacing(true);
     try {
@@ -113,7 +120,7 @@ export default function CheckoutPaymentPage() {
         tenant_id: tenant?.id ?? null,
         user_id: session?.user?.id ?? null,
         order_ref: orderRef,
-        status: 'paid',
+        status: method === 'card' ? 'paid' : 'pending',
         subtotal,
         vat_amount: vatAmount,
         total,
@@ -189,6 +196,17 @@ export default function CheckoutPaymentPage() {
         throw new Error(orderItemError.error.message || 'Failed to create order items');
       }
 
+      // Credit / on-account payment is settled server-side before fulfilment starts
+      if (method !== 'card') {
+        const { error: payErr } = method === 'wallet'
+          ? await (supabase as any).rpc('pay_order_with_wallet', { _order_id: orderData.id })
+          : await (supabase as any).rpc('pay_order_on_account', { _order_id: orderData.id, _po: po });
+        if (payErr) {
+          await supabase.from('orders').update({ status: 'cancelled' }).eq('id', orderData.id);
+          throw new Error(payErr.message);
+        }
+      }
+
       // Submit to API4All immediately after order creation
       try {
         await supabase.functions.invoke('create-api4all-order', {
@@ -237,7 +255,7 @@ export default function CheckoutPaymentPage() {
       clearCart();
       navigate('/checkout/success');
     } catch (err) {
-      setCardError('Payment failed. Please try again or contact support.');
+      setCardError(method === 'card' ? 'Payment failed. Please try again or contact support.' : (err instanceof Error ? err.message : 'Payment failed.'));
     } finally {
       setIsPlacing(false);
     }
@@ -260,9 +278,41 @@ export default function CheckoutPaymentPage() {
               Payment Details
             </h2>
 
+            {billing.userId && (billing.balance > 0 || billing.accountApproved) && (
+              <div className="space-y-2 mb-4">
+                {([
+                  ['card', 'Pay by card', 'Visa, Mastercard, Amex', true],
+                  ['wallet', 'Pay with account credit', `Balance ${formatEur(billing.balance)}`, billing.balance >= effectiveTotalEur],
+                  ...(billing.accountApproved ? [['invoice', 'Pay on account (monthly invoice)', `${formatEur(billing.availableOnAccount)} available this month`, billing.availableOnAccount >= effectiveTotalEur]] : []),
+                ] as [typeof method, string, string, boolean][]).map(([k, label, sub, ok]) => (
+                  <label key={k} className={`flex items-center gap-3 border rounded-lg p-3 bg-card ${ok ? 'cursor-pointer' : 'opacity-50'}`}
+                    style={{ borderColor: method === k ? 'var(--brand-accent)' : 'var(--bg-border)' }}>
+                    <input type="radio" disabled={!ok} checked={method === k} onChange={() => setMethod(k)} />
+                    <span className="text-sm"><span className="font-medium" style={{ color: 'var(--text-heading)' }}>{label}</span>
+                      <span className="block text-xs" style={{ color: 'var(--text-muted)' }}>{ok ? sub : k === 'wallet' ? `${sub} — not enough credit` : `${sub} — limit reached`}</span></span>
+                  </label>
+                ))}
+                {billing.balance > 0 && billing.balance < effectiveTotalEur && (
+                  <Link to="/account/billing" className="text-xs" style={{ color: 'var(--brand-accent)' }}>Top up credit →</Link>
+                )}
+              </div>
+            )}
+
+            {method === 'invoice' && (
+              <div className="rounded-lg border p-5 mb-4 bg-card" style={{ borderColor: 'var(--bg-border)' }}>
+                <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-body)' }}>
+                  PO reference {billing.account?.po_required ? '(required)' : '(optional)'}
+                </label>
+                <input value={po} onChange={(e) => setPo(e.target.value)} maxLength={100} className="w-full border rounded-lg px-3 py-2.5 text-sm outline-none" style={{ borderColor: 'var(--bg-border)' }} />
+                <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>Added to your end-of-month invoice for {billing.account?.company_name}.</p>
+                {cardError && <div className="mt-3 text-sm" style={{ color: 'var(--status-dissolved)' }}>{cardError}</div>}
+              </div>
+            )}
+            {method === 'wallet' && cardError && <div className="mb-4 text-sm" style={{ color: 'var(--status-dissolved)' }}>{cardError}</div>}
+
             <div
               className="rounded-lg border p-5 mb-4"
-              style={{ borderColor: 'var(--bg-border)', backgroundColor: '#fff' }}
+              style={{ borderColor: 'var(--bg-border)', backgroundColor: '#fff', display: method === 'card' ? undefined : 'none' }}
             >
               <div className="space-y-4">
                 <div>
@@ -408,7 +458,7 @@ export default function CheckoutPaymentPage() {
                   <span style={{ color: 'var(--brand-accent)' }}>{format(effectiveTotalEur)}</span>
                 </div>
                 <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
-                  Charged in {currency} via Stripe.
+                  {method === 'card' ? `Charged in ${currency} via Stripe.` : method === 'wallet' ? 'Deducted in EUR from your credit balance.' : 'Billed in EUR on your monthly invoice.'}
                 </p>
               </div>
 
