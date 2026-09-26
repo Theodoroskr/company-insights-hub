@@ -6,6 +6,7 @@ import { useTenantSites, getTenantSiteUrl } from '@/lib/useTenantSites';
 
 export default function Footer() {
   const { tenant } = useTenant();
+  const sites = useTenantSites();
   const year = new Date().getFullYear();
 
   return (
@@ -90,6 +91,44 @@ export default function Footer() {
             ))}
           </div>
         </div>
+
+        {/* Country sites */}
+        {sites.length > 0 && (
+          <div
+            className="py-6"
+            style={{ borderBottom: '1px solid rgba(255,255,255,0.12)' }}
+          >
+            <p
+              className="text-xs font-semibold uppercase tracking-wider mb-3"
+              style={{ color: 'rgba(255,255,255,0.5)' }}
+            >
+              Our countries
+            </p>
+            <div className="flex flex-wrap gap-x-6 gap-y-2">
+              {sites.map((site) => {
+                const isCurrent = site.slug === tenant?.slug;
+                return (
+                  <a
+                    key={site.slug}
+                    href={getTenantSiteUrl(site)}
+                    className="flex items-center gap-1.5 text-sm transition-colors"
+                    style={{
+                      color: isCurrent ? '#fff' : 'rgba(255,255,255,0.7)',
+                      fontWeight: isCurrent ? 600 : 400,
+                    }}
+                    onMouseOver={(e) => (e.currentTarget.style.color = '#fff')}
+                    onMouseOut={(e) =>
+                      (e.currentTarget.style.color = isCurrent ? '#fff' : 'rgba(255,255,255,0.7)')
+                    }
+                  >
+                    <span aria-hidden>{site.flag}</span>
+                    {site.brandName}
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Bottom row */}
         <div className="pt-8 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
