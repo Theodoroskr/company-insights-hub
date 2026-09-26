@@ -70,15 +70,8 @@ export default function AccountBillingPage() {
           <div className="flex items-center gap-3">
             <Wallet className="w-5 h-5" style={{ color: 'var(--brand-accent)' }} />
             <div>
-              <p className="text-xs text-muted-foreground">Prepaid credit balance · usable on every country site</p>
+              <p className="text-xs text-muted-foreground">Prepaid credit balance · valid on every country site · never expires</p>
               <p className="text-3xl font-bold" style={{ color: 'var(--text-heading)' }}>{formatEur(b.balance)}</p>
-              {b.expiresAt && b.balance > 0 && (
-                <p className="text-xs mt-1" style={{ color: b.creditExpired ? 'var(--status-overdue, #b91c1c)' : 'var(--text-muted)' }}>
-                  {b.creditExpired
-                    ? `Credit expired on ${new Date(b.expiresAt).toLocaleDateString('en-GB')} — top up to reactivate`
-                    : `Valid until ${new Date(b.expiresAt).toLocaleDateString('en-GB')} · each top-up extends validity by 1 year`}
-                </p>
-              )}
             </div>
           </div>
         </div>
@@ -103,7 +96,7 @@ export default function AccountBillingPage() {
                 <p className="text-2xl font-bold mt-1" style={{ color: 'var(--text-heading)' }}>{formatEur(x.pay, 0)}</p>
                 <p className="text-sm text-muted-foreground mt-1">+{x.bonusPct}% bonus · {formatEur(x.bonus)} extra</p>
                 <p className="text-sm mt-2 font-medium">You get {formatEur(x.pay + x.bonus)} credit</p>
-                <p className="text-xs text-muted-foreground mt-1">Credit valid for 1 year from purchase</p>
+                <p className="text-xs text-muted-foreground mt-1">Valid on every country site · no expiry</p>
                 <button disabled={!!buying} onClick={() => buy(x.tier, x.pay)}
                   className="mt-4 py-2 rounded text-sm font-semibold text-primary-foreground disabled:opacity-60"
                   style={{ backgroundColor: 'var(--brand-accent)' }}>
