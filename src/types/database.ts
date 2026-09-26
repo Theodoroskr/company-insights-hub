@@ -121,6 +121,8 @@ export interface ProductSpeed {
 export interface Product {
   id: string;
   tenant_id: string | null;
+  country_scope?: string | null;
+  allowed_countries?: string[] | null;
   name: string;
   slug: string;
   api4all_product_code: string | null;

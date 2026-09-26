@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/lib/tenant.tsx';
+import { isProductVisibleForTenant } from '@/lib/tenantConfig';
 import { useCart, isScreeningEligible, isScreeningIncluded, SCREENING_ADDON_PRICE_EUR, type CartItem } from '@/contexts/CartContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { ShieldCheck } from 'lucide-react';
@@ -53,8 +54,13 @@ export default function OrderReportModal({
   const isCertificateMode = preselectedProduct?.type === 'certificate' || 
     (!preselectedProduct && selectedProduct?.type === 'certificate');
 
-  const certificates = products.filter((p) => p.type === 'certificate');
-  const nonCertificates = products.filter((p) => p.type !== 'certificate');
+  // Scope the catalogue to the selected company's jurisdiction so e.g.
+  // UK-only reports never appear for a Cyprus company.
+  const visibleProducts = products.filter((p) =>
+    isProductVisibleForTenant(p, selectedCompany?.country_code),
+  );
+  const certificates = visibleProducts.filter((p) => p.type === 'certificate');
+  const nonCertificates = visibleProducts.filter((p) => p.type !== 'certificate');
 
   // Sync preselected values when modal opens
   useEffect(() => {
@@ -89,8 +95,11 @@ export default function OrderReportModal({
             available_speeds: Array.isArray(p.available_speeds) ? p.available_speeds : [],
           }));
           setProducts(prods);
-          if (!selectedProduct && prods.length > 0) {
-            setSelectedProduct(prods[0]);
+          if (!selectedProduct) {
+            const visible = prods.filter((p) =>
+              isProductVisibleForTenant(p, selectedCompany?.country_code),
+            );
+            if (visible.length > 0) setSelectedProduct(visible[0]);
           }
         }
         setIsLoadingProducts(false);
@@ -99,10 +108,20 @@ export default function OrderReportModal({
 
   // Auto-select first product when products load (if none preselected)
   useEffect(() => {
-    if (products.length > 0 && !selectedProduct && !preselectedProduct) {
-      setSelectedProduct(products[0]);
+    if (visibleProducts.length > 0 && !selectedProduct && !preselectedProduct) {
+      setSelectedProduct(visibleProducts[0]);
     }
-  }, [products]);
+  }, [visibleProducts]);
+
+  // When the company changes, drop a selected product that is not valid
+  // for the new company's jurisdiction.
+  useEffect(() => {
+    if (selectedProduct && !preselectedProduct &&
+        !isProductVisibleForTenant(selectedProduct, selectedCompany?.country_code)) {
+      setSelectedProduct(null);
+      setSelectedCertIds(new Set());
+    }
+  }, [selectedCompany?.country_code]);
 
   // When switching to certificate mode via dropdown, init multi-select
   useEffect(() => {
@@ -392,7 +411,7 @@ export default function OrderReportModal({
                 style={{ borderColor: 'var(--bg-border)', color: 'var(--text-body)' }}
                 value={selectedProduct?.id ?? ''}
                 onChange={(e) => {
-                  const p = products.find((x) => x.id === e.target.value);
+                  const p = visibleProducts.find((x) => x.id === e.target.value);
                   if (p) setSelectedProduct(p);
                 }}
                 disabled={isLoadingProducts}
@@ -400,7 +419,7 @@ export default function OrderReportModal({
                 {isLoadingProducts ? (
                   <option>Loading…</option>
                 ) : (
-                  products.map((p) => (
+                  visibleProducts.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.name} — €{p.base_price.toFixed(0)}
                     </option>

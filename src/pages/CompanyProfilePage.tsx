@@ -20,6 +20,7 @@ import IntelligenceKpiStrip from '../components/company/IntelligenceKpiStrip';
 import DirectorRelationshipGraph from '../components/company/DirectorRelationshipGraph';
 import CompanyChangeTimeline from '../components/company/CompanyChangeTimeline';
 import { useTenant } from '../lib/tenant.tsx';
+import { isProductVisibleForTenant } from '../lib/tenantConfig';
 import { useCountries } from '../lib/countries';
 import { useCart } from '../contexts/CartContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -475,11 +476,15 @@ export default function CompanyProfilePage() {
         .order('display_order', { ascending: true });
 
       if (productsRes.data) {
+        // Scope the catalogue to the company's jurisdiction so e.g. UK-only
+        // reports never appear on a Cyprus company profile.
         setProducts(
-          (productsRes.data as unknown as Product[]).map((p) => ({
-            ...p,
-            available_speeds: Array.isArray(p.available_speeds) ? p.available_speeds : [],
-          }))
+          (productsRes.data as unknown as Product[])
+            .map((p) => ({
+              ...p,
+              available_speeds: Array.isArray(p.available_speeds) ? p.available_speeds : [],
+            }))
+            .filter((p) => isProductVisibleForTenant(p, comp.country_code))
         );
       }
 
