@@ -12,7 +12,10 @@ interface SuccessData {
   slaHours: number;
   isInstant: boolean;
   productNames?: string[];
+  bundles?: { name: string; pay: number; bonus: number }[];
 }
+
+const eur = (n: number) => `€${n.toFixed(2)}`;
 
 export default function CheckoutSuccessPage() {
   const { tenant } = useTenant();
