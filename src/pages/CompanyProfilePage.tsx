@@ -454,6 +454,7 @@ export default function CompanyProfilePage() {
   const [reportBundle, setReportBundle] = useState<Record<string, unknown> | null>(null);
   const [unlockedOrderItemId, setUnlockedOrderItemId] = useState<string | null>(null);
   const [hasEnhancedKyb, setHasEnhancedKyb] = useState(false);
+  const [profileTab, setProfileTab] = useState<'overview' | 'compliance'>('overview');
 
   const getCountryInfo = (code: string) => {
     return countries.find((c) => c.code.toUpperCase() === code.toUpperCase());
@@ -841,6 +842,27 @@ export default function CompanyProfilePage() {
               isUnlocked={isUnlocked}
             />
 
+            {/* Profile tabs */}
+            <div className="flex gap-1 mb-4 border-b" style={{ borderColor: 'var(--bg-border)' }} role="tablist">
+              {([['overview', 'Overview'], ['compliance', `Compliance & AML${isUnlocked && unlockedOrderItemId ? '' : ' 🔒'}`]] as const).map(([key, lbl]) => (
+                <button
+                  key={key}
+                  role="tab"
+                  aria-selected={profileTab === key}
+                  onClick={() => setProfileTab(key)}
+                  className="px-4 py-2 text-sm font-medium -mb-px border-b-2"
+                  style={{
+                    borderColor: profileTab === key ? 'var(--brand-accent)' : 'transparent',
+                    color: profileTab === key ? 'var(--brand-accent)' : 'var(--text-muted)',
+                  }}
+                >
+                  {lbl}
+                </button>
+              ))}
+            </div>
+
+            {profileTab === 'overview' ? (
+            <>
             {/* INTEL-2 — Director relationship graph */}
             <DirectorRelationshipGraph
               company={company}
@@ -865,17 +887,6 @@ export default function CompanyProfilePage() {
               <UKCompanyFactsPanel bundle={reportBundle} />
             )}
 
-            {/* B0c — Compliance Screening (any country once unlocked) */}
-            {isUnlocked && unlockedOrderItemId && (
-              <UKComplianceScreeningPanel
-                orderItemId={unlockedOrderItemId}
-                isEnhanced={hasEnhancedKyb}
-                onUpgrade={() => {
-                  setKybModalProductOverride(enhancedKybProduct ?? null);
-                  setKybModalOpen(true);
-                }}
-              />
-            )}
 
             {/* B — Risk Indicator */}
             <SectionCard>
@@ -1267,6 +1278,49 @@ export default function CompanyProfilePage() {
                 </Link>
               )}
             </SectionCard>
+
+            </>
+            ) : (
+              isUnlocked && unlockedOrderItemId ? (
+                <UKComplianceScreeningPanel
+                  orderItemId={unlockedOrderItemId}
+                  isEnhanced={hasEnhancedKyb}
+                  onUpgrade={() => {
+                    setKybModalProductOverride(enhancedKybProduct ?? null);
+                    setKybModalOpen(true);
+                  }}
+                />
+              ) : (
+                <SectionCard>
+                  <div className="text-center py-8">
+                    <p className="text-3xl mb-3">🔒</p>
+                    <h3 className="font-semibold text-lg mb-2" style={{ color: 'var(--text-heading)' }}>
+                      Compliance & AML screening
+                    </h3>
+                    <p className="text-sm max-w-md mx-auto mb-5" style={{ color: 'var(--text-muted)' }}>
+                      Sanctions, PEP and adverse media checks on this company, its officers and owners.
+                      Available once you order a report for this company.
+                    </p>
+                    <button
+                      className="btn-primary px-5 py-2.5 rounded-md text-sm font-semibold"
+                      style={{ background: 'var(--brand-accent)', color: 'var(--text-on-accent, #fff)' }}
+                      onClick={() => {
+                        if (company.country_code === 'GB' && enhancedKybProduct) {
+                          setKybModalProductOverride(enhancedKybProduct);
+                          setKybModalOpen(true);
+                        } else if (kybProduct) {
+                          setKybModalOpen(true);
+                        } else {
+                          openStructureModal();
+                        }
+                      }}
+                    >
+                      See report options
+                    </button>
+                  </div>
+                </SectionCard>
+              )
+            )}
 
             {/* H — Disclaimer */}
             <div
