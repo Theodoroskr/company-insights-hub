@@ -29,6 +29,9 @@ const LEGAL_TYPE_OPTIONS = [
   'Overseas Company',
 ];
 
+// Registries searched in "multi-registry" mode. Labelled honestly in the UI.
+const CORE_REGISTRIES = ['gb', 'cy', 'gr', 'mt', 'ro', 'ae'];
+
 export default function SearchResultsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -60,10 +63,43 @@ export default function SearchResultsPage() {
     return c ? `${c.flag_emoji ?? ''} ${c.name}` : code;
   };
 
+  // Multi-registry mode: Global tenant with no specific country, or explicit ?country=all
+  const isMulti = countryParam === 'all' || (!countryParam && tenant?.slug === 'icw');
+  const [registryStatus, setRegistryStatus] = useState<Record<string, 'loading' | 'done' | 'error'>>({});
+
   const fetchResults = useCallback(
     async (append = false) => {
       if (!q || q.length < 2 || !tenant) return;
       setIsLoading(true);
+
+      if (isMulti) {
+        // Progressive: fire each registry in parallel, show results as each one returns.
+        setRegistryStatus(Object.fromEntries(CORE_REGISTRIES.map((c) => [c, 'loading'])));
+        let anyLive = false;
+        await Promise.all(
+          CORE_REGISTRIES.map(async (cc) => {
+            try {
+              const { data, error } = await supabase.functions.invoke('search-companies', {
+                body: { q, country: cc, tenant_id: tenant.id },
+              });
+              if (error) throw error;
+              const companies: Company[] = data?.results ?? [];
+              if (data?.source === 'api4all') anyLive = true;
+              setResults((prev) => {
+                const seen = new Set(prev.map((c) => c.id));
+                return [...prev, ...companies.filter((c) => !seen.has(c.id))];
+              });
+              setRegistryStatus((s) => ({ ...s, [cc]: 'done' }));
+            } catch {
+              setRegistryStatus((s) => ({ ...s, [cc]: 'error' }));
+            }
+          })
+        );
+        setDataSource(anyLive ? 'api4all' : 'cache');
+        setHasMore(false);
+        setIsLoading(false);
+        return;
+      }
 
       try {
         const { data, error } = await supabase.functions.invoke('search-companies', {
@@ -87,7 +123,7 @@ export default function SearchResultsPage() {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [q, countryParam, tenant?.id]
+    [q, countryParam, tenant?.id, isMulti]
   );
 
   useEffect(() => {
@@ -96,6 +132,7 @@ export default function SearchResultsPage() {
     setLegalTypeFilter('all');
     setSelectedCountries([]);
     setDataSource(null);
+    setRegistryStatus({});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q, countryParam, tenant?.id]);
 
