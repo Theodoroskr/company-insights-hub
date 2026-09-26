@@ -195,8 +195,10 @@ export default function CheckoutPaymentPage() {
         JSON.stringify({
           orderRef,
           email: customerEmail,
-          slaHours: items[0]?.product?.delivery_sla_hours ?? 24,
-          isInstant: items[0]?.product?.is_instant ?? false,
+          // Slowest item decides the promised delivery time
+          slaHours: Math.max(0, ...items.map((i) => (i.product?.is_instant ? 0 : i.product?.delivery_sla_hours ?? 24))),
+          isInstant: items.every((i) => i.product?.is_instant),
+          productNames: items.map((i) => i.product?.name).filter(Boolean),
         })
       );
 

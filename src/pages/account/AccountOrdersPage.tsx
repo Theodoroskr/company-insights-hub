@@ -38,10 +38,7 @@ function formatDate(iso: string | null) {
 }
 
 function formatSla(hours: number | null) {
-  if (!hours) return '—';
-  if (hours < 24) return `${hours} hours`;
-  const days = Math.ceil(hours / 24);
-  return `1-${days} days`;
+  return formatDelivery(hours);
 }
 
 export default function AccountOrdersPage() {

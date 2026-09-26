@@ -187,7 +187,7 @@ function ProductOrderRow({
           className="text-xs shrink-0"
           style={{ color: product.is_instant ? 'var(--status-active)' : 'var(--text-muted)' }}
         >
-          {product.is_instant ? '⚡ Instant' : `${product.delivery_sla_hours}hr`}
+          {product.is_instant ? '⚡ Instant' : formatDelivery(product.delivery_sla_hours)}
         </span>
       </div>
 
@@ -1324,7 +1324,7 @@ export default function CompanyProfilePage() {
                     <div className="mt-4 flex items-baseline gap-2">
                       <span className="text-2xl font-bold text-white">€{price.toFixed(0)}</span>
                       <span className="text-xs" style={{ color: 'rgba(255,255,255,0.7)' }}>
-                        + VAT · {heroProduct.is_instant ? '⚡ Instant' : `Delivered in ${heroProduct.delivery_sla_hours}hrs`}
+                        + VAT · {heroProduct.is_instant ? '⚡ Instant' : `Delivered in ${formatDelivery(heroProduct.delivery_sla_hours)}`}
                       </span>
                     </div>
 
