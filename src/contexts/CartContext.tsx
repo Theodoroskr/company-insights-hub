@@ -18,7 +18,8 @@ import { useTenant } from '../lib/tenant';
 import { getCountryPricing, priceProduct, priceCertificateOrder, vatForNet } from '../lib/pricing';
 
 /** Compliance screening add-on price (EUR), shown alongside eligible reports */
-export const SCREENING_ADDON_PRICE_EUR = getCountryPricing(null).screeningAddon;
+import { SCREENING_ADDON_PRICE_EUR } from '../lib/pricing';
+export { SCREENING_ADDON_PRICE_EUR };
 
 /** Products where ComplyAdvantage screening is bundled in the base price (no add-on shown) */
 export const SCREENING_INCLUDED_SLUGS = new Set([
