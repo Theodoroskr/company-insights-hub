@@ -73,7 +73,7 @@ export default function UkLandingPage() {
             <span className="text-2xl font-bold" style={{ color: 'var(--text-heading)' }}>€{price.net.toFixed(2)}</span>
             {p.is_instant && <span className="ml-2 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Instant</span>}
           </div>
-          <a href="#uk-search" className="px-4 py-2 rounded-lg text-sm font-semibold" style={{ backgroundColor: 'var(--primary)', color: 'var(--primary-foreground, #fff)' }}>
+          <a href="#uk-search" className="px-4 py-2 rounded-lg text-sm font-semibold" style={{ backgroundColor: 'var(--brand-accent)', color: 'hsl(var(--primary-foreground))' }}>
             Find a company
           </a>
         </div>
@@ -88,18 +88,19 @@ export default function UkLandingPage() {
         <meta name="description" content="Search any UK company and get instant reports from official Companies House data — directors, shareholders, filings and KYB checks." />
       </Helmet>
 
-      <section className="hero-mesh">
-        <div className="max-w-5xl mx-auto px-4 py-16 sm:py-20 text-center">
-          <p className="text-sm font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--hero-muted, rgba(255,255,255,0.7))' }}>🇬🇧 United Kingdom</p>
-          <h1 className="text-3xl sm:text-5xl font-bold mb-4" style={{ color: 'var(--hero-text, #fff)' }}>UK Company Reports</h1>
-          <p className="text-lg max-w-2xl mx-auto mb-8" style={{ color: 'var(--hero-muted, rgba(255,255,255,0.8))' }}>
+      <section className="relative isolate">
+        <div className="hero-mesh" aria-hidden="true"><div className="hero-mesh-blob" /></div>
+        <div className="relative max-w-5xl mx-auto px-4 py-16 sm:py-20 text-center">
+          <p className="text-sm font-semibold uppercase tracking-wider mb-3" style={{ color: 'hsl(var(--primary-foreground) / 0.7)' }}>United Kingdom</p>
+          <h1 className="text-3xl sm:text-5xl font-bold mb-4" style={{ color: 'hsl(var(--primary-foreground))' }}>UK Company Reports</h1>
+          <p className="text-lg max-w-2xl mx-auto mb-8" style={{ color: 'hsl(var(--primary-foreground) / 0.8)' }}>
             Instant reports from the official Companies House register — directors, shareholders, filings and KYB checks.
           </p>
           <form id="uk-search" onSubmit={submit} className="max-w-xl mx-auto flex bg-white rounded-xl overflow-hidden shadow-lg">
             <Search className="w-5 h-5 m-4 shrink-0" style={{ color: 'var(--text-muted)' }} />
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search UK company name or number"
               className="flex-1 py-4 text-sm outline-none" style={{ color: 'var(--text-heading)' }} aria-label="Search UK companies" />
-            <button type="submit" className="px-6 text-sm font-semibold" style={{ backgroundColor: 'var(--primary)', color: 'var(--primary-foreground, #fff)' }}>Search</button>
+            <button type="submit" className="px-6 text-sm font-semibold" style={{ backgroundColor: 'var(--brand-accent)', color: 'hsl(var(--primary-foreground))' }}>Search</button>
           </form>
         </div>
       </section>
@@ -109,13 +110,13 @@ export default function UkLandingPage() {
         {loading ? <p style={{ color: 'var(--text-muted)' }}>Loading…</p> : reports.length === 0 ? (
           <p style={{ color: 'var(--text-muted)' }}>No UK reports are available right now.</p>
         ) : (
-          <div className="grid md:grid-cols-2 gap-6">{reports.map((p) => card(p, <FileText className="w-6 h-6" style={{ color: 'var(--primary)' }} />))}</div>
+          <div className="grid md:grid-cols-2 gap-6">{reports.map((p) => card(p, <FileText className="w-6 h-6" style={{ color: 'var(--brand-accent)' }} />))}</div>
         )}
 
         {certs.length > 0 && (
           <>
             <h2 className="text-2xl font-bold mt-14 mb-6" style={{ color: 'var(--text-heading)' }}>UK certificates</h2>
-            <div className="grid md:grid-cols-2 gap-6">{certs.map((p) => card(p, <Award className="w-6 h-6" style={{ color: 'var(--primary)' }} />))}</div>
+            <div className="grid md:grid-cols-2 gap-6">{certs.map((p) => card(p, <Award className="w-6 h-6" style={{ color: 'var(--brand-accent)' }} />))}</div>
           </>
         )}
       </section>
@@ -128,7 +129,7 @@ export default function UkLandingPage() {
             { icon: FileText, t: 'KYB ready', d: 'Directors, owners and filings in one document.' },
           ].map(({ icon: I, t, d }) => (
             <div key={t}>
-              <I className="w-7 h-7 mb-3" style={{ color: 'var(--primary)' }} />
+              <I className="w-7 h-7 mb-3" style={{ color: 'var(--brand-accent)' }} />
               <h3 className="font-semibold mb-1" style={{ color: 'var(--text-heading)' }}>{t}</h3>
               <p className="text-sm" style={{ color: 'var(--text-body)' }}>{d}</p>
             </div>

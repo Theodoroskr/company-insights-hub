@@ -298,8 +298,8 @@ export default function Navbar() {
 
             {/* ── Desktop nav ── */}
             <div className="hidden md:flex items-center gap-1">
-              <Link to="/uk" className="px-3 py-2 text-sm font-medium rounded transition-colors order-last" style={{ color: 'var(--text-body)' }}>
-                UK Companies
+              <Link to="/uk" className="px-3 py-2 text-sm font-medium rounded transition-colors order-last whitespace-nowrap" style={{ color: 'var(--text-body)' }}>
+                UK
               </Link>
 
 

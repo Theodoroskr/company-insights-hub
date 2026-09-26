@@ -775,7 +775,7 @@ export default function CompanyProfilePage() {
         <Breadcrumb companyName={company.name} />
         {company.country_code?.toUpperCase() === 'GB' && (
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-2 mb-2">
-            <Link to="/uk" className="text-xs font-medium underline" style={{ color: 'var(--primary)' }}>🇬🇧 All UK company reports</Link>
+            <Link to="/uk" className="text-xs font-medium underline" style={{ color: 'var(--brand-accent)' }}>All UK company reports</Link>
           </div>
         )}
 
