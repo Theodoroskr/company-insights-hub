@@ -324,6 +324,29 @@ export default function SearchResultsPage() {
                     : `⏱ Cached data · ${firstCachedAt ? new Date(firstCachedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : ''}`}
                 </p>
               )}
+              {isMulti && Object.keys(registryStatus).length > 0 && (
+                <div className="mt-2">
+                  <p className="text-xs mb-1.5" style={{ color: 'var(--text-muted)' }}>
+                    Searching {CORE_REGISTRIES.length} official registries — results appear as each one responds:
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {CORE_REGISTRIES.map((cc) => {
+                      const st = registryStatus[cc];
+                      const count = results.filter((c) => c.country_code?.toUpperCase() === cc.toUpperCase()).length;
+                      return (
+                        <span
+                          key={cc}
+                          className="text-xs px-2 py-0.5 rounded-full border"
+                          style={{ borderColor: 'var(--bg-border)', color: 'var(--text-body)', opacity: st === 'loading' ? 0.6 : 1 }}
+                        >
+                          {getCountryName(cc)}{' '}
+                          {st === 'loading' ? '…' : st === 'error' ? '· unavailable' : `· ${count}`}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Loading skeletons */}
@@ -350,7 +373,10 @@ export default function SearchResultsPage() {
             {filtered.length > 0 && (
               <div className="space-y-3">
                   {filtered.map((company) => {
-                    const entityType = legalFormToEntityType(company.legal_form, company.reg_no);
+                    // Cyprus registrar certificates only apply to Cyprus companies
+                    const entityType = company.country_code?.toUpperCase() === 'CY'
+                      ? legalFormToEntityType(company.legal_form, company.reg_no)
+                      : null;
                     const topCerts = entityType ? getPrimaryCertificatesForEntity(entityType, 3) : [];
 
                     return (
