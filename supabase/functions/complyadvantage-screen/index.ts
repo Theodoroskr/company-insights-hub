@@ -282,25 +282,26 @@ Deno.serve(async (req) => {
 
     for (const ent of entities) {
       try {
-        const resp = await caSearch(apiKey, ent.name);
+        const resp = await caSearch(apiKey, ent);
         rawAll.push({ entity: ent, response: resp });
         const hits = resp.content?.data?.hits ?? [];
-        const shareUrl = resp.content?.data?.share_url;
 
         for (const h of hits) {
-          const types = categoriseHitTypes(h.doc?.types);
+          const strength = strengthFromScore(h.score, h.match_status);
+          if (strength === "weak" || h.match_status === "false_positive") continue;
+          const types = categoriseHitTypes(h.doc?.types, h.doc?.sources);
           for (const t of types) {
             if (t === "sanction") totalSanctions++;
             else if (t === "pep") totalPep++;
-            else if (t === "adverse-media") totalAdverse++;
+            else if (t === "warning") totalAdverse++; // regulatory enforcement only
             hitsRows.push({
               entity_name: ent.name,
               entity_role: ent.role,
               hit_type: t,
-              match_strength: strengthFromScore(h.score, h.match_status),
-              source_lists: h.doc?.sources ?? [],
-              share_url: shareUrl ?? null,
-              raw_match: h,
+              match_strength: strength,
+              source_lists: (h.doc?.sources ?? []).filter((s) => !CRIME_NOISE.test(s)),
+              share_url: null,
+              raw_match: { name: h.doc?.name, types: h.doc?.types, score: h.score, match_status: h.match_status },
             });
           }
         }
