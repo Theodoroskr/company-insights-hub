@@ -41,7 +41,7 @@ export function buildReportDisclaimer(meta: DisclaimerMeta): string {
 export function ReportDisclaimerFooter({ brandName, generatedAt, orderRef }: DisclaimerMeta) {
   const metaLine = formatDisclaimerMeta({ generatedAt, orderRef });
   return (
-    <footer className="mt-10 pt-6 border-t" style={{ borderColor: 'var(--bg-border)' }}>
+    <div className="mt-10 pt-6 border-t" style={{ borderColor: 'var(--bg-border)' }}>
       <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
         {buildReportDisclaimerBody(brandName)}
       </p>
@@ -50,6 +50,6 @@ export function ReportDisclaimerFooter({ brandName, generatedAt, orderRef }: Dis
           {metaLine}
         </p>
       )}
-    </footer>
+    </div>
   );
 }
