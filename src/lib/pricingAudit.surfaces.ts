@@ -73,3 +73,13 @@ export const PRICE_SURFACES: PriceSurfaceEntry[] = [
     shownPrice: 150,
   },
 ];
+
+// Advertised on the country dashboard but not yet in the catalogue —
+// the audit reports it as a warning until a matching product exists.
+PRICE_SURFACES.push({
+  kind: 'product',
+  file: 'src/pages/CountryDashboardPage.tsx',
+  label: 'Country dashboard — KYB & Compliance Report',
+  slug: 'global-kyb-report',
+  shownPrice: 89,
+});
