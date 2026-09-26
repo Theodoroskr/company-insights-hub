@@ -93,7 +93,7 @@ export default function AccountOrdersPage() {
     const q = search.toLowerCase();
     return orders.filter((o) => {
       if (!q) return true;
-      const companyName = o.items[0]?.company?.name?.toLowerCase() ?? '';
+      const companyName = o.items.map((i) => i.company?.name ?? '').join(' ').toLowerCase();
       const ref = (o.order_ref ?? '').toLowerCase();
       return companyName.includes(q) || ref.includes(q);
     });
@@ -181,14 +181,13 @@ export default function AccountOrdersPage() {
               </tr>
             </thead>
             <tbody>
-              {sorted.map((order) => {
-                const firstItem = order.items[0];
-                const company = firstItem?.company;
-                const product = firstItem?.product;
+              {sorted.flatMap((order) => (order.items.length ? order.items : [null]).map((item, idx) => {
+                const company = item?.company;
+                const product = item?.product;
                 const statusStyle = STATUS_STYLES[order.status ?? 'pending'] ?? STATUS_STYLES.pending;
                 return (
                   <tr
-                    key={order.id}
+                    key={`${order.id}-${item?.id ?? idx}`}
                     className="cursor-pointer transition-colors"
                     style={{ borderBottom: '1px solid var(--bg-border)' }}
                     onClick={() => navigate(`/account/orders/${order.id}`)}
@@ -232,7 +231,7 @@ export default function AccountOrdersPage() {
                     </td>
                   </tr>
                 );
-              })}
+              }))}
             </tbody>
           </table>
         </div>
