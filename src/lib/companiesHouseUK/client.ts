@@ -57,10 +57,15 @@ export const companiesHouseUK = {
 
   officers: (companyNumber: string) => call<{ items: unknown[] }>("officers", { companyNumber }),
 
-  filingHistory: (companyNumber: string, itemsPerPage = 25) =>
+  filingHistory: (
+    companyNumber: string,
+    opts: { itemsPerPage?: number; startIndex?: number; category?: string } = {},
+  ) =>
     call<{ items: unknown[]; total_count: number }>("filing-history", {
       companyNumber,
-      itemsPerPage,
+      itemsPerPage: opts.itemsPerPage ?? 25,
+      startIndex: opts.startIndex ?? 0,
+      category: opts.category,
     }),
 
   charges: (companyNumber: string) =>

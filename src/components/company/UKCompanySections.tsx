@@ -74,11 +74,43 @@ export default function UKCompanySections({
 }: UKCompanySectionsProps) {
   const [filings, setFilings] = useState<FilingItem[]>([]);
   const [filingsTotal, setFilingsTotal] = useState(0);
+  const [filingCategory, setFilingCategory] = useState<string>('all');
+  const [filingsLoading, setFilingsLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [charges, setCharges] = useState<ChargeItem[]>([]);
   const [chargesTotal, setChargesTotal] = useState(0);
   const [psc, setPsc] = useState<PscItem[]>([]);
   const [pscTotal, setPscTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+
+  const FILING_PAGE = 25;
+  const FILING_CATEGORIES: Array<{ key: string; label: string; apiCategory?: string }> = [
+    { key: 'all', label: 'All' },
+    { key: 'mortgage', label: 'Mortgages & charges', apiCategory: 'mortgage' },
+    { key: 'accounts', label: 'Accounts', apiCategory: 'accounts' },
+    { key: 'officers', label: 'Officers', apiCategory: 'officers' },
+    { key: 'resolution', label: 'Resolutions', apiCategory: 'resolution' },
+    { key: 'other', label: 'Other' },
+  ];
+
+  const fetchFilings = async (category: string, startIndex: number, append: boolean) => {
+    const cat = FILING_CATEGORIES.find((c) => c.key === category);
+    const apiCategory =
+      cat?.apiCategory ?? (category === 'other' ? undefined : undefined);
+    // 'all' and 'other' both fetch unfiltered; 'other' filters client-side
+    const res = await companiesHouseUK.filingHistory(companyNumber, {
+      itemsPerPage: FILING_PAGE,
+      startIndex,
+      category: apiCategory,
+    });
+    let items = (res.items ?? []) as FilingItem[];
+    if (category === 'other') {
+      const known = new Set(['mortgage', 'accounts', 'officers', 'resolution']);
+      items = items.filter((f) => !known.has(f.category ?? ''));
+    }
+    setFilingsTotal(res.total_count ?? 0);
+    setFilings((prev) => (append ? [...prev, ...items] : items));
+  };
 
   useEffect(() => {
     if (!companyNumber) return;
@@ -86,17 +118,14 @@ export default function UKCompanySections({
 
     (async () => {
       setLoading(true);
+      setFilingsLoading(true);
       const [f, c, p] = await Promise.allSettled([
-        companiesHouseUK.filingHistory(companyNumber, 10),
+        fetchFilings('all', 0, false),
         companiesHouseUK.charges(companyNumber),
         companiesHouseUK.psc(companyNumber),
       ]);
       if (cancelled) return;
 
-      if (f.status === 'fulfilled') {
-        setFilings((f.value.items ?? []) as FilingItem[]);
-        setFilingsTotal(f.value.total_count ?? 0);
-      }
       if (c.status === 'fulfilled') {
         setCharges((c.value.items ?? []) as ChargeItem[]);
         setChargesTotal(c.value.total_count ?? 0);
@@ -105,11 +134,43 @@ export default function UKCompanySections({
         setPsc((p.value.items ?? []) as PscItem[]);
         setPscTotal(p.value.total_results ?? 0);
       }
+      setFilingsLoading(false);
       setLoading(false);
     })();
 
     return () => { cancelled = true; };
   }, [companyNumber]);
+
+  const onSelectCategory = async (key: string) => {
+    if (key === filingCategory || filingsLoading) return;
+    setFilingCategory(key);
+    setFilingsLoading(true);
+    try {
+      await fetchFilings(key, 0, false);
+    } finally {
+      setFilingsLoading(false);
+    }
+  };
+
+  const onLoadMore = async () => {
+    setLoadingMore(true);
+    try {
+      await fetchFilings(filingCategory, filings.length, true);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  // Group filings by year for a timeline feel
+  const filingsByYear: Array<[string, FilingItem[]]> = (() => {
+    const map = new Map<string, FilingItem[]>();
+    for (const f of filings) {
+      const year = f.date ? String(new Date(f.date).getFullYear()) : 'Undated';
+      if (!map.has(year)) map.set(year, []);
+      map.get(year)!.push(f);
+    }
+    return Array.from(map.entries());
+  })();
 
   return (
     <>
@@ -119,7 +180,32 @@ export default function UKCompanySections({
           UK Filing History
         </SectionTitle>
 
-        {loading ? (
+        {/* Category filter chips */}
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {FILING_CATEGORIES.map((c) => {
+            const active = filingCategory === c.key;
+            return (
+              <button
+                key={c.key}
+                type="button"
+                onClick={() => onSelectCategory(c.key)}
+                className="text-xs px-2.5 py-1 rounded-full border transition-colors"
+                style={{
+                  borderColor: active ? 'var(--brand-accent)' : 'var(--bg-border)',
+                  backgroundColor: active
+                    ? 'color-mix(in srgb, var(--brand-accent) 10%, transparent)'
+                    : 'transparent',
+                  color: active ? 'var(--brand-accent)' : 'var(--text-muted)',
+                  fontWeight: active ? 600 : 400,
+                }}
+              >
+                {c.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {filingsLoading ? (
           <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Loading filings…</p>
         ) : filings.length === 0 ? (
           <p className="text-sm italic" style={{ color: 'var(--text-muted)' }}>No filings on record.</p>
@@ -130,49 +216,81 @@ export default function UKCompanySections({
             ctaLabel="Order Report"
             onCta={onOrderReport}
           >
-            <table className="w-full text-sm">
-              <tbody>
-                {filings.slice(0, 10).map((f, i) => {
-                  const docMeta = f.links?.document_metadata;
-                  // CH document_metadata URLs look like https://document-api.company-information.service.gov.uk/document/{id}
-                  // The public viewer is at https://find-and-update.company-information.service.gov.uk/document/{id}
-                  const docId = docMeta?.split('/document/')[1];
-                  const viewerUrl = docId
-                    ? `https://find-and-update.company-information.service.gov.uk/document/${docId}`
-                    : null;
-                  const label = (f.description ?? f.type ?? '')
-                    .replace(/-/g, ' ')
-                    .replace(/^./, (s) => s.toUpperCase());
-                  return (
-                    <tr key={i} className="border-b last:border-0" style={{ borderColor: 'var(--bg-border)' }}>
-                      <td className="py-2 pr-4" style={{ color: 'var(--text-body)' }}>
-                        {isUnlocked && viewerUrl ? (
-                          <a
-                            href={viewerUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="hover:underline inline-flex items-center gap-1"
-                            style={{ color: 'var(--brand-accent)' }}
-                            title="Open original PDF on Companies House"
-                          >
-                            {label}
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
-                        ) : (
-                          label
-                        )}
-                      </td>
-                      <td className="py-2 pr-4 whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>
-                        {formatDate(f.date)}
-                      </td>
-                      <td className="py-2 text-xs" style={{ color: 'var(--text-muted)' }}>
-                        {f.category ?? ''}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <div className="text-sm">
+              {filingsByYear.map(([year, items]) => (
+                <div key={year}>
+                  <div
+                    className="text-xs font-semibold uppercase tracking-wide mt-4 first:mt-0 mb-1"
+                    style={{ color: 'var(--text-muted)' }}
+                  >
+                    {year}
+                  </div>
+                  {items.map((f, i) => {
+                    const docMeta = f.links?.document_metadata;
+                    // CH document_metadata URLs look like https://document-api.company-information.service.gov.uk/document/{id}
+                    // The public viewer is at https://find-and-update.company-information.service.gov.uk/document/{id}
+                    const docId = docMeta?.split('/document/')[1];
+                    const viewerUrl = docId
+                      ? `https://find-and-update.company-information.service.gov.uk/document/${docId}`
+                      : null;
+                    const label = (f.description ?? f.type ?? '')
+                      .replace(/-/g, ' ')
+                      .replace(/^./, (s) => s.toUpperCase());
+                    return (
+                      <div
+                        key={`${year}-${i}`}
+                        className="flex items-baseline gap-3 py-1.5 border-b last:border-0"
+                        style={{ borderColor: 'var(--bg-border)' }}
+                      >
+                        <span
+                          className="whitespace-nowrap text-xs w-20 shrink-0"
+                          style={{ color: 'var(--text-muted)' }}
+                        >
+                          {formatDate(f.date)}
+                        </span>
+                        <span className="flex-1" style={{ color: 'var(--text-body)' }}>
+                          {isUnlocked && viewerUrl ? (
+                            <a
+                              href={viewerUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="hover:underline inline-flex items-center gap-1"
+                              style={{ color: 'var(--brand-accent)' }}
+                              title="Open original PDF on Companies House"
+                            >
+                              {label}
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          ) : (
+                            label
+                          )}
+                        </span>
+                        <span className="text-xs shrink-0" style={{ color: 'var(--text-muted)' }}>
+                          {f.category ?? ''}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+
+            {filings.length < filingsTotal && (
+              <button
+                type="button"
+                onClick={onLoadMore}
+                disabled={loadingMore}
+                className="mt-3 text-sm font-medium px-4 py-1.5 rounded-md border transition-colors disabled:opacity-50"
+                style={{
+                  borderColor: 'var(--brand-accent)',
+                  color: 'var(--brand-accent)',
+                }}
+              >
+                {loadingMore
+                  ? 'Loading…'
+                  : `Load more (${filings.length} of ${filingsTotal.toLocaleString()})`}
+              </button>
+            )}
           </GatedContent>
         )}
 

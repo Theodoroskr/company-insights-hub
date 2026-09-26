@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const { action, query, companyNumber, itemsPerPage = 20, startIndex = 0 } =
+    const { action, query, companyNumber, itemsPerPage = 20, startIndex = 0, category } =
       await req.json();
 
     const supabase = createClient(
@@ -128,9 +128,10 @@ Deno.serve(async (req) => {
 
       case "filing-history": {
         if (!companyNumber) throw new Error("companyNumber is required");
-        data = await chFetch(
-          `/company/${companyNumber}/filing-history?items_per_page=${itemsPerPage}`,
-        );
+        let path =
+          `/company/${companyNumber}/filing-history?items_per_page=${itemsPerPage}&start_index=${startIndex}`;
+        if (category) path += `&category=${encodeURIComponent(category)}`;
+        data = await chFetch(path);
         break;
       }
 
