@@ -52,7 +52,7 @@ function StepBar({ current }: { current: number }) {
 }
 
 function OrderSummary({ compact = false }: { compact?: boolean }) {
-  const { items, certificateOrders, subtotal, totalVat, grandTotal } = useCart();
+  const { items, certificateOrders, bundleOrders, subtotal, totalVat, grandTotal } = useCart();
   const { format } = useCurrency();
   return (
     <div
@@ -63,6 +63,12 @@ function OrderSummary({ compact = false }: { compact?: boolean }) {
         Order Summary
       </h3>
       <div className="space-y-2 mb-3">
+        {bundleOrders.map((b) => (
+          <div key={b.id} className="flex justify-between text-sm gap-2">
+            <span className="truncate" style={{ color: 'var(--text-body)' }}>💳 {b.name} credit bundle (+{format(b.bonus)} bonus)</span>
+            <span className="shrink-0 font-medium" style={{ color: 'var(--text-heading)' }}>{format(b.pay)}</span>
+          </div>
+        ))}
         {certificateOrders.flatMap((o) => o.certificates.map((c) => (
           <div key={o.id + c.slug} className="flex justify-between text-sm gap-2">
             <span className="truncate" style={{ color: 'var(--text-body)' }}>{c.name} — {o.companyName}</span>
@@ -99,7 +105,7 @@ function OrderSummary({ compact = false }: { compact?: boolean }) {
 
 export default function CheckoutDetailsPage() {
   const { tenant } = useTenant();
-  const { items, certificateOrders, subtotal: cartSubtotal, grandTotal, totalVat } = useCart();
+  const { items, certificateOrders, bundleOrders, subtotal: cartSubtotal, grandTotal, totalVat } = useCart();
   const navigate = useNavigate();
   const countryOptions = useCountries();
 
@@ -190,7 +196,7 @@ export default function CheckoutDetailsPage() {
     navigate('/checkout/payment');
   };
 
-  if (items.length === 0 && certificateOrders.length === 0) {
+  if (items.length === 0 && certificateOrders.length === 0 && bundleOrders.length === 0) {
     return (
       <PageLayout>
         <div className="max-w-xl mx-auto py-20 text-center">
