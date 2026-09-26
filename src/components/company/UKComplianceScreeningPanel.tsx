@@ -49,8 +49,7 @@ const STATUS_META: Record<Status, { color: string; bg: string; label: string; Ic
 const HIT_TYPE_LABEL: Record<string, string> = {
   sanction: 'Sanctions',
   pep: 'PEP',
-  'adverse-media': 'Adverse Media',
-  warning: 'Warning',
+  warning: 'Regulatory Warning',
   'fitness-probity': 'Fitness & Probity',
 };
 
