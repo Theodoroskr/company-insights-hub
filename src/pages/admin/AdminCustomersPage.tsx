@@ -74,7 +74,17 @@ export default function AdminCustomersPage() {
   const updateRole = async (newRole: string) => {
     if (!selected) return;
     setUpdatingRole(true);
-    const { error } = await supabase.from('profiles').update({ role: newRole }).eq('id', selected.id);
+    // roles live in the protected user_roles table; profiles.role is kept as a display mirror
+    await supabase.from('user_roles').delete().eq('user_id', selected.id);
+    let error: { message: string } | null = null;
+    if (newRole !== 'user') {
+      const res = await supabase.from('user_roles').insert({ user_id: selected.id, role: newRole as any });
+      error = res.error;
+    }
+    if (!error) {
+      const res = await supabase.from('profiles').update({ role: newRole }).eq('id', selected.id);
+      error = res.error;
+    }
     setUpdatingRole(false);
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
@@ -84,6 +94,7 @@ export default function AdminCustomersPage() {
       toast({ title: `Role updated to ${newRole}` });
     }
   };
+
 
   const filtered = customers.filter(c => {
     if (!search) return true;
