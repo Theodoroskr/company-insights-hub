@@ -95,7 +95,10 @@ export default function IntelligenceKpiStrip({ company, country, isUnlocked }: P
     | null;
   const incorporatedIso = raw?.incorporated_on ?? raw?.date_of_creation ?? null;
   const ageYears        = yearsSince(incorporatedIso);
-  const sector          = raw?.nature_of_business ?? raw?.sic_codes?.[0] ?? company.legal_form ?? '—';
+  const sector          = raw?.nature_of_business
+                          ?? (raw?.sic_codes?.[0] ? describeSicCode(raw.sic_codes[0]) ?? raw.sic_codes[0] : null)
+                          ?? company.legal_form
+                          ?? '—';
 
   const status        = company.status ?? 'Unknown';
   const statusActive  = /active|registered|in good standing/i.test(status);
