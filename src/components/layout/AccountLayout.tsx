@@ -12,6 +12,7 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
+  { icon: <LayoutDashboard className="w-4 h-4" />, label: 'Overview', to: '/account' },
   { icon: <User className="w-4 h-4" />, label: 'Profile', to: '/account/profile' },
   { icon: <FileText className="w-4 h-4" />, label: 'Reports', to: '/account/orders' },
   { icon: <Bookmark className="w-4 h-4" />, label: 'Saved Companies', to: '/account/saved' },
