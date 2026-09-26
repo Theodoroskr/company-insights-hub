@@ -189,7 +189,7 @@ export default function UKCompanySections({
           .then((resolved) => {
             if (cancelled) return;
             const map: Record<string, string> = {};
-            for (const entry of resolved) map[entry.name.toUpperCase()] = corporatePscHref(entry);
+            for (const entry of resolved) map[entry.sourceName.toUpperCase()] = corporatePscHref(entry);
             setPscHrefs(map);
           })
           .catch(() => undefined);
