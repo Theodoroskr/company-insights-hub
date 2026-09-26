@@ -8,10 +8,12 @@ import React, {
   ReactNode,
 } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useTenant } from '@/lib/tenant';
+import { getTenantLocale } from '@/lib/tenantConfig';
 
-export type Currency = 'EUR' | 'GBP' | 'USD' | 'CHF' | 'AED';
+export type Currency = 'EUR' | 'GBP' | 'USD' | 'CHF' | 'AED' | 'RON';
 
-export const SUPPORTED_CURRENCIES: Currency[] = ['EUR', 'GBP', 'USD', 'CHF', 'AED'];
+export const SUPPORTED_CURRENCIES: Currency[] = ['EUR', 'GBP', 'USD', 'CHF', 'AED', 'RON'];
 
 export const CURRENCY_META: Record<Currency, { symbol: string; label: string; flag: string }> = {
   EUR: { symbol: '€', label: 'Euro', flag: '🇪🇺' },
@@ -19,6 +21,7 @@ export const CURRENCY_META: Record<Currency, { symbol: string; label: string; fl
   USD: { symbol: '$', label: 'US Dollar', flag: '🇺🇸' },
   CHF: { symbol: 'CHF', label: 'Swiss Franc', flag: '🇨🇭' },
   AED: { symbol: 'AED', label: 'UAE Dirham', flag: '🇦🇪' },
+  RON: { symbol: 'lei', label: 'Romanian Leu', flag: '🇷🇴' },
 };
 
 const FALLBACK: Record<Currency, number> = {
@@ -27,6 +30,7 @@ const FALLBACK: Record<Currency, number> = {
   USD: 1.08,
   CHF: 0.96,
   AED: 3.97,
+  RON: 4.97,
 };
 
 const STORAGE_KEY = 'ch_currency_v1';
@@ -62,7 +66,15 @@ function readPersisted(): Currency {
 }
 
 export function CurrencyProvider({ children }: { children: ReactNode }) {
-  const [currency, setCurrencyState] = useState<Currency>(readPersisted);
+  const { tenant } = useTenant();
+  const slug = (tenant as { slug?: string } | null)?.slug ?? null;
+  const [userPicked, setUserPicked] = useState<Currency | null>(() => {
+    try {
+      const v = localStorage.getItem(STORAGE_KEY) as Currency | null;
+      return v && SUPPORTED_CURRENCIES.includes(v) ? v : null;
+    } catch { return null; }
+  });
+  const currency: Currency = userPicked ?? (slug ? getTenantLocale(slug).currency : readPersisted());
   const [rates, setRates] = useState<Record<Currency, number>>(FALLBACK);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -89,7 +101,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setCurrency = useCallback((c: Currency) => {
-    setCurrencyState(c);
+    setUserPicked(c);
     try { localStorage.setItem(STORAGE_KEY, c); } catch { /* ignore */ }
   }, []);
 

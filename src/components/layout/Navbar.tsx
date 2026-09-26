@@ -1,3 +1,4 @@
+import { getTenantLocale } from '@/lib/tenantConfig';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, ChevronDown, User, LogOut, Settings, Package, Download, ShoppingCart, Search, Loader2 } from 'lucide-react';
@@ -286,7 +287,7 @@ export default function Navbar() {
             {/* ── Logo ── */}
             <Link
               to="/"
-              className="flex-shrink-0 transition-opacity hover:opacity-80"
+              className="flex-shrink-0 flex items-center gap-2 transition-opacity hover:opacity-80"
               aria-label={`${tenant?.brand_name ?? 'Companies House'} home`}
             >
               <BrandMark
@@ -294,6 +295,9 @@ export default function Navbar() {
                 variant="light"
                 size="md"
               />
+              <span className="text-xl leading-none" aria-hidden="true">
+                {getTenantLocale(tenant?.slug).flag}
+              </span>
             </Link>
 
             {/* ── Desktop nav ── */}
