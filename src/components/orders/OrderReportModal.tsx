@@ -254,6 +254,11 @@ export default function OrderReportModal({
     setEligibleUpgrade(null);
   };
 
+  const handleGoToSearch = () => {
+    onClose();
+    navigate('/company/search');
+  };
+
   const handleGoToCart = () => {
     onClose();
     navigate('/cart');
@@ -581,7 +586,7 @@ export default function OrderReportModal({
             </p>
             <div className="flex items-center justify-center gap-3">
               <button
-                onClick={handleContinueShopping}
+                onClick={handleGoToSearch}
                 className="px-5 py-2 rounded-md text-sm font-medium border transition-all active:scale-95"
                 style={{ borderColor: 'var(--bg-border)', color: 'var(--text-body)' }}
               >
