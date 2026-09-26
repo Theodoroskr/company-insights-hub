@@ -36,6 +36,7 @@ interface PscItem {
   natures_of_control?: string[];
   notified_on?: string;
   ceased_on?: string;
+  identification?: { registration_number?: string };
 }
 
 function SectionCard({ children, className = '' }: { children: React.ReactNode; className?: string }) {
