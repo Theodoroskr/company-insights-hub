@@ -745,6 +745,7 @@ function MobileMenu({
             { to: '/', label: 'Home' },
             { to: '/company/search', label: 'Search Companies' },
             { to: '/pricing', label: 'Pricing' },
+            { to: '/report-advisor', label: 'Which report?' },
           ].map(({ to, label }) => (
             <Link
               key={to}
