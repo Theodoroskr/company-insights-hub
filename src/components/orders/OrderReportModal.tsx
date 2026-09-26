@@ -105,10 +105,20 @@ export default function OrderReportModal({
 
   // Auto-select first product when products load (if none preselected)
   useEffect(() => {
-    if (products.length > 0 && !selectedProduct && !preselectedProduct) {
-      setSelectedProduct(products[0]);
+    if (visibleProducts.length > 0 && !selectedProduct && !preselectedProduct) {
+      setSelectedProduct(visibleProducts[0]);
     }
-  }, [products]);
+  }, [visibleProducts]);
+
+  // When the company changes, drop a selected product that is not valid
+  // for the new company's jurisdiction.
+  useEffect(() => {
+    if (selectedProduct && !preselectedProduct &&
+        !isProductVisibleForTenant(selectedProduct, selectedCompany?.country_code)) {
+      setSelectedProduct(null);
+      setSelectedCertIds(new Set());
+    }
+  }, [selectedCompany?.country_code]);
 
   // When switching to certificate mode via dropdown, init multi-select
   useEffect(() => {
@@ -398,7 +408,7 @@ export default function OrderReportModal({
                 style={{ borderColor: 'var(--bg-border)', color: 'var(--text-body)' }}
                 value={selectedProduct?.id ?? ''}
                 onChange={(e) => {
-                  const p = products.find((x) => x.id === e.target.value);
+                  const p = visibleProducts.find((x) => x.id === e.target.value);
                   if (p) setSelectedProduct(p);
                 }}
                 disabled={isLoadingProducts}
@@ -406,7 +416,7 @@ export default function OrderReportModal({
                 {isLoadingProducts ? (
                   <option>Loading…</option>
                 ) : (
-                  products.map((p) => (
+                  visibleProducts.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.name} — €{p.base_price.toFixed(0)}
                     </option>
