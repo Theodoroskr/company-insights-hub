@@ -207,6 +207,7 @@ export type Database = {
           aml_risk: string | null
           api4all_supported: boolean | null
           business_climate_score: number | null
+          certificates_enabled: boolean
           code: string
           coverage_tier: string | null
           currency_code: string | null
@@ -227,6 +228,7 @@ export type Database = {
           aml_risk?: string | null
           api4all_supported?: boolean | null
           business_climate_score?: number | null
+          certificates_enabled?: boolean
           code: string
           coverage_tier?: string | null
           currency_code?: string | null
@@ -247,6 +249,7 @@ export type Database = {
           aml_risk?: string | null
           api4all_supported?: boolean | null
           business_climate_score?: number | null
+          certificates_enabled?: boolean
           code?: string
           coverage_tier?: string | null
           currency_code?: string | null
