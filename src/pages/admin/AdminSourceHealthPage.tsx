@@ -83,6 +83,9 @@ export default function AdminSourceHealthPage() {
       <div className="p-6 max-w-4xl mx-auto space-y-6">
         <h1 className="text-2xl font-bold" style={{ color: 'var(--text-heading)' }}>Source Health</h1>
 
+        <AllApisHealth />
+
+
         {/* API4All Status Card */}
         <div className={`border rounded-xl p-6 ${sh.bg}`}>
           <div className="flex items-start justify-between flex-wrap gap-4">
