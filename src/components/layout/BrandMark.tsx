@@ -14,13 +14,14 @@ interface BrandMarkProps {
   variant?: 'light' | 'dark';   // surface the mark is shown on
   size?: 'sm' | 'md' | 'lg';
   className?: string;
-  showEndorsement?: boolean;    // show "An Infocredit Group platform" line
+  showEndorsement?: boolean;    // show "An Infocredit Group platform" endorsement line
+  tagline?: string;             // small line rendered under the wordmark (replaces endorsement)
 }
 
 const SIZE = {
-  sm: { logoH: 22, endorsement: '0.55rem', tracking: '0.18em' },
-  md: { logoH: 30, endorsement: '0.6rem',  tracking: '0.22em' },
-  lg: { logoH: 40, endorsement: '0.65rem', tracking: '0.24em' },
+  sm: { logoH: 22, endorsement: '0.55rem', tagline: '0.62rem', tracking: '0.18em' },
+  md: { logoH: 30, endorsement: '0.6rem',  tagline: '0.68rem', tracking: '0.22em' },
+  lg: { logoH: 40, endorsement: '0.65rem', tagline: '0.74rem', tracking: '0.24em' },
 } as const;
 
 // Inline wordmark so the brand colors can flip on dark surfaces
