@@ -246,6 +246,7 @@ export default function AccountOrderDetailPage() {
                         <Download className="w-4 h-4" />
                         Download Report
                       </button>
+                      </>)}
                       </div>
                     </div>
                   )}
