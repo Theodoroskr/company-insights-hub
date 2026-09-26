@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FileText, Shield, Users, ExternalLink } from 'lucide-react';
+import { FileText, Shield, Users } from 'lucide-react';
 import GatedContent from '@/components/ui/GatedContent';
 import { companiesHouseUK } from '@/lib/companiesHouseUK/client';
 
@@ -15,7 +15,6 @@ interface FilingItem {
   category?: string;
   description?: string;
   date?: string;
-  links?: { document_metadata?: string };
 }
 
 interface ChargeItem {
@@ -226,13 +225,6 @@ export default function UKCompanySections({
                     {year}
                   </div>
                   {items.map((f, i) => {
-                    const docMeta = f.links?.document_metadata;
-                    // CH document_metadata URLs look like https://document-api.company-information.service.gov.uk/document/{id}
-                    // The public viewer is at https://find-and-update.company-information.service.gov.uk/document/{id}
-                    const docId = docMeta?.split('/document/')[1];
-                    const viewerUrl = docId
-                      ? `https://find-and-update.company-information.service.gov.uk/document/${docId}`
-                      : null;
                     const label = (f.description ?? f.type ?? '')
                       .replace(/-/g, ' ')
                       .replace(/^./, (s) => s.toUpperCase());
@@ -249,21 +241,7 @@ export default function UKCompanySections({
                           {formatDate(f.date)}
                         </span>
                         <span className="flex-1" style={{ color: 'var(--text-body)' }}>
-                          {isUnlocked && viewerUrl ? (
-                            <a
-                              href={viewerUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="hover:underline inline-flex items-center gap-1"
-                              style={{ color: 'var(--brand-accent)' }}
-                              title="Open original PDF on Companies House"
-                            >
-                              {label}
-                              <ExternalLink className="w-3 h-3" />
-                            </a>
-                          ) : (
-                            label
-                          )}
+                          {label}
                         </span>
                         <span className="text-xs shrink-0" style={{ color: 'var(--text-muted)' }}>
                           {f.category ?? ''}
@@ -293,19 +271,6 @@ export default function UKCompanySections({
             )}
           </GatedContent>
         )}
-
-        <p className="text-xs mt-3" style={{ color: 'var(--text-muted)' }}>
-          Source: Companies House UK ·{' '}
-          <a
-            href={`https://find-and-update.company-information.service.gov.uk/company/${companyNumber}/filing-history`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:underline inline-flex items-center gap-0.5"
-            style={{ color: 'var(--brand-accent)' }}
-          >
-            View on official register <ExternalLink className="w-3 h-3" />
-          </a>
-        </p>
       </SectionCard>
 
       {/* Charges & Mortgages */}
