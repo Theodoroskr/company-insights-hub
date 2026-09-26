@@ -130,6 +130,7 @@ export default function UKCompanySections({
   const [chargesTotal, setChargesTotal] = useState(0);
   const [psc, setPsc] = useState<PscItem[]>([]);
   const [pscTotal, setPscTotal] = useState(0);
+  const [pscHrefs, setPscHrefs] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
   const FILING_PAGE = 25;
