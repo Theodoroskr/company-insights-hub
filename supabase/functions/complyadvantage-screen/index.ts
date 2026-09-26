@@ -194,6 +194,34 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    // Entitlement: only run for items where screening was paid for
+    const { data: ent } = await supabase
+      .from("order_items")
+      .select("screening_addon, products:product_id(slug), orders!inner(status, user_id)")
+      .eq("id", order_item_id)
+      .maybeSingle();
+    const entRow = ent as unknown as {
+      screening_addon?: boolean;
+      products?: { slug?: string } | null;
+      orders?: { status?: string; user_id?: string } | null;
+    } | null;
+    const paidFor = !!entRow && (entRow.screening_addon === true || entRow.products?.slug === "enhanced-uk-kyb-report");
+    const orderOk = !!entRow?.orders && ["paid", "processing", "completed", "fulfilled"].includes(entRow.orders.status ?? "");
+    if (!paidFor || !orderOk) {
+      return new Response(JSON.stringify({ success: false, error: "Screening not purchased for this item" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+    if (token && token !== Deno.env.get("SUPABASE_ANON_KEY") && token !== Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) {
+      const { data: u } = await supabase.auth.getUser(token);
+      if (u?.user && entRow?.orders?.user_id && u.user.id !== entRow.orders.user_id) {
+        return new Response(JSON.stringify({ success: false, error: "Forbidden" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     // Skip if already screened
     const { data: existing } = await supabase
       .from("screening_results")
