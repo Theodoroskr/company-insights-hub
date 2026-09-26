@@ -1357,7 +1357,6 @@ export default function CompanyProfilePage() {
                 )}
               </div>
             </SectionCard>
-            </SectionCard>
 
             </>
             ) : (
