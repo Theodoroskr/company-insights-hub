@@ -145,33 +145,46 @@ function extractEntities(bundle: Record<string, unknown>): Entity[] {
   });
 }
 
-function categoriseHitTypes(types: string[] | undefined): string[] {
+// Only regulator / enforcement sources count as "warning"/"fitness-probity".
+// Generic crime lists (sex offender registries, most-wanted, warrants) are dropped:
+// they match common names and produce false positives.
+const REGULATORY_SOURCE = /(fca|sec-|sec_|finra|ofac|ofsi|hmt|esma|eba|fincen|central-bank|centralbank|cysec|regulator|enforcement|final-notice|disqualif|prohibit|penalt|debarr|world-bank|interpol-red)/i;
+const CRIME_NOISE = /(sex-offender|sex_offender|most-wanted|mostwanted|warrant|absconder|inmate|arrest|police|sheriff|troopers|bureau-of-investigation)/i;
+
+function categoriseHitTypes(types: string[] | undefined, sources: string[] | undefined): string[] {
   if (!types) return [];
-  return types.filter((t) => FILTER_TYPES.includes(t));
+  const srcs = sources ?? [];
+  const regulatory = srcs.some((s) => REGULATORY_SOURCE.test(s) && !CRIME_NOISE.test(s));
+  const out = new Set<string>();
+  for (const t of types) {
+    if (t === "sanction" || t === "pep") out.add(t);
+    else if ((t === "warning" || t === "fitness-probity") && regulatory) out.add("warning");
+    // adverse-media intentionally excluded
+  }
+  return [...out];
 }
 
 function strengthFromScore(score?: number, matchStatus?: string): string {
   if (matchStatus === "true_positive") return "exact";
-  if (matchStatus === "potential_match" || matchStatus === "unknown") {
-    if ((score ?? 0) >= 0.85) return "strong";
-    if ((score ?? 0) >= 0.6) return "medium";
-    return "weak";
-  }
   if ((score ?? 0) >= 0.95) return "exact";
   if ((score ?? 0) >= 0.8) return "strong";
   if ((score ?? 0) >= 0.6) return "medium";
   return "weak";
 }
 
-async function caSearch(apiKey: string, term: string): Promise<CASearchResponse> {
+async function caSearch(apiKey: string, ent: Entity): Promise<CASearchResponse> {
   const res = await fetch(`${CA_BASE}/searches?api_key=${encodeURIComponent(apiKey)}`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
     body: JSON.stringify({
-      search_term: term,
-      fuzziness: 0.6,
-      share_url: 1,
-      filters: { types: FILTER_TYPES },
+      search_term: ent.name,
+      fuzziness: 0.2,
+      exact_match: false,
+      share_url: 0,
+      filters: {
+        types: ["sanction", "pep", "warning", "fitness-probity"],
+        entity_type: ent.role === "company" ? "company" : "person",
+      },
     }),
   });
   const text = await res.text();
