@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { X } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { X, Wallet } from 'lucide-react';
 import AccountLayout from '../../components/layout/AccountLayout';
 import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../lib/tenant';
 import { useToast } from '../../hooks/use-toast';
+import { useBilling } from '../../lib/billing';
 
 interface Country {
   code: string;
@@ -15,6 +17,7 @@ interface Country {
 export default function AccountProfilePage() {
   const { tenant } = useTenant();
   const { toast } = useToast();
+  const { balance } = useBilling();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -127,6 +130,47 @@ export default function AccountProfilePage() {
       <h1 className="text-2xl font-semibold mb-6" style={{ color: 'var(--text-heading)' }}>
         Profile Information
       </h1>
+
+      {/* ── Credit Balance ── */}
+      <div
+        className="bg-white border rounded-lg p-6 mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+        style={{ borderColor: 'var(--bg-border)' }}
+      >
+        <div className="flex items-center gap-4">
+          <div
+            className="w-11 h-11 rounded-full flex items-center justify-center shrink-0"
+            style={{ backgroundColor: 'var(--brand-accent)', color: '#fff' }}
+          >
+            <Wallet className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Credit balance</p>
+            <p className="text-2xl font-semibold" style={{ color: 'var(--text-heading)' }}>
+              €{balance.toFixed(2)}
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+              Valid on every country site · valid for one year
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Link
+            to="/company/search"
+            className="px-5 py-2 text-sm font-semibold text-white rounded transition-all active:scale-95"
+            style={{ backgroundColor: 'var(--brand-primary)' }}
+          >
+            Order a report
+          </Link>
+          <Link
+            to="/account/billing"
+            className="px-5 py-2 text-sm font-semibold rounded border transition-all active:scale-95"
+            style={{ borderColor: 'var(--bg-border)', color: 'var(--text-body)' }}
+          >
+            Top up
+          </Link>
+        </div>
+      </div>
+
 
       {/* ── Personal Information ── */}
       <form onSubmit={handleSave}>
