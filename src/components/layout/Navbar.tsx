@@ -316,7 +316,7 @@ export default function Navbar() {
                     className="absolute left-0 top-full mt-1 bg-white rounded-xl shadow-2xl border z-50 overflow-hidden"
                     style={{ borderColor: 'var(--bg-border)', width: '720px' }}
                   >
-                    <div className="grid grid-cols-3 divide-x" style={{ borderColor: 'var(--bg-border)' }}>
+                    <div className="grid grid-cols-2 divide-x" style={{ borderColor: 'var(--bg-border)' }}>
                       {/* Reports column */}
                       <div className="py-3">
                         <p className="px-4 pb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
@@ -391,40 +391,6 @@ export default function Navbar() {
                         </Link>
                       </div>
 
-                      {/* Register column */}
-                      <div className="py-3">
-                        <p className="px-4 pb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
-                          Register a Company
-                        </p>
-                        <Link
-                          to="/company-set-up"
-                          onClick={() => setOpenMenu(null)}
-                          className="flex items-start gap-3 px-4 py-2.5 transition-colors"
-                          style={{ color: 'var(--text-body)' }}
-                          onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
-                          onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                        >
-                          <ProductIcon type="company-setup" variant="tile" />
-                          <span className="min-w-0">
-                            <p className="font-semibold text-sm" style={{ color: 'var(--text-heading)' }}>Company Set Up</p>
-                            <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Register a new company</p>
-                          </span>
-                        </Link>
-                        <Link
-                          to="/business-name-approval"
-                          onClick={() => setOpenMenu(null)}
-                          className="flex items-start gap-3 px-4 py-2.5 transition-colors"
-                          style={{ color: 'var(--text-body)' }}
-                          onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
-                          onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                        >
-                          <ProductIcon type="business-name" variant="tile" />
-                          <span className="min-w-0">
-                            <p className="font-semibold text-sm" style={{ color: 'var(--text-heading)' }}>Business Name Approval</p>
-                            <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Check and reserve your name</p>
-                          </span>
-                        </Link>
-                      </div>
                     </div>
 
                     {/* Footer CTA */}
@@ -799,15 +765,6 @@ function MobileMenu({
             </Link>
           </MobileAccordion>
 
-          {/* Register accordion */}
-          <MobileAccordion title="Register a Company">
-            <Link to="/company-set-up" onClick={onClose} className={mobileLinkClass} style={{ color: 'var(--text-body)' }}>
-              <span className="text-sm">🏢</span> Company Set Up
-            </Link>
-            <Link to="/business-name-approval" onClick={onClose} className={mobileLinkClass} style={{ color: 'var(--text-body)' }}>
-              <span className="text-sm">✅</span> Business Name Approval
-            </Link>
-          </MobileAccordion>
 
           {/* Bottom links */}
           {[

@@ -18,8 +18,6 @@ import SearchResultsPage from "./pages/SearchResultsPage";
 import CompanyProfilePage from "./pages/CompanyProfilePage";
 import CompanyBrowseByLetterPage from "./pages/CompanyBrowseByLetterPage";
 import ProductLandingPage from "./pages/ProductLandingPage";
-import CompanySetUpPage from "./pages/CompanySetUpPage";
-import BusinessNameApprovalPage from "./pages/BusinessNameApprovalPage";
 import PricingPage from "./pages/PricingPage";
 import CertificatesPage from "./pages/CertificatesPage";
 import ReportAdvisorPage from "./pages/ReportAdvisorPage";
@@ -82,8 +80,8 @@ const App = () => (
               <Route path="/company/search" element={<SearchResultsPage />} />
               <Route path="/search" element={<SearchResultsPage />} />
               <Route path="/report" element={<ProductLandingPage />} />
-              <Route path="/company-set-up" element={<CompanySetUpPage />} />
-              <Route path="/business-name-approval" element={<BusinessNameApprovalPage />} />
+              <Route path="/company-set-up" element={<Navigate to="/" replace />} />
+              <Route path="/business-name-approval" element={<Navigate to="/" replace />} />
               <Route path="/company/:slug" element={<CompanyProfilePage />} />
               <Route path="/companies/:letter" element={<CompanyBrowseByLetterPage />} />
               <Route path="/country/:code" element={<CountryDashboardPage />} />
