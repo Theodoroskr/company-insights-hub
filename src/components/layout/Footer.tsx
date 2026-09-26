@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTenant } from '../../lib/tenant';
 import BrandMark from './BrandMark';
+import { useTenantSites, getTenantSiteUrl } from '@/lib/useTenantSites';
 
 export default function Footer() {
   const { tenant } = useTenant();
