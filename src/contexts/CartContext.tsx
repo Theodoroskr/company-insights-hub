@@ -93,6 +93,9 @@ export interface BundleOrder {
 interface CartContextValue {
   items: CartItem[];
   certificateOrders: CertificateOrder[];
+  bundleOrders: BundleOrder[];
+  addBundle: (bundle: Omit<BundleOrder, 'id'>) => void;
+  removeBundle: (id: string) => void;
   addItem: (
     product: Product,
     company: CartItem['company'],
@@ -116,6 +119,9 @@ interface CartContextValue {
 const CartContext = createContext<CartContextValue>({
   items: [],
   certificateOrders: [],
+  bundleOrders: [],
+  addBundle: () => {},
+  removeBundle: () => {},
   addItem: () => {},
   removeItem: () => {},
   updateSpeed: () => {},
@@ -132,6 +138,7 @@ const CartContext = createContext<CartContextValue>({
 
 const STORAGE_KEY = 'ch_cart_v1';
 const CERT_STORAGE_KEY = 'ch_cert_cart_v1';
+const BUNDLE_STORAGE_KEY = 'ch_bundle_cart_v1';
 
 function calcPrice(
   product: Product,
