@@ -1,7 +1,7 @@
 import { formatDelivery } from '@/lib/delivery';
 import { useReportDates, getAvailability, formatArchiveDate, URGENT_LABEL } from '@/hooks/useReportAvailability';
 import React, { useEffect, useState, useCallback } from 'react';
-import { priceProduct } from '../lib/pricing';
+import { priceProduct, formatEur } from '../lib/pricing';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { Check, ShoppingCart, Lock, ShieldCheck } from 'lucide-react';
@@ -622,8 +622,19 @@ export default function CompanyProfilePage() {
         .in('fulfillment_status', ['completed', 'fulfilled', 'delivered']);
 
       if (cancelled) return;
-      const unlocked = !error && (data?.length ?? 0) > 0;
+      const SCREEN_ONLY = ['company-aml-screening', 'aml-screening-with-directors'];
+      const allRows = (data ?? []) as unknown as Array<{ products?: { slug?: string } | null }>;
+      // Standalone screening unlocks only the Compliance tab, not the report data
+      const unlocked = !error && allRows.some((r) => !SCREEN_ONLY.includes(r.products?.slug ?? ''));
+      const screenOnlyItem = !error ? allRows.find((r) => SCREEN_ONLY.includes(r.products?.slug ?? '')) as { id?: string } | undefined : undefined;
       setIsUnlocked(unlocked);
+      if (!unlocked && screenOnlyItem?.id) {
+        setHasEnhancedKyb(true);
+        setUnlockedOrderItemId(screenOnlyItem.id);
+        setReportPsc([]);
+        setReportBundle(null);
+        return;
+      }
 
       // Pull PSC entries from the most recent generated report bundle
       if (unlocked && data) {
@@ -638,7 +649,9 @@ export default function CompanyProfilePage() {
         // Screening is unlocked if the user owns Enhanced UK KYB OR
         // any standard report with the paid screening add-on for this company.
         const enhanced = items.find((i) => i.products?.slug === 'enhanced-uk-kyb-report');
-        const withScreeningAddon = items.find((i) => i.screening_addon === true);
+        const withScreeningAddon = items.find((i) => i.screening_addon === true)
+          ?? items.find((i) => i.products?.slug === 'aml-screening-with-directors')
+          ?? items.find((i) => i.products?.slug === 'company-aml-screening');
         setHasEnhancedKyb(!!enhanced || !!withScreeningAddon);
 
         // Prefer enhanced, then add-on item, else most recent
@@ -694,7 +707,7 @@ export default function CompanyProfilePage() {
         .not('fulfillment_status', 'in', '(completed,fulfilled,delivered,failed,cancelled)');
       if (cancelled) return;
       const rows = (data ?? []) as unknown as Array<{ screening_addon?: boolean; products?: { slug?: string } | null }>;
-      setScreeningPending(rows.some((r) => r.screening_addon || r.products?.slug === 'enhanced-uk-kyb-report'));
+      setScreeningPending(rows.some((r) => r.screening_addon || ['enhanced-uk-kyb-report', 'company-aml-screening', 'aml-screening-with-directors'].includes(r.products?.slug ?? '')));
     })();
     return () => { cancelled = true; };
   }, [company?.id]);
@@ -772,6 +785,8 @@ export default function CompanyProfilePage() {
   const certificateProducts = certificatesAvailableFor(company?.country_code, certCountries)
     ? products.filter((p) => p.type === 'certificate')
     : [];
+  const companyAmlProduct = products.find((p) => p.slug === 'company-aml-screening');
+  const directorsAmlProduct = products.find((p) => p.slug === 'aml-screening-with-directors');
   const kybProduct = products.find((p) => p.type === 'kyb' || p.slug === 'cyprus-kyb-report');
   const enhancedKybProduct = products.find((p) => p.slug === 'enhanced-uk-kyb-report');
   const structureProduct = products.find((p) => p.slug?.includes('structure') || p.name?.toLowerCase().includes('structure'));
@@ -966,25 +981,38 @@ export default function CompanyProfilePage() {
                   <RiskTrafficLight band="medium" showLabel />
                 </div>
                 <div className="flex-1 sm:border-l sm:pl-4 mt-3 sm:mt-0" style={{ borderColor: 'var(--bg-border)' }}>
-                  <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-                    Full compliance analysis — sanctions screening, PEP checks and adverse media — is
-                    included in the Compliance &amp; AML Report
+<p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                    Check this company against sanctions, PEP and regulatory enforcement lists. Results are timestamped and saved to your account.
                   </p>
-                  <button
-                    className="text-sm mt-2 hover:underline font-semibold"
-                    style={{ color: 'var(--brand-accent)' }}
-                    onClick={() => kybProduct ? setKybModalOpen(true) : document.getElementById('sidebar-products')?.scrollIntoView({ behavior: 'smooth' })}
-                  >
-                    Order Compliance &amp; AML Report →
-                  </button>
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {[companyAmlProduct, directorsAmlProduct].filter(Boolean).map((p) => (
+                      <button
+                        key={p!.id}
+                        className="text-sm px-3 py-1.5 rounded-md border font-semibold hover:opacity-90"
+                        style={{ borderColor: 'var(--brand-accent)', color: 'var(--brand-accent)' }}
+                        onClick={() => { setKybModalProductOverride(p!); setKybModalOpen(true); }}
+                      >
+                        {p!.slug === 'company-aml-screening' ? 'Company only' : 'Company + directors'} · {formatEur(priceProduct(p!, 0).net, 0)} →
+                      </button>
+                    ))}
+                    {!companyAmlProduct && !directorsAmlProduct && (
+                      <button
+                        className="text-sm hover:underline font-semibold"
+                        style={{ color: 'var(--brand-accent)' }}
+                        onClick={() => kybProduct ? setKybModalOpen(true) : document.getElementById('sidebar-products')?.scrollIntoView({ behavior: 'smooth' })}
+                      >
+                        Order Compliance &amp; AML Report →
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {kybProduct && (
+              {(kybProduct || kybModalProductOverride) && (
                 <OrderReportModal
                   isOpen={kybModalOpen}
                   onClose={() => { setKybModalOpen(false); setKybModalProductOverride(null); }}
-                  preselectedProduct={kybModalProductOverride ?? kybProduct}
+                  preselectedProduct={(kybModalProductOverride ?? kybProduct)!}
                   preselectedCompany={company as unknown as import('../types/database').Company}
                 />
               )}

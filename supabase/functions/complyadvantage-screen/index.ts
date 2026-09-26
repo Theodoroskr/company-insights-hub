@@ -17,6 +17,7 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+const STANDALONE_SLUGS = ["company-aml-screening", "aml-screening-with-directors"];
 const CA_BASE = "https://api.complyadvantage.com";
 const FILTER_TYPES = ["sanction", "pep", "adverse-media", "warning", "fitness-probity"];
 
@@ -210,15 +211,19 @@ Deno.serve(async (req) => {
     // Entitlement: only run for items where screening was paid for
     const { data: ent } = await supabase
       .from("order_items")
-      .select("screening_addon, products:product_id(slug), orders!inner(status, user_id)")
+      .select("screening_addon, company_id, products:product_id(slug), orders!inner(status, user_id)")
       .eq("id", order_item_id)
       .maybeSingle();
     const entRow = ent as unknown as {
       screening_addon?: boolean;
+      company_id?: string | null;
       products?: { slug?: string } | null;
       orders?: { status?: string; user_id?: string } | null;
     } | null;
-    const paidFor = !!entRow && (entRow.screening_addon === true || entRow.products?.slug === "enhanced-uk-kyb-report");
+    const slug = entRow?.products?.slug ?? "";
+    const standalone = STANDALONE_SLUGS.includes(slug);
+    const companyOnly = slug === "company-aml-screening";
+    const paidFor = !!entRow && (entRow.screening_addon === true || slug === "enhanced-uk-kyb-report" || standalone);
     const orderOk = !!entRow?.orders && ["paid", "processing", "completed", "fulfilled"].includes(entRow.orders.status ?? "");
     if (!paidFor || !orderOk) {
       return new Response(JSON.stringify({ success: false, error: "Screening not purchased for this item" }), {
@@ -247,31 +252,36 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Load report bundle for this order_item
-    const { data: report, error: repErr } = await supabase
+    // Load report bundle for this order_item (standalone screening has none)
+    const { data: report } = await supabase
       .from("generated_reports")
       .select("id, api4all_raw_json, company_id")
       .eq("order_item_id", order_item_id)
       .order("generated_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (repErr || !report) throw new Error("No generated report bundle for order_item");
+    if (!report && !standalone) throw new Error("No generated report bundle for order_item");
 
-    let bundle = (report.api4all_raw_json ?? {}) as Record<string, unknown>;
-
-    // Fallback: if bundle has no name at all, try to read company name from companies table
-    if (!bundle || Object.keys(bundle).length === 0) {
-      bundle = {};
-    }
-    let entities = extractEntities(bundle);
-    if (entities.length === 0 && report.company_id) {
+    let bundle = (report?.api4all_raw_json ?? {}) as Record<string, unknown>;
+    const companyId = report?.company_id ?? entRow?.company_id ?? null;
+    let companyName: string | undefined;
+    if (companyId) {
       const { data: c } = await supabase
         .from("companies")
-        .select("name")
-        .eq("id", report.company_id)
+        .select("name, directors_json, raw_source_json")
+        .eq("id", companyId)
         .maybeSingle();
-      if (c?.name) entities = [{ name: c.name, role: "company" }];
+      companyName = c?.name ?? undefined;
+      if (!report && c) {
+        const raw = (c.raw_source_json ?? {}) as Record<string, unknown>;
+        bundle = { ...raw, name: c.name, directors_json: c.directors_json ?? undefined };
+      }
     }
+    let entities = extractEntities(bundle ?? {});
+    if (!entities.some((e) => e.role === "company") && companyName) {
+      entities.unshift({ name: companyName, role: "company" });
+    }
+    if (companyOnly) entities = entities.filter((e) => e.role === "company").slice(0, 1);
     if (entities.length === 0) throw new Error("No entities to screen");
 
     let totalSanctions = 0;
@@ -349,6 +359,10 @@ Deno.serve(async (req) => {
       entity_id: order_item_id,
       payload: { entities: entities.length, total_hits: totalHits, overall },
     }).then(() => {}, () => {});
+
+    if (standalone) {
+      await supabase.from("order_items").update({ fulfillment_status: "completed" }).eq("id", order_item_id);
+    }
 
     return new Response(
       JSON.stringify({
