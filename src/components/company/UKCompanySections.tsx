@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
-import { ChevronDown, FileText, Shield, Users } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ArrowUpRight, ChevronDown, FileText, Shield, Users } from 'lucide-react';
 import GatedContent from '@/components/ui/GatedContent';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { companiesHouseUK } from '@/lib/companiesHouseUK/client';
+import { corporatePscHref, isCorporatePsc, resolveCorporatePscs } from '@/lib/companiesHouseUK/corporatePsc';
 
 interface UKCompanySectionsProps {
   companyNumber: string;
@@ -36,6 +38,7 @@ interface PscItem {
   natures_of_control?: string[];
   notified_on?: string;
   ceased_on?: string;
+  identification?: { registration_number?: string };
 }
 
 function SectionCard({ children, className = '' }: { children: React.ReactNode; className?: string }) {
@@ -127,6 +130,7 @@ export default function UKCompanySections({
   const [chargesTotal, setChargesTotal] = useState(0);
   const [psc, setPsc] = useState<PscItem[]>([]);
   const [pscTotal, setPscTotal] = useState(0);
+  const [pscHrefs, setPscHrefs] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
   const FILING_PAGE = 25;
@@ -178,8 +182,17 @@ export default function UKCompanySections({
         setChargesTotal(c.value.total_count ?? 0);
       }
       if (p.status === 'fulfilled') {
-        setPsc((p.value.items ?? []) as PscItem[]);
+        const pscItems = (p.value.items ?? []) as PscItem[];
+        setPsc(pscItems);
         setPscTotal(p.value.total_results ?? 0);
+        resolveCorporatePscs(pscItems)
+          .then((resolved) => {
+            if (cancelled) return;
+            const map: Record<string, string> = {};
+            for (const entry of resolved) map[entry.sourceName.toUpperCase()] = corporatePscHref(entry);
+            setPscHrefs(map);
+          })
+          .catch(() => undefined);
       }
       setLoading(false);
     })();
@@ -434,6 +447,7 @@ export default function UKCompanySections({
             <div className="space-y-2">
               {psc.slice(0, 5).map((p, i) => {
                 const isCeased = !!p.ceased_on;
+                const href = isCorporatePsc(p) ? pscHrefs[(p.name ?? '').toUpperCase()] : undefined;
                 return (
                   <div
                     key={i}
@@ -441,9 +455,20 @@ export default function UKCompanySections({
                     style={{ borderColor: 'var(--bg-border)', opacity: isCeased ? 0.6 : 1 }}
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-medium" style={{ color: 'var(--text-body)' }}>
-                        {p.name ?? '—'}
-                      </span>
+                      {href ? (
+                        <Link
+                          to={href}
+                          className="font-medium inline-flex items-center gap-1 hover:underline"
+                          style={{ color: 'var(--brand-accent)' }}
+                        >
+                          {p.name ?? '—'}
+                          <ArrowUpRight className="w-3.5 h-3.5" />
+                        </Link>
+                      ) : (
+                        <span className="font-medium" style={{ color: 'var(--text-body)' }}>
+                          {p.name ?? '—'}
+                        </span>
+                      )}
                       <span
                         className="text-xs px-2 py-0.5 rounded-full"
                         style={{ backgroundColor: 'var(--bg-subtle)', color: 'var(--text-muted)' }}

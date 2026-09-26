@@ -27,6 +27,8 @@ import { isProductVisibleForTenant } from '../lib/tenantConfig';
 import { useCountries } from '../lib/countries';
 import { useCart, SCREENING_ADDON_PRICE_EUR } from '../contexts/CartContext';
 import { supabase } from '@/integrations/supabase/client';
+import { companiesHouseUK } from '@/lib/companiesHouseUK/client';
+import { resolveCorporatePscs, type RawPscLike } from '@/lib/companiesHouseUK/corporatePsc';
 import { legalFormToEntityType } from '@/data/cyprusCertificates';
 import { useCertificateCountries, certificatesAvailableFor } from '@/lib/certificateAvailability';
 import type { Company, Product, ProductSpeed, DirectorEntry } from '../types/database';
@@ -441,7 +443,7 @@ export default function CompanyProfilePage() {
 
   const [company, setCompany] = useState<Company | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
-  const [affiliated, setAffiliated] = useState<Array<Company & { _sharedNames?: string[] }>>([]);
+  const [affiliated, setAffiliated] = useState<Array<Company & { _sharedNames?: string[]; _relationship?: string }>>([]);
   const [personFilter, setPersonFilter] = useState<string | null>(null);
   const affiliatesRef = React.useRef<HTMLDivElement | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -519,6 +521,42 @@ export default function CompanyProfilePage() {
         for (const p of raw!.psc) if (p?.name) namePool.add(p.name.toUpperCase().trim());
       }
 
+      const matches: Array<Company & { _sharedNames?: string[]; _relationship?: string }> = [];
+
+      // 1. Corporate parents / beneficial owners declared as PSC at Companies House
+      if (comp.country_code === 'GB' && comp.reg_no) {
+        try {
+          const pscRes = await companiesHouseUK.psc(comp.reg_no);
+          const corporates = await resolveCorporatePscs(
+            (pscRes.items ?? []) as RawPscLike[],
+            tenant!.id,
+          );
+          const parentIds = corporates.map((c) => c.companyId).filter(Boolean) as string[];
+          if (parentIds.length > 0) {
+            const { data: parentRows } = await supabase
+              .from('companies')
+              .select('id, name, slug, reg_no, status, country_code, icg_code, directors_json, raw_source_json, tenant_id, vat_no, legal_form, registered_address, cached_at, meta_title, meta_description')
+              .in('id', parentIds);
+            for (const row of (parentRows ?? []) as unknown as Company[]) {
+              const entry = corporates.find((c) => c.companyId === row.id);
+              const control = (entry?.naturesOfControl ?? [])
+                .slice(0, 1)
+                .map((n) => n.replace(/-/g, ' '))
+                .join('');
+              matches.push({
+                ...row,
+                _relationship: control
+                  ? `Corporate parent / beneficial owner · ${control}`
+                  : 'Corporate parent / beneficial owner',
+              });
+            }
+          }
+        } catch {
+          // Registry lookup is best-effort; name matching below still applies
+        }
+      }
+
+      // 2. Companies sharing directors, officers or beneficial owners
       if (namePool.size > 0) {
         // Pull a generous candidate set from the same tenant (cached_at desc)
         const { data: affData } = await supabase
@@ -531,8 +569,8 @@ export default function CompanyProfilePage() {
           .limit(300);
 
         if (affData) {
-          const matches: Array<Company & { _sharedNames?: string[] }> = [];
           for (const c of affData as unknown as Company[]) {
+            if (matches.some((m) => m.id === c.id)) continue;
             const theirNames = new Set<string>();
             const theirDirectors: DirectorEntry[] = Array.isArray(c.directors_json) ? c.directors_json : [];
             for (const d of theirDirectors) if (d?.name) theirNames.add(d.name.toUpperCase().trim());
@@ -549,11 +587,10 @@ export default function CompanyProfilePage() {
               matches.push({ ...c, _sharedNames: shared });
             }
           }
-          setAffiliated(matches.slice(0, 25));
         }
-      } else {
-        setAffiliated([]);
       }
+
+      setAffiliated(matches.slice(0, 25));
 
       setIsLoading(false);
     }
@@ -1288,7 +1325,9 @@ export default function CompanyProfilePage() {
                               </span>
                             )}
                             <p className="text-xs italic mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                              via {display.length > 0 ? display.join(', ') : 'shared person'}
+                              {aff._relationship
+                                ? aff._relationship
+                                : `via ${display.length > 0 ? display.join(', ') : 'shared person'}`}
                             </p>
                           </div>
                           {aff.status && <StatusBadge status={aff.status} />}
@@ -1299,15 +1338,24 @@ export default function CompanyProfilePage() {
                 );
               })()}
 
-              {Array.isArray(company.directors_json) && company.directors_json.length > 0 && (
+              <div className="flex flex-col gap-2 mt-4">
                 <Link
-                  to={`/company/search?q=${encodeURIComponent(company.directors_json[0].name)}`}
-                  className="inline-block text-sm mt-4 hover:underline"
+                  to={`/company/search?q=${encodeURIComponent(company.name.split(/\s+/)[0])}${company.country_code ? `&country=${company.country_code.toLowerCase()}` : ''}`}
+                  className="inline-block text-sm hover:underline"
                   style={{ color: 'var(--brand-accent)' }}
                 >
-                  Search companies linked to {company.directors_json[0].name} →
+                  Search other companies in the {company.name.split(/\s+/)[0]} group →
                 </Link>
-              )}
+                {Array.isArray(company.directors_json) && company.directors_json.length > 0 && (
+                  <Link
+                    to={`/company/search?q=${encodeURIComponent(company.directors_json[0].name)}`}
+                    className="inline-block text-sm hover:underline"
+                    style={{ color: 'var(--brand-accent)' }}
+                  >
+                    Search companies linked to {company.directors_json[0].name} →
+                  </Link>
+                )}
+              </div>
             </SectionCard>
 
             </>
