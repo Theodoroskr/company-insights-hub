@@ -55,6 +55,14 @@ export default function AboutPage() {
             are delivered digitally within minutes, and our platform is secured with enterprise-grade encryption
             and GDPR-compliant data handling.
           </p>
+          <h2 className="text-xl font-semibold pt-4" style={{ color: 'var(--text-heading)' }}>Company Information</h2>
+          <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-color, #e2e8f0)', backgroundColor: 'var(--bg-card, #fff)' }}>
+            <p>
+              {brand} is an independent digital service operated by{' '}
+              <strong style={{ color: 'var(--text-heading)' }}>Infocredit Group Ltd</strong>, a company registered
+              in the Republic of Cyprus under registration number <strong style={{ color: 'var(--text-heading)' }}>HE4404</strong>.
+            </p>
+          </div>
         </div>
       </section>
 
