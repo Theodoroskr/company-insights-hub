@@ -247,3 +247,16 @@ export function isProductVisibleForTenant(
       return false;
   }
 }
+
+// Per-tenant flag and default display currency (visitor's picker choice overrides).
+export const TENANT_LOCALE: Record<string, { flag: string; currency: 'EUR' | 'RON' | 'AED' }> = {
+  cy: { flag: '🇨🇾', currency: 'EUR' },
+  gr: { flag: '🇬🇷', currency: 'EUR' },
+  mt: { flag: '🇲🇹', currency: 'EUR' },
+  ro: { flag: '🇷🇴', currency: 'RON' },
+  ae: { flag: '🇦🇪', currency: 'AED' },
+  icw: { flag: '🌍', currency: 'EUR' },
+};
+export function getTenantLocale(slug?: string | null) {
+  return TENANT_LOCALE[slug ?? ''] ?? TENANT_LOCALE.icw;
+}
