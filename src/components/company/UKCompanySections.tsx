@@ -128,6 +128,8 @@ export default function UKCompanySections({
   const [filingsLoaded, setFilingsLoaded] = useState(false);
   const [charges, setCharges] = useState<ChargeItem[]>([]);
   const [chargesTotal, setChargesTotal] = useState(0);
+  const [accounts, setAccounts] = useState<FilingItem[]>([]);
+  const [accountsTotal, setAccountsTotal] = useState(0);
   const [psc, setPsc] = useState<PscItem[]>([]);
   const [pscTotal, setPscTotal] = useState(0);
   const [pscHrefs, setPscHrefs] = useState<Record<string, string>>({});
@@ -169,14 +171,19 @@ export default function UKCompanySections({
 
     (async () => {
       setLoading(true);
-      const [f, c, p] = await Promise.allSettled([
+      const [f, c, p, a] = await Promise.allSettled([
         companiesHouseUK.filingHistory(companyNumber, { itemsPerPage: 1, startIndex: 0 }),
         companiesHouseUK.charges(companyNumber),
         companiesHouseUK.psc(companyNumber),
+        companiesHouseUK.filingHistory(companyNumber, { itemsPerPage: 5, startIndex: 0, category: 'accounts' }),
       ]);
       if (cancelled) return;
 
       if (f.status === 'fulfilled') setFilingsTotal(f.value.total_count ?? 0);
+      if (a.status === 'fulfilled') {
+        setAccounts((a.value.items ?? []) as FilingItem[]);
+        setAccountsTotal(a.value.total_count ?? 0);
+      }
       if (c.status === 'fulfilled') {
         setCharges((c.value.items ?? []) as ChargeItem[]);
         setChargesTotal(c.value.total_count ?? 0);
