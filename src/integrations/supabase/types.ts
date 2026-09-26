@@ -86,6 +86,51 @@ export type Database = {
           },
         ]
       }
+      billing_accounts: {
+        Row: {
+          admin_notes: string | null
+          approved_at: string | null
+          company_name: string
+          created_at: string
+          expected_monthly_spend: number | null
+          monthly_limit_eur: number
+          payment_terms_days: number
+          po_required: boolean
+          status: string
+          updated_at: string
+          user_id: string
+          vat_number: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          approved_at?: string | null
+          company_name: string
+          created_at?: string
+          expected_monthly_spend?: number | null
+          monthly_limit_eur?: number
+          payment_terms_days?: number
+          po_required?: boolean
+          status?: string
+          updated_at?: string
+          user_id: string
+          vat_number?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          approved_at?: string | null
+          company_name?: string
+          created_at?: string
+          expected_monthly_spend?: number | null
+          monthly_limit_eur?: number
+          payment_terms_days?: number
+          po_required?: boolean
+          status?: string
+          updated_at?: string
+          user_id?: string
+          vat_number?: string | null
+        }
+        Relationships: []
+      }
       change_events: {
         Row: {
           company_id: string | null
@@ -421,6 +466,54 @@ export type Database = {
           },
         ]
       }
+      monthly_invoices: {
+        Row: {
+          created_at: string
+          due_date: string
+          id: string
+          invoice_ref: string
+          order_count: number
+          paid_at: string | null
+          period_end: string
+          period_start: string
+          status: string
+          subtotal: number
+          total: number
+          user_id: string
+          vat_amount: number
+        }
+        Insert: {
+          created_at?: string
+          due_date: string
+          id?: string
+          invoice_ref: string
+          order_count?: number
+          paid_at?: string | null
+          period_end: string
+          period_start: string
+          status?: string
+          subtotal?: number
+          total?: number
+          user_id: string
+          vat_amount?: number
+        }
+        Update: {
+          created_at?: string
+          due_date?: string
+          id?: string
+          invoice_ref?: string
+          order_count?: number
+          paid_at?: string | null
+          period_end?: string
+          period_start?: string
+          status?: string
+          subtotal?: number
+          total?: number
+          user_id?: string
+          vat_amount?: number
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           api4all_item_code: string | null
@@ -519,8 +612,11 @@ export type Database = {
           guest_details: Json | null
           guest_email: string | null
           id: string
+          monthly_invoice_id: string | null
           notes: string | null
           order_ref: string | null
+          payment_method: string
+          po_reference: string | null
           status: string | null
           stripe_payment_intent_id: string | null
           subtotal: number
@@ -539,8 +635,11 @@ export type Database = {
           guest_details?: Json | null
           guest_email?: string | null
           id?: string
+          monthly_invoice_id?: string | null
           notes?: string | null
           order_ref?: string | null
+          payment_method?: string
+          po_reference?: string | null
           status?: string | null
           stripe_payment_intent_id?: string | null
           subtotal: number
@@ -559,8 +658,11 @@ export type Database = {
           guest_details?: Json | null
           guest_email?: string | null
           id?: string
+          monthly_invoice_id?: string | null
           notes?: string | null
           order_ref?: string | null
+          payment_method?: string
+          po_reference?: string | null
           status?: string | null
           stripe_payment_intent_id?: string | null
           subtotal?: number
@@ -1033,6 +1135,74 @@ export type Database = {
         }
         Relationships: []
       }
+      user_wallets: {
+        Row: {
+          balance_eur: number
+          created_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance_eur?: number
+          created_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance_eur?: number
+          created_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wallet_transactions: {
+        Row: {
+          amount_eur: number
+          balance_after: number
+          bonus_eur: number
+          bundle: string | null
+          created_at: string
+          id: string
+          note: string | null
+          order_id: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount_eur: number
+          balance_after?: number
+          bonus_eur?: number
+          bundle?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          order_id?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount_eur?: number
+          balance_after?: number
+          bonus_eur?: number
+          bundle?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          order_id?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -1041,6 +1211,10 @@ export type Database = {
       admin_set_user_password: {
         Args: { new_password: string; user_email: string }
         Returns: undefined
+      }
+      generate_monthly_invoices: {
+        Args: { _period_start: string }
+        Returns: number
       }
       get_my_role: { Args: never; Returns: string }
       has_permission: {
@@ -1055,6 +1229,16 @@ export type Database = {
         Returns: boolean
       }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
+      pay_order_on_account: {
+        Args: { _order_id: string; _po: string }
+        Returns: undefined
+      }
+      pay_order_with_wallet: { Args: { _order_id: string }; Returns: number }
+      purchase_credit_bundle: { Args: { _tier: string }; Returns: number }
+      request_billing_account: {
+        Args: { _company: string; _spend: number; _vat: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "super_admin" | "admin" | "support" | "user"

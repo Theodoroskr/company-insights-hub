@@ -26,6 +26,7 @@ const NAV_ITEMS: { label: string; icon: any; to: string; section: string }[] = [
   { label: 'Fulfillment',   icon: Settings2,        to: '/admin/fulfillment',    section: 'fulfillment' },
   { label: 'Products',      icon: Package,          to: '/admin/products',       section: 'products' },
   { label: 'Customers',     icon: Users,            to: '/admin/customers',      section: 'customers' },
+  { label: 'Enterprise Billing', icon: Users,       to: '/admin/billing',        section: 'customers' },
   { label: 'Promo Codes',   icon: Tag,              to: '/admin/promo-codes',    section: 'promo_codes' },
   { label: 'Source Health', icon: Activity,         to: '/admin/source-health',  section: 'source_health' },
   { label: 'Certificates',  icon: Activity,         to: '/admin/certificates',   section: 'certificates' },
