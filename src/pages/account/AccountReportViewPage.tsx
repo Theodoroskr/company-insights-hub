@@ -92,14 +92,14 @@ function Section({ title, value }: { title: string; value: unknown }) {
 
 export default function AccountReportViewPage() {
   const { itemId } = useParams<{ itemId: string }>();
-  const [state, setState] = useState<{ loading: boolean; error?: string; title?: string; company?: string; orderId?: string; data?: Record<string, unknown>; generated?: string | null; screening?: boolean }>({ loading: true });
+  const [state, setState] = useState<{ loading: boolean; error?: string; title?: string; company?: string; orderId?: string; orderRef?: string | null; data?: Record<string, unknown>; generated?: string | null; screening?: boolean }>({ loading: true });
 
   useEffect(() => {
     if (!itemId) return;
     (async () => {
       const { data, error } = await supabase
         .from('order_items')
-        .select('id, order_id, screening_addon, products ( name, slug ), companies ( name ), generated_reports ( api4all_raw_json, generated_at )')
+        .select('id, order_id, screening_addon, products ( name, slug ), companies ( name ), orders ( order_ref ), generated_reports ( api4all_raw_json, generated_at )')
         .eq('id', itemId)
         .maybeSingle();
       const i = data as any;
