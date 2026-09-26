@@ -205,9 +205,9 @@ export default function CountryDashboardPage() {
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {[
-              { icon: <FileText className="w-5 h-5" />, name: 'Company Structure Report', sla: country.coverage_tier === 'premium' ? 'Instant' : '24h', price: '€49' },
+              { icon: <FileText className="w-5 h-5" />, name: 'Global Structure Report', sla: country.coverage_tier === 'premium' ? 'Instant' : '24h', price: '€49' },
               { icon: <ShieldCheck className="w-5 h-5" />, name: 'KYB & Compliance Report', sla: country.coverage_tier === 'premium' ? 'Instant' : '24h', price: '€89' },
-              { icon: <TrendingUp className="w-5 h-5" />, name: 'Credit & Financial Report', sla: country.coverage_tier === 'on_request' ? '2-5 days' : '24-48h', price: '€129' },
+              { icon: <TrendingUp className="w-5 h-5" />, name: 'Global Credit Report', sla: country.coverage_tier === 'on_request' ? '2-5 days' : '24-48h', price: '€150' },
             ].map((r) => (
               <div key={r.name} className="rounded-xl p-6 transition-all hover:shadow-md" style={{ backgroundColor: 'var(--bg-subtle)', border: '1px solid var(--bg-border)' }}>
                 <div className="inline-flex items-center justify-center w-10 h-10 rounded-lg mb-3" style={{ backgroundColor: 'var(--brand-primary)', color: '#fff' }}>
