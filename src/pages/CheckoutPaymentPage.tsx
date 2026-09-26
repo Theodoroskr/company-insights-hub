@@ -362,6 +362,11 @@ export default function CheckoutPaymentPage() {
               </h3>
 
               <div className="space-y-2 mb-3">
+                {certificateOrders.flatMap((o) => o.certificates.map((c) => (
+                  <div key={o.id + c.slug} className="text-sm truncate font-medium" style={{ color: 'var(--text-body)' }}>
+                    {c.name} — {o.companyName}
+                  </div>
+                )))}
                 {items.map((item) => (
                   <div key={item.id} className="text-sm">
                     <div className="flex justify-between gap-2">
