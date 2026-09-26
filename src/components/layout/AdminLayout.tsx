@@ -18,20 +18,22 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/lib/tenant';
 
-const NAV_ITEMS: { label: string; icon: any; to: string; superAdminOnly?: boolean }[] = [
-  { label: 'Dashboard',     icon: LayoutDashboard, to: '/admin' },
-  { label: 'Orders',        icon: ClipboardList,    to: '/admin/orders' },
-  { label: 'Fulfillment',   icon: Settings2,        to: '/admin/fulfillment' },
-  { label: 'Products',      icon: Package,          to: '/admin/products' },
-  { label: 'Customers',     icon: Users,            to: '/admin/customers' },
-  { label: 'Promo Codes',   icon: Tag,              to: '/admin/promo-codes' },
-  { label: 'Source Health', icon: Activity,         to: '/admin/source-health' },
-  { label: 'Certificates',  icon: Activity,        to: '/admin/certificates' },
-  { label: 'Pricing Health', icon: Activity,        to: '/admin/pricing-health' },
-  { label: 'Audit Logs',    icon: ScrollText,       to: '/admin/audit-logs' },
-  { label: 'Settings',      icon: Settings,         to: '/admin/settings' },
-  { label: 'Tenants',       icon: Globe,            to: '/admin/tenants', superAdminOnly: true },
+const NAV_ITEMS: { label: string; icon: any; to: string; section: string }[] = [
+  { label: 'Dashboard',     icon: LayoutDashboard, to: '/admin',                 section: 'dashboard' },
+  { label: 'Orders',        icon: ClipboardList,    to: '/admin/orders',         section: 'orders' },
+  { label: 'Fulfillment',   icon: Settings2,        to: '/admin/fulfillment',    section: 'fulfillment' },
+  { label: 'Products',      icon: Package,          to: '/admin/products',       section: 'products' },
+  { label: 'Customers',     icon: Users,            to: '/admin/customers',      section: 'customers' },
+  { label: 'Promo Codes',   icon: Tag,              to: '/admin/promo-codes',    section: 'promo_codes' },
+  { label: 'Source Health', icon: Activity,         to: '/admin/source-health',  section: 'source_health' },
+  { label: 'Certificates',  icon: Activity,         to: '/admin/certificates',   section: 'certificates' },
+  { label: 'Pricing Health', icon: Activity,        to: '/admin/pricing-health', section: 'pricing_health' },
+  { label: 'Audit Logs',    icon: ScrollText,       to: '/admin/audit-logs',     section: 'audit_logs' },
+  { label: 'Settings',      icon: Settings,         to: '/admin/settings',       section: 'settings' },
+  { label: 'Tenants',       icon: Globe,            to: '/admin/tenants',        section: 'tenants' },
+  { label: 'User Rights',   icon: Shield,           to: '/admin/roles',          section: 'roles' },
 ];
+
 
 interface AdminLayoutProps {
   children: React.ReactNode;
