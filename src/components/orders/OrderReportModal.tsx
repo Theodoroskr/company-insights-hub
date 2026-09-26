@@ -416,7 +416,7 @@ export default function OrderReportModal({
                 style={{ borderColor: 'var(--bg-border)', color: 'var(--text-body)' }}
                 value={selectedProduct?.id ?? ''}
                 onChange={(e) => {
-                  const p = visibleProducts.find((x) => x.id === e.target.value);
+                  const p = [...visibleProducts, ...(selectedProduct ? [selectedProduct] : [])].find((x) => x.id === e.target.value);
                   if (p) setSelectedProduct(p);
                 }}
                 disabled={isLoadingProducts}
@@ -424,7 +424,10 @@ export default function OrderReportModal({
                 {isLoadingProducts ? (
                   <option>Loading…</option>
                 ) : (
-                  visibleProducts.map((p) => (
+                  [
+                    ...(selectedProduct && !visibleProducts.some((x) => x.id === selectedProduct.id) ? [selectedProduct] : []),
+                    ...visibleProducts,
+                  ].map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.name} — €{p.base_price.toFixed(0)}
                     </option>
