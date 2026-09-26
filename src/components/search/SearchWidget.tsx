@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Loader2, ChevronDown, X, Building2, MapPin, Hash, CornerDownLeft, ArrowUpDown } from 'lucide-react';
+import { describeSicCode } from '../../lib/sicCodes';
 import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../lib/tenant';
 import { useCountries } from '../../lib/countries';
@@ -39,7 +40,10 @@ function pickSnippet(c: Company): { kind: 'address' | 'sector' | 'form'; value: 
     return { kind: 'address', value: [office.address_line_1, office.locality].filter(Boolean).join(', ') };
   }
   if (raw?.nature_of_business) return { kind: 'sector', value: raw.nature_of_business };
-  if (raw?.sic_codes?.length) return { kind: 'sector', value: `SIC ${raw.sic_codes.join(', ')}` };
+  if (raw?.sic_codes?.length) {
+    const descs = raw.sic_codes.map(describeSicCode).filter(Boolean) as string[];
+    return { kind: 'sector', value: descs.length ? descs.join(' · ') : `SIC ${raw.sic_codes.join(', ')}` };
+  }
   if (c.legal_form) return { kind: 'form', value: c.legal_form };
   return null;
 }

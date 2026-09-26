@@ -1,13 +1,12 @@
 // ============================================================
 // DirectorRelationshipGraph
-// Force-directed mini-graph: company at the center, directors as
-// surrounding nodes. When unlocked, names render in full and
-// hover/click expose detail; when locked, the layout is shown
-// but labels are blurred to incentivize purchase.
+// Static radial diagram: company at the center, officers and
+// PSCs evenly spaced on one or two rings. Deterministic layout —
+// no physics — so labels never collide. When locked, names are
+// masked to incentivize purchase.
 // ============================================================
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import ForceGraph2D from 'react-force-graph-2d';
 import { Lock } from 'lucide-react';
 import type { Company, DirectorEntry } from '../../types/database';
 
@@ -23,35 +22,39 @@ interface GraphNode {
   type: 'company' | 'director' | 'secretary' | 'psc';
   role?: string;
 }
-interface GraphLink {
-  source: string;
-  target: string;
-}
 
 const TYPE_COLORS: Record<GraphNode['type'], string> = {
-  company:   '#1B3A6B',
-  director:  '#2563EB',
-  secretary: '#0EA5E9',
-  psc:       '#8B5CF6',
+  company:   'var(--graph-company)',
+  director:  'var(--graph-director)',
+  secretary: 'var(--graph-secretary)',
+  psc:       'var(--graph-psc)',
 };
+
+const TYPE_LABELS: Record<Exclude<GraphNode['type'], 'company'>, string> = {
+  director:  'Director',
+  secretary: 'Secretary',
+  psc:       'PSC',
+};
+
+const RING_HEIGHT = 380;
 
 function maskLabel(name: string): string {
   const words = name.trim().split(/\s+/);
   return words.map((w, i) => (i === 0 ? w : `${w[0] ?? ''}•••`)).join(' ');
 }
 
+function truncate(label: string, max: number): string {
+  return label.length > max ? `${label.slice(0, max - 1)}…` : label;
+}
+
 export default function DirectorRelationshipGraph({ company, isUnlocked, onUnlockClick }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const fgRef = useRef<{ zoomToFit: (ms?: number, padding?: number) => void } | null>(null);
-  const [size, setSize] = useState({ w: 600, h: 380 });
+  const [size, setSize] = useState({ w: 640 });
   const [hoverId, setHoverId] = useState<string | null>(null);
 
-  // Build graph data
+  // Build node list
   const data = useMemo(() => {
-    const nodes: GraphNode[] = [];
-    const links: GraphLink[] = [];
-
-    nodes.push({ id: 'company', name: company.name, type: 'company' });
+    const nodes: GraphNode[] = [{ id: 'company', name: company.name, type: 'company' }];
 
     const directors: DirectorEntry[] = Array.isArray(company.directors_json)
       ? company.directors_json
@@ -66,9 +69,7 @@ export default function DirectorRelationshipGraph({ company, isUnlocked, onUnloc
       const key = `${type}:${name.toUpperCase().trim()}`;
       if (seen.has(key)) return;
       seen.add(key);
-      const id = `n-${nodes.length}`;
-      nodes.push({ id, name, type, role });
-      links.push({ source: 'company', target: id });
+      nodes.push({ id: `n-${nodes.length}`, name, type, role });
     };
 
     for (const d of directors) {
@@ -86,26 +87,51 @@ export default function DirectorRelationshipGraph({ company, isUnlocked, onUnloc
       push(p.name, 'psc', 'PSC');
     }
 
-    return { nodes, links };
+    return nodes;
   }, [company]);
 
   // Responsive sizing
   useEffect(() => {
     if (!containerRef.current) return;
     const el = containerRef.current;
-    const ro = new ResizeObserver(() => {
-      setSize({ w: el.clientWidth, h: 380 });
-    });
+    const ro = new ResizeObserver(() => setSize({ w: el.clientWidth }));
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
 
-  useEffect(() => {
-    const t = setTimeout(() => fgRef.current?.zoomToFit?.(400, 40), 80);
-    return () => clearTimeout(t);
+  // Deterministic radial layout
+  const layout = useMemo(() => {
+    const w = Math.max(size.w, 280);
+    const cx = w / 2;
+    const cy = RING_HEIGHT / 2;
+    const companyNode = data[0];
+    const officers = data.slice(1);
+    const n = officers.length;
+    const maxR = Math.max(78, Math.min(w / 2 - 110, RING_HEIGHT / 2 - 70));
+    const multiRing = n > 12;
+    const outerCount = multiRing ? Math.ceil(n * 0.55) : n;
+
+    const positioned = officers.map((node, i) => {
+      const isInner = multiRing && i >= outerCount;
+      const ringN = isInner ? n - outerCount : outerCount;
+      const idx = isInner ? i - outerCount : i;
+      const ringR = isInner ? maxR * 0.55 : maxR;
+      const angle = -Math.PI / 2 + (2 * Math.PI * (idx + (isInner ? 0.5 : 0))) / ringN;
+      const x = cx + ringR * Math.cos(angle);
+      const y = cy + ringR * Math.sin(angle);
+      const cosv = Math.cos(angle);
+      const sinv = Math.sin(angle);
+      const anchor: 'start' | 'end' | 'middle' = cosv > 0.3 ? 'start' : cosv < -0.3 ? 'end' : 'middle';
+      const labelX = anchor === 'start' ? x + 13 : anchor === 'end' ? x - 13 : x;
+      const above = anchor === 'middle' && (sinv < 0 || sinv > 0.8);
+      return { node, x, y, anchor, labelX, above, small: isInner };
+    });
+
+    return { w, cx, cy, companyNode, positioned, n };
   }, [data, size.w]);
 
-  const isEmpty = data.nodes.length <= 1;
+  const isEmpty = layout.n === 0;
+  const fontSizeName = (small: boolean) => (small ? 10 : 11.5);
 
   return (
     <div
@@ -118,7 +144,7 @@ export default function DirectorRelationshipGraph({ company, isUnlocked, onUnloc
             Director Relationship Graph
           </h3>
           <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
-            Drag any node · scroll to zoom · {data.nodes.length - 1} relationships mapped
+            {layout.n} relationships mapped
           </p>
         </div>
         <div className="hidden sm:flex items-center gap-3 text-[10px] font-semibold uppercase tracking-wider"
@@ -137,57 +163,110 @@ export default function DirectorRelationshipGraph({ company, isUnlocked, onUnloc
         </div>
       </div>
 
-      <div ref={containerRef} className="relative" style={{ height: 380 }}>
+      <div ref={containerRef} className="relative" style={{ height: RING_HEIGHT }}>
         {isEmpty ? (
           <div className="absolute inset-0 flex items-center justify-center text-sm" style={{ color: 'var(--text-muted)' }}>
             No officer or PSC data available yet.
           </div>
         ) : (
           <>
-            <ForceGraph2D
-              ref={fgRef as unknown as React.MutableRefObject<undefined>}
-              graphData={data}
-              width={size.w}
-              height={size.h}
-              backgroundColor="#ffffff"
-              nodeRelSize={6}
-              cooldownTicks={120}
-              linkColor={() => 'rgba(100,116,139,0.35)'}
-              linkWidth={1.2}
-              onNodeHover={(n) => setHoverId((n as GraphNode | null)?.id ?? null)}
-              nodeCanvasObject={(node, ctx, globalScale) => {
-                const n = node as GraphNode & { x: number; y: number };
-                const color = TYPE_COLORS[n.type];
-                const isCompany = n.type === 'company';
-                const r = isCompany ? 10 : 6;
+            <svg
+              width="100%"
+              height={RING_HEIGHT}
+              viewBox={`0 0 ${layout.w} ${RING_HEIGHT}`}
+              role="img"
+              aria-label={`Director relationship graph for ${company.name}`}
+            >
+              {/* Spokes */}
+              {layout.positioned.map(({ node, x, y }) => (
+                <line
+                  key={`l-${node.id}`}
+                  x1={layout.cx}
+                  y1={layout.cy}
+                  x2={x}
+                  y2={y}
+                  stroke="color-mix(in srgb, var(--brand-accent) 25%, transparent)"
+                  strokeWidth={1.25}
+                />
+              ))}
 
-                // Glow ring for company / hover
-                if (isCompany || hoverId === n.id) {
-                  ctx.beginPath();
-                  ctx.arc(n.x, n.y, r + 4, 0, 2 * Math.PI);
-                  ctx.fillStyle = `${color}33`;
-                  ctx.fill();
-                }
+              {/* Company node */}
+              <g>
+                <circle cx={layout.cx} cy={layout.cy} r={34} fill={TYPE_COLORS.company} />
+                <circle
+                  cx={layout.cx}
+                  cy={layout.cy}
+                  r={40}
+                  fill="none"
+                  stroke="color-mix(in srgb, var(--brand-accent) 20%, transparent)"
+                  strokeWidth={1}
+                />
+                {(() => {
+                  const label = truncate(company.name ?? '', 42);
+                  const chunks = label.match(/.{1,11}(\s|$)/g)?.map((s) => s.trim()).slice(0, 4) ?? [label];
+                  const startY = layout.cy - (chunks.length - 1) * 4.5;
+                  return chunks.map((chunk, i) => (
+                    <text
+                      key={i}
+                      x={layout.cx}
+                      y={startY + i * 9}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fontSize={9}
+                      fontWeight={700}
+                      fill="#FFFFFF"
+                      fontFamily="Inter, system-ui, sans-serif"
+                    >
+                      {chunk}
+                    </text>
+                  ));
+                })()}
+              </g>
 
-                ctx.beginPath();
-                ctx.arc(n.x, n.y, r, 0, 2 * Math.PI);
-                ctx.fillStyle = color;
-                ctx.fill();
-                ctx.strokeStyle = '#fff';
-                ctx.lineWidth = 1.5;
-                ctx.stroke();
-
-                // Label
-                const fontSize = Math.max(10, 12 / globalScale);
-                ctx.font = `${isCompany ? '700' : '500'} ${fontSize}px Inter, system-ui, sans-serif`;
-                ctx.fillStyle = '#0F172A';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'top';
-                const label = isCompany || isUnlocked ? n.name : maskLabel(n.name);
-                const truncated = label.length > 32 ? `${label.slice(0, 30)}…` : label;
-                ctx.fillText(truncated, n.x, n.y + r + 3);
-              }}
-            />
+              {/* Officer nodes + labels */}
+              {layout.positioned.map(({ node, x, y, anchor, labelX, above, small }) => {
+                const label = isUnlocked ? truncate(node.name, 30) : truncate(maskLabel(node.name), 30);
+                const role = node.role ?? TYPE_LABELS[node.type];
+                const hovered = hoverId === node.id;
+                const r = small ? 6.5 : 9;
+                const nameY = anchor === 'middle' ? (above ? y - r - 17 : y + r + 11) : y - 2;
+                const roleY = anchor === 'middle' ? (above ? y - r - 6 : y + r + 22) : y + 10;
+                return (
+                  <g
+                    key={node.id}
+                    onMouseEnter={() => setHoverId(node.id)}
+                    onMouseLeave={() => setHoverId(null)}
+                  >
+                    <circle cx={x} cy={y} r={r + (hovered ? 3 : 0)} fill={TYPE_COLORS[node.type]} />
+                    {hovered && (
+                      <circle cx={x} cy={y} r={r + 6} fill="none" stroke="var(--brand-accent)" strokeWidth={1.5} />
+                    )}
+                    <text
+                      x={labelX}
+                      y={nameY}
+                      textAnchor={anchor}
+                      fontSize={fontSizeName(small)}
+                      fontWeight={600}
+                      fill={hovered ? 'var(--brand-accent)' : 'var(--text-heading)'}
+                      fontFamily="Inter, system-ui, sans-serif"
+                    >
+                      {label}
+                    </text>
+                    <text
+                      x={labelX}
+                      y={roleY}
+                      textAnchor={anchor}
+                      fontSize={9.5}
+                      fill="var(--text-muted)"
+                      fontFamily="Inter, system-ui, sans-serif"
+                    >
+                      {truncate(role, 24)}
+                    </text>
+                    <title>{`${node.name} — ${role}`}</title>
+                  </g>
+                );
+              })}
+            </svg>
             {!isUnlocked && (
               <div
                 className="absolute bottom-3 left-1/2 -translate-x-1/2 inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur-md cursor-pointer transition-all hover:scale-[1.02]"
