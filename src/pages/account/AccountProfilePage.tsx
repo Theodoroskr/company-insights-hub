@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { X } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { X, Wallet } from 'lucide-react';
 import AccountLayout from '../../components/layout/AccountLayout';
 import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../lib/tenant';
 import { useToast } from '../../hooks/use-toast';
+import { useBilling } from '../../lib/billing';
 
 interface Country {
   code: string;
