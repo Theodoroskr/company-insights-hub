@@ -14,13 +14,14 @@ interface BrandMarkProps {
   variant?: 'light' | 'dark';   // surface the mark is shown on
   size?: 'sm' | 'md' | 'lg';
   className?: string;
-  showEndorsement?: boolean;    // show "An Infocredit Group platform" line
+  showEndorsement?: boolean;    // show "An Infocredit Group platform" endorsement line
+  tagline?: string;             // small line rendered under the wordmark (replaces endorsement)
 }
 
 const SIZE = {
-  sm: { logoH: 22, endorsement: '0.55rem', tracking: '0.18em' },
-  md: { logoH: 30, endorsement: '0.6rem',  tracking: '0.22em' },
-  lg: { logoH: 40, endorsement: '0.65rem', tracking: '0.24em' },
+  sm: { logoH: 22, endorsement: '0.55rem', tagline: '0.62rem', tracking: '0.18em' },
+  md: { logoH: 30, endorsement: '0.6rem',  tagline: '0.68rem', tracking: '0.22em' },
+  lg: { logoH: 40, endorsement: '0.65rem', tagline: '0.74rem', tracking: '0.24em' },
 } as const;
 
 // Inline wordmark so the brand colors can flip on dark surfaces
@@ -55,12 +56,35 @@ export default function BrandMark({
   size = 'md',
   className = '',
   showEndorsement = true,
+  tagline,
 }: BrandMarkProps) {
   const s = SIZE[size];
   const isDark = variant === 'dark';
 
   const endorsementColor = isDark ? 'rgba(255,255,255,0.6)' : 'rgba(15,36,68,0.55)';
   const dividerColor     = isDark ? 'rgba(255,255,255,0.25)' : 'rgba(15,36,68,0.18)';
+  const taglineColor     = isDark ? 'rgba(255,255,255,0.7)'  : 'rgba(15,36,68,0.65)';
+
+  // Tagline mode: wordmark with a small line beneath it (no endorsement).
+  if (tagline) {
+    return (
+      <span className={`inline-flex flex-col items-start gap-1 select-none ${className}`}>
+        <Wordmark height={s.logoH} isDark={isDark} />
+        <span
+          style={{
+            fontFamily: 'Inter, system-ui, sans-serif',
+            fontWeight: 500,
+            fontSize: s.tagline,
+            color: taglineColor,
+            whiteSpace: 'nowrap',
+            lineHeight: 1.1,
+          }}
+        >
+          {tagline}
+        </span>
+      </span>
+    );
+  }
 
   return (
     <span className={`inline-flex items-center gap-3 select-none ${className}`}>
