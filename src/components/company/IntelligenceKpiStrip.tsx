@@ -7,6 +7,7 @@
 
 import React from 'react';
 import { Shield, CheckCircle2, Calendar, Users, Briefcase, MapPin, Clock } from 'lucide-react';
+import { describeSicCode } from '../../lib/sicCodes';
 import type { Company, Country, DirectorEntry } from '../../types/database';
 
 interface Props {

@@ -123,7 +123,7 @@ export default function DirectorRelationshipGraph({ company, isUnlocked, onUnloc
       const sinv = Math.sin(angle);
       const anchor: 'start' | 'end' | 'middle' = cosv > 0.3 ? 'start' : cosv < -0.3 ? 'end' : 'middle';
       const labelX = anchor === 'start' ? x + 13 : anchor === 'end' ? x - 13 : x;
-      const above = anchor === 'middle' && sinv < 0;
+      const above = anchor === 'middle' && (sinv < 0 || sinv > 0.8);
       return { node, x, y, anchor, labelX, above, small: isInner };
     });
 
