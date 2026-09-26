@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { priceProduct } from '../lib/pricing';
+import { formatDelivery } from '../lib/delivery';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronUp, CheckCircle2 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
@@ -350,6 +351,19 @@ export default function ProductLandingPage() {
                   </>
                 )}
               </div>
+
+              {dbProduct && (
+                <ul className="mt-4 space-y-1.5 text-sm" style={{ color: 'var(--text-body)' }}>
+                  <li>
+                    {dbProduct.is_instant ? '⚡' : '🕐'} Delivery:{' '}
+                    <strong>{formatDelivery(dbProduct.delivery_sla_hours, dbProduct.is_instant)}</strong>
+                  </li>
+                  <li>
+                    🌍 Coverage:{' '}
+                    <strong>{dbProduct.country_scope === 'global' ? 'Companies in any country' : 'Selected countries'}</strong>
+                  </li>
+                </ul>
+              )}
 
               {/* Sample */}
               <button

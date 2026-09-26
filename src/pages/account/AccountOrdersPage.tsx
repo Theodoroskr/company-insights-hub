@@ -1,3 +1,4 @@
+import { formatDelivery } from '@/lib/delivery';
 import React, { useEffect, useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
@@ -38,10 +39,7 @@ function formatDate(iso: string | null) {
 }
 
 function formatSla(hours: number | null) {
-  if (!hours) return '—';
-  if (hours < 24) return `${hours} hours`;
-  const days = Math.ceil(hours / 24);
-  return `1-${days} days`;
+  return formatDelivery(hours);
 }
 
 export default function AccountOrdersPage() {
