@@ -34,6 +34,9 @@ export default function CheckoutSuccessPage() {
   const slaHours = data?.slaHours ?? 24;
   const isInstant = data?.isInstant ?? false;
   const productNames = data?.productNames ?? [];
+  const bundles = data?.bundles ?? [];
+  const totalCredit = bundles.reduce((s, b) => s + b.pay + b.bonus, 0);
+  const creditOnly = bundles.length > 0 && productNames.length === bundles.length;
   const dueDate = isInstant ? null : expectedDeliveryDate(slaHours);
 
   return (
