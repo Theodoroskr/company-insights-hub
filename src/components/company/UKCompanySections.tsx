@@ -182,8 +182,17 @@ export default function UKCompanySections({
         setChargesTotal(c.value.total_count ?? 0);
       }
       if (p.status === 'fulfilled') {
-        setPsc((p.value.items ?? []) as PscItem[]);
+        const pscItems = (p.value.items ?? []) as PscItem[];
+        setPsc(pscItems);
         setPscTotal(p.value.total_results ?? 0);
+        resolveCorporatePscs(pscItems)
+          .then((resolved) => {
+            if (cancelled) return;
+            const map: Record<string, string> = {};
+            for (const entry of resolved) map[entry.name.toUpperCase()] = corporatePscHref(entry);
+            setPscHrefs(map);
+          })
+          .catch(() => undefined);
       }
       setLoading(false);
     })();
