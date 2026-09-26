@@ -887,6 +887,13 @@ export default function CompanyProfilePage() {
           {/* ── MAIN CONTENT ── */}
           <div className="flex-1 min-w-0 space-y-4">
 
+            {purchaseInfo && (
+              <PurchaseStatusBanner
+                info={purchaseInfo}
+                onReorder={() => (kybProduct ? setKybModalOpen(true) : openStructureModal())}
+              />
+            )}
+
             {/* A — Company Header */}
             <div>
               <div className="flex flex-wrap items-center gap-3 mb-2">
