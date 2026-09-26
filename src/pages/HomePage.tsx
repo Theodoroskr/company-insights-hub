@@ -720,7 +720,7 @@ function ProductCard({ product, delay }: { product: Product; delay: number }) {
       >
         <div>
           <span className="text-xs" style={{ color: 'var(--text-muted)' }}>from </span>
-          <PriceDisplay basePrice={product.base_price} className="text-2xl" />
+          <PriceDisplay basePrice={product.base_price} serviceFee={Number(product.service_fee ?? 0)} className="text-2xl" />
         </div>
         <Link
           to={

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { priceProduct } from '../lib/pricing';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { Check, ShoppingCart } from 'lucide-react';
@@ -162,7 +163,7 @@ function ProductOrderRow({
     ? (product.available_speeds as ProductSpeed[])
     : [];
   const currentSpeed = speeds[0];
-  const price = product.base_price + (currentSpeed?.price_delta ?? 0);
+  const price = priceProduct(product, 0, currentSpeed?.code).net;
   const [modalOpen, setModalOpen] = useState(false);
 
   const companyForModal = company as unknown as import('../types/database').Company;
@@ -336,7 +337,7 @@ function CertificateMultiSelect({
 
   const totalPrice = products
     .filter((p) => selectedIds.has(p.id))
-    .reduce((s, p) => s + p.base_price, 0);
+    .reduce((s, p) => s + priceProduct(p, 0).net, 0);
 
   return (
     <div className={products.length > 0 ? 'mt-4 pt-4 border-t' : ''} style={{ borderColor: 'var(--bg-border)' }}>
@@ -376,7 +377,7 @@ function CertificateMultiSelect({
                 📄 {product.name}
               </span>
               <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
-                €{product.base_price.toFixed(0)}
+                €{Number(product.base_price).toFixed(0)}{Number(product.service_fee ?? 0) > 0 ? ` + €${Number(product.service_fee).toFixed(0)}` : ''}
               </span>
             </label>
           );
@@ -1273,7 +1274,7 @@ export default function CompanyProfilePage() {
                 const speeds: ProductSpeed[] = Array.isArray(heroProduct.available_speeds)
                   ? (heroProduct.available_speeds as ProductSpeed[])
                   : [];
-                const price = heroProduct.base_price + (speeds[0]?.price_delta ?? 0);
+                const price = priceProduct(heroProduct, 0, speeds[0]?.code).net;
                 const companyForModal = company as unknown as import('../types/database').Company;
 
                 return (
