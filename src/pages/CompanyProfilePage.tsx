@@ -807,7 +807,12 @@ export default function CompanyProfilePage() {
   const directorsAmlProduct = products.find((p) => p.slug === 'aml-screening-with-directors');
   const kybProduct = products.find((p) => p.type === 'kyb' || p.slug === 'cyprus-kyb-report');
   const enhancedKybProduct = products.find((p) => p.slug === 'enhanced-uk-kyb-report');
-  const structureProduct = products.find((p) => p.slug?.includes('structure') || p.name?.toLowerCase().includes('structure'));
+  const structureProduct =
+    (company.country_code === 'CY' && products.find((p) => p.slug === 'cyprus-structure-report')) ||
+    (company.country_code === 'GB' && products.find((p) => p.slug === 'uk-company-report')) ||
+    products.find((p) => p.slug === 'global-structure-report') ||
+    products.find((p) => p.slug?.includes('structure') || p.name?.toLowerCase().includes('structure')) ||
+    undefined;
   const samplePdfUrl = products[0]?.sample_pdf_url ?? null;
 
   const openStructureModal = () => {
