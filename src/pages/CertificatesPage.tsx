@@ -36,7 +36,7 @@ import {
   type CertificateGroup,
   type BundleDefinition,
 } from '../data/cyprusCertificates';
-import { getVatRate } from '../lib/tenantConfig';
+import { getCountryPricing, priceCertificateOrder } from '../lib/pricing';
 
 // ── Entity type tab icons ────────────────────────────────────
 const entityIcons: Record<EntityType, React.ReactNode> = {
@@ -320,16 +320,26 @@ export default function CertificatesPage() {
 
   // ── Price calculations ───────────────────────────────────
   const certCount = selectedSlugs.size;
-  const certSubtotal = certCount * CERT_PRICE;
-  const serviceDeliveryTotal = certCount * SERVICE_DELIVERY_FEE;
+  const certTotals = priceCertificateOrder(
+    {
+      certificates: allCerts
+        .filter((c) => selectedSlugs.has(c.slug))
+        .map((c) => ({ price: c.price, apostille: apostilleSlugs.has(c.slug) })),
+      urgentDelivery,
+      courierDelivery,
+    },
+    getCountryPricing(tenant?.slug),
+  );
+  const certSubtotal = certTotals.certificates;
+  const serviceDeliveryTotal = certTotals.serviceDelivery;
   const apostilleCount = apostilleSlugs.size;
-  const apostilleTotal = apostilleCount * APOSTILLE_PRICE;
-  const urgentTotal = urgentDelivery ? URGENT_DELIVERY_PRICE * certCount : 0;
-  const courierTotal = courierDelivery ? COURIER_DELIVERY_PRICE : 0;
-  const subtotal = certSubtotal + serviceDeliveryTotal + apostilleTotal + urgentTotal + courierTotal;
-  const vatRate = getVatRate(tenant?.slug);
-  const vat = parseFloat((subtotal * vatRate).toFixed(2));
-  const grandTotal = subtotal + vat;
+  const apostilleTotal = certTotals.apostille;
+  const urgentTotal = certTotals.urgent;
+  const courierTotal = certTotals.courier;
+  const subtotal = certTotals.subtotal;
+  const vatRate = getCountryPricing(tenant?.slug).vatRate;
+  const vat = certTotals.vat;
+  const grandTotal = certTotals.total;
 
   const handleAddToCart = () => {
     if (certCount === 0 || !companyName.trim()) return;
