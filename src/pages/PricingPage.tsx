@@ -198,6 +198,7 @@ export default function PricingPage() {
       </section>
 
       {/* Content */}
+      {view === 'payg' ? (
       <section className="py-12 px-4">
         <div className="max-w-6xl mx-auto">
           {loading ? (
@@ -249,6 +250,109 @@ export default function PricingPage() {
           )}
         </div>
       </section>
+      ) : (
+      /* Prepaid bundles view */
+      <section className="py-12 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center max-w-2xl mx-auto mb-10">
+            <h2 className="text-2xl font-bold" style={{ color: 'var(--text-heading)' }}>
+              Prepay once, order in one click
+            </h2>
+            <p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>
+              Top up your account credit and spend it on any report, certificate or screening across every country site. Bonus credit is added instantly, and every purchase comes with an official VAT invoice.
+            </p>
+          </div>
+
+          <div className="grid sm:grid-cols-3 gap-6 mb-16">
+            {CREDIT_BUNDLES.map((x) => (
+              <div
+                key={x.tier}
+                className="relative rounded-xl border p-6 flex flex-col transition-shadow hover:shadow-lg"
+                style={{
+                  borderColor: x.tier === 'professional' ? 'var(--brand-accent)' : 'var(--bg-border)',
+                  backgroundColor: 'var(--bg-surface)',
+                  borderWidth: x.tier === 'professional' ? '2px' : '1px',
+                }}
+              >
+                {x.tier === 'professional' && (
+                  <div
+                    className="absolute -top-3 left-1/2 -translate-x-1/2 flex items-center gap-1 px-3 py-0.5 rounded-full text-xs font-bold text-white"
+                    style={{ backgroundColor: 'var(--brand-accent)' }}
+                  >
+                    <Star className="w-3 h-3" /> Most Popular
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <Wallet className="w-4 h-4" style={{ color: 'var(--brand-accent)' }} />
+                  <h3 className="text-lg font-bold" style={{ color: 'var(--text-heading)' }}>{x.name}</h3>
+                </div>
+                <div className="mt-4">
+                  <span className="text-3xl font-extrabold" style={{ color: 'var(--text-heading)' }}>
+                    {formatEur(x.pay, 0)}
+                  </span>
+                  <span className="text-sm ml-1" style={{ color: 'var(--text-muted)' }}>one-time</span>
+                </div>
+                <ul className="mt-4 space-y-2 flex-1">
+                  <li className="flex items-start gap-2 text-sm" style={{ color: 'var(--text-body)' }}>
+                    <Check className="w-4 h-4 shrink-0 mt-0.5" style={{ color: 'var(--status-active)' }} />
+                    <span><strong>+{x.bonusPct}% bonus</strong> — {formatEur(x.bonus)} extra credit</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-sm" style={{ color: 'var(--text-body)' }}>
+                    <Check className="w-4 h-4 shrink-0 mt-0.5" style={{ color: 'var(--status-active)' }} />
+                    <span>You get <strong>{formatEur(x.pay + x.bonus)}</strong> to spend</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-sm" style={{ color: 'var(--text-body)' }}>
+                    <Check className="w-4 h-4 shrink-0 mt-0.5" style={{ color: 'var(--status-active)' }} />
+                    <span>Valid on every country site, no expiry</span>
+                  </li>
+                </ul>
+                <button
+                  onClick={() => navigate('/register')}
+                  className="mt-6 w-full py-2.5 rounded-lg text-sm font-semibold transition-opacity hover:opacity-90 flex items-center justify-center gap-2"
+                  style={{
+                    backgroundColor: x.tier === 'professional' ? 'var(--brand-accent)' : 'var(--brand-primary)',
+                    color: '#fff',
+                  }}
+                >
+                  Create free account <ArrowRight className="w-4 h-4" />
+                </button>
+                <p className="text-xs text-center mt-2" style={{ color: 'var(--text-muted)' }}>
+                  Buy bundles from My Account after signing up
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* Enterprise invoicing banner */}
+          <div
+            className="rounded-xl border-2 p-8 md:p-10 flex flex-col md:flex-row items-center gap-6"
+            style={{
+              borderColor: 'var(--brand-accent)',
+              background: 'linear-gradient(135deg, rgba(37,99,235,0.04) 0%, rgba(37,99,235,0.08) 100%)',
+            }}
+          >
+            <div className="flex items-center justify-center w-14 h-14 rounded-full shrink-0" style={{ backgroundColor: 'rgba(37,99,235,0.1)' }}>
+              <Building2 className="w-7 h-7" style={{ color: 'var(--brand-accent)' }} />
+            </div>
+            <div className="flex-1 text-center md:text-left">
+              <h2 className="text-xl font-bold" style={{ color: 'var(--text-heading)' }}>
+                Enterprise monthly invoicing
+              </h2>
+              <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
+                For firms ordering regularly: order now with a PO reference and pay one consolidated invoice at the end of each month. Subject to approval.
+              </p>
+            </div>
+            <button
+              onClick={() => navigate('/register')}
+              className="px-6 py-3 rounded-lg text-sm font-bold text-white transition-all hover:opacity-90 active:scale-[0.98] flex items-center gap-2 shrink-0"
+              style={{ backgroundColor: 'var(--brand-accent)' }}
+            >
+              Apply after sign-up <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </section>
+      )}
 
       {/* Trust strip */}
       <section className="py-10 px-4" style={{ borderTop: '1px solid var(--bg-border)' }}>
