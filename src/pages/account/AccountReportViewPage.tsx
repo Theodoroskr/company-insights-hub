@@ -92,6 +92,7 @@ function Section({ title, value }: { title: string; value: unknown }) {
 
 export default function AccountReportViewPage() {
   const { itemId } = useParams<{ itemId: string }>();
+  const { tenant } = useTenant();
   const [state, setState] = useState<{ loading: boolean; error?: string; title?: string; company?: string; orderId?: string; orderRef?: string | null; data?: Record<string, unknown>; generated?: string | null; screening?: boolean }>({ loading: true });
 
   useEffect(() => {
