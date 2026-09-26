@@ -94,7 +94,7 @@ function OrderSummary({ compact = false }: { compact?: boolean }) {
 
 export default function CheckoutDetailsPage() {
   const { tenant } = useTenant();
-  const { items, grandTotal, totalVat } = useCart();
+  const { items, certificateOrders, subtotal: cartSubtotal, grandTotal, totalVat } = useCart();
   const navigate = useNavigate();
   const countryOptions = useCountries();
 
@@ -144,7 +144,7 @@ export default function CheckoutDetailsPage() {
   const isEU = EU_COUNTRY_CODES.has(form.country.toUpperCase());
   const vatExempt = !isEU || (form.isBusiness && form.vatValidated === true);
   const effectiveVat = vatExempt ? 0 : totalVat;
-  const effectiveTotal = items.reduce((s, i) => s + i.price, 0) + effectiveVat;
+  const effectiveTotal = cartSubtotal + effectiveVat;
 
   const set = (key: keyof typeof form, val: unknown) => {
     setForm((f) => ({ ...f, [key]: val }));
@@ -185,7 +185,7 @@ export default function CheckoutDetailsPage() {
     navigate('/checkout/payment');
   };
 
-  if (items.length === 0) {
+  if (items.length === 0 && certificateOrders.length === 0) {
     return (
       <PageLayout>
         <div className="max-w-xl mx-auto py-20 text-center">

@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, ChevronDown, User, LogOut, Settings, Package, Download, ShoppingCart, Search, Loader2 } from 'lucide-react';
 import { ProductIcon } from '../ui/ProductIcon';
 import { useTenant } from '../../lib/tenant';
+import { useCertificateCountries, certificatesAvailableFor } from '../../lib/certificateAvailability';
 import { supabase } from '../../lib/supabase';
 import { useCart } from '../../contexts/CartContext';
 import CurrencySwitcher from './CurrencySwitcher';
@@ -192,6 +193,8 @@ export default function Navbar() {
   const { tenant } = useTenant();
   const navigate = useNavigate();
   const { totalItems } = useCart();
+  const certCountries = useCertificateCountries();
+  const certsOn = certificatesAvailableFor(tenant?.country_code, certCountries);
 
   const [products, setProducts] = useState<Product[]>([]);
   const [session, setSession] = useState<null | { user: { email?: string; id: string } }>(null);
@@ -349,7 +352,7 @@ export default function Navbar() {
                       </div>
 
                       {/* Certificates column */}
-                      <div className="py-3">
+                      {certsOn && (<div className="py-3">
                         <p className="px-4 pb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
                           Certificates · 🇨🇾 Cyprus
                         </p>
@@ -395,7 +398,7 @@ export default function Navbar() {
                             <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Partners, Registration & more</p>
                           </span>
                         </Link>
-                      </div>
+                      </div>)}
 
                     </div>
 
@@ -771,7 +774,7 @@ function MobileMenu({
           </MobileAccordion>
 
           {/* Certificates accordion */}
-          <MobileAccordion title="Cyprus Certificates">
+          {mobileCertsOn && (<MobileAccordion title="Cyprus Certificates">
             <Link to="/certificates" onClick={onClose} className={mobileLinkClass} style={{ color: 'var(--text-body)' }}>
               <span className="text-sm">🏢</span> Company Certificates
             </Link>
@@ -781,7 +784,7 @@ function MobileMenu({
             <Link to="/certificates?entity=partnership" onClick={onClose} className={mobileLinkClass} style={{ color: 'var(--text-body)' }}>
               <span className="text-sm">👥</span> Partnership Certificates
             </Link>
-          </MobileAccordion>
+          </MobileAccordion>)}
 
 
           {/* Bottom links */}
