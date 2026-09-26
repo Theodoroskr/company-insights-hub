@@ -43,12 +43,13 @@ let inflight: Promise<TenantSite[]> | null = null;
 async function loadSites(): Promise<TenantSite[]> {
   if (cachedSites) return cachedSites;
   if (!inflight) {
-    inflight = supabase
-      .from('tenants')
-      .select('slug, brand_name, domain')
-      .eq('is_active', true)
-      .order('slug', { ascending: true })
-      .then(({ data }) => {
+    inflight = (async () => {
+      try {
+        const { data } = await supabase
+          .from('tenants')
+          .select('slug, brand_name, domain')
+          .eq('is_active', true)
+          .order('slug', { ascending: true });
         const sites: TenantSite[] = (data ?? []).map((t) => ({
           slug: t.slug as string,
           brandName: (t.brand_name as string) ?? (t.slug as string),
@@ -57,8 +58,10 @@ async function loadSites(): Promise<TenantSite[]> {
         }));
         cachedSites = sites;
         return sites;
-      })
-      .catch(() => [] as TenantSite[]);
+      } catch {
+        return [] as TenantSite[];
+      }
+    })();
   }
   return inflight;
 }
