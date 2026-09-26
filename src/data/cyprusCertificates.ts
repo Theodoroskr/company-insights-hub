@@ -94,7 +94,7 @@ const companyCertificates: CertificateGroup[] = [
         slug: 'certificate_memorandum',
         name: 'Memorandum & Articles of Association',
         description: 'Certified copy of the company\'s constitutional documents governing its operations.',
-        price: PRICE, delivery: DELIVERY, source: SOURCE, apostilleAvailable: true,
+        price: 70, delivery: DELIVERY, source: SOURCE, apostilleAvailable: true,
       },
       {
         slug: 'certificate_reduction_capital',
@@ -334,7 +334,8 @@ export function getAllCertificatesForEntity(entityType: EntityType): Certificate
   return certificatesByEntity[entityType].flatMap((g) => g.certificates);
 }
 
-export const APOSTILLE_PRICE = 150;
+export const APOSTILLE_PRICE = 100;
+export const CERTIFIED_TRANSLATION_PRICE = 90;
 export const URGENT_DELIVERY_PRICE = 20;
 export const COURIER_DELIVERY_PRICE = 25;
 export const CERT_PRICE = 40;
