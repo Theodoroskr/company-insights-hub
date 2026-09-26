@@ -7,6 +7,7 @@ import UKComplianceScreeningPanel from '../../components/company/UKComplianceScr
 import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../lib/tenant';
 import { ReportDisclaimerFooter } from '../../lib/reportDisclaimer';
+import UKReportView from '../../components/report/UKReportView';
 
 /** Reports that are delivered only as analyst documents, never shown online. */
 export const OFFLINE_ONLY_SLUGS = ['edd-report'];
@@ -140,8 +141,14 @@ export default function AccountReportViewPage() {
             <h1 className="text-2xl font-semibold" style={{ color: 'var(--text-heading)' }}>{state.company}</h1>
             <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{state.title}{state.generated ? ` · generated ${new Date(state.generated).toLocaleDateString('en-GB')}` : ''}</p>
           </div>
-          {Object.keys(topFields).length > 0 && <Section title="Summary" value={topFields} />}
-          {sections.map(([k, v]) => <Section key={k} title={label(k)} value={v} />)}
+          {data.source === 'companies-house-uk' && isPlain(data.company) ? (
+            <UKReportView data={data} />
+          ) : (
+            <>
+              {Object.keys(topFields).length > 0 && <Section title="Summary" value={topFields} />}
+              {sections.map(([k, v]) => <Section key={k} title={label(k)} value={v} />)}
+            </>
+          )}
           {state.screening && itemId && (
             <div className="mb-4 break-inside-avoid">
               <UKComplianceScreeningPanel orderItemId={itemId} isEnhanced />
