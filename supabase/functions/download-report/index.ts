@@ -78,9 +78,6 @@ async function appendDisclaimerPage(pdfBytes: Uint8Array, disclaimer: string): P
     y -= 14;
   }
 
-  const merged = await doc.copyPages(existing, existing.getPageIndices());
-  merged.forEach((p) => doc.addPage(p));
-
   return doc.save();
 }
 
