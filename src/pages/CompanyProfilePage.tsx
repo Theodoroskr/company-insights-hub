@@ -930,15 +930,15 @@ export default function CompanyProfilePage() {
                 </div>
                 <div className="flex-1 sm:border-l sm:pl-4 mt-3 sm:mt-0" style={{ borderColor: 'var(--bg-border)' }}>
                   <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-                    Full risk analysis including sanctions screening, PEP checks and adverse media is
-                    included in the KYB Report
+                    Full compliance analysis — sanctions screening, PEP checks and adverse media — is
+                    included in the Compliance &amp; AML Report
                   </p>
                   <button
                     className="text-sm mt-2 hover:underline font-semibold"
                     style={{ color: 'var(--brand-accent)' }}
                     onClick={() => kybProduct ? setKybModalOpen(true) : document.getElementById('sidebar-products')?.scrollIntoView({ behavior: 'smooth' })}
                   >
-                    Order KYB Report →
+                    Order Compliance &amp; AML Report →
                   </button>
                 </div>
               </div>
