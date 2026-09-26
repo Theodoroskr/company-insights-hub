@@ -231,21 +231,30 @@ export default function UKComplianceScreeningPanel({ orderItemId, isEnhanced, on
     );
   }
 
-  const meta = STATUS_META[result.overall_status];
+  // Adverse media is intentionally excluded — high-noise, low-signal for compliance files.
+  const sanctionHits = hits.filter((h) => h.hit_type === 'sanction');
+  const pepHits = hits.filter((h) => h.hit_type === 'pep');
+  const enforcementHits = hits.filter((h) => h.hit_type === 'warning' || h.hit_type === 'fitness-probity');
+
+  const verdict: Status =
+    sanctionHits.length > 0 ? 'hit' : pepHits.length + enforcementHits.length > 0 ? 'review' : 'clear';
+  const meta = STATUS_META[verdict];
   const Icon = meta.Icon;
 
-  const tiles: Array<{ label: string; count: number; tone: Status }> = [
-    { label: 'Sanctions', count: result.sanctions_hits, tone: result.sanctions_hits > 0 ? 'hit' : 'clear' },
-    { label: 'PEP', count: result.pep_hits, tone: result.pep_hits > 0 ? 'review' : 'clear' },
-    { label: 'Adverse Media', count: result.adverse_media_hits, tone: result.adverse_media_hits > 0 ? 'review' : 'clear' },
-  ];
+  const entities = result.raw_response?.entities ?? [];
+  const people = entities.filter((e) => e.role !== 'company');
+  const pepByName = new Map<string, Hit[]>();
+  for (const h of pepHits) {
+    const k = h.entity_name.toLowerCase();
+    pepByName.set(k, [...(pepByName.get(k) ?? []), h]);
+  }
 
   return (
     <div
       className="rounded-lg border p-5"
       style={{ borderColor: 'var(--bg-border)', backgroundColor: '#fff' }}
     >
-      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+      <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
         <div className="flex items-start gap-3">
           <div
             className="w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0"
@@ -255,10 +264,10 @@ export default function UKComplianceScreeningPanel({ orderItemId, isEnhanced, on
           </div>
           <div>
             <h2 className="font-semibold text-base" style={{ color: 'var(--text-subheading)' }}>
-              Compliance Screening
+              Compliance &amp; AML Screening
             </h2>
             <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
-              Sanctions · PEP · Adverse Media · Powered by WorldAML
+              Sanctions · Politically Exposed Persons · Regulatory Enforcements
             </p>
           </div>
         </div>
@@ -267,114 +276,176 @@ export default function UKComplianceScreeningPanel({ orderItemId, isEnhanced, on
           style={{ backgroundColor: meta.bg, color: meta.color }}
         >
           <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: meta.color }} />
-          {meta.label}
+          {verdict === 'clear' ? 'Verified Clear' : meta.label}
         </span>
       </div>
 
-      {/* Screened entities summary */}
+      <p className="text-[11px] mb-4" style={{ color: 'var(--text-muted)' }}>
+        Screened on {formatStamp(result.screened_at)}
+      </p>
+
       <ScreenedEntities
-        entities={result.raw_response?.entities ?? []}
+        entities={entities}
         fallbackCount={result.entities_screened}
-        hits={hits}
+        hits={[...sanctionHits, ...pepHits, ...enforcementHits]}
       />
 
-      <div className="grid grid-cols-3 gap-3 mb-3">
+      {/* 1. Sanctions */}
+      <Section title="Sanctions Screening" subtitle="OFAC · UK OFSI · EU Consolidated · UN · SECO">
+        {sanctionHits.length === 0 ? (
+          <ClearSeal text="No sanctions matches found on any screened entity." />
+        ) : (
+          <div className="space-y-2">
+            {sanctionHits.map((h) => (
+              <HitRow key={h.id} hit={h} tone="hit" />
+            ))}
+          </div>
+        )}
+      </Section>
 
-        {tiles.map((t) => {
-          const tm = STATUS_META[t.tone];
-          return (
-            <div
-              key={t.label}
-              className="rounded-md border p-3"
-              style={{ borderColor: 'var(--bg-border)', backgroundColor: tm.bg }}
-            >
-              <div className="text-[11px] font-medium uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>
-                {t.label}
-              </div>
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-xl font-semibold" style={{ color: tm.color }}>{t.count}</span>
-                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                  {t.count === 0 ? 'no matches' : t.count === 1 ? 'match' : 'matches'}
-                </span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {hits.length > 0 && (
-        <>
-          <button
-            onClick={() => setExpanded((v) => !v)}
-            className="w-full flex items-center justify-between py-2 px-3 rounded-md text-sm transition-colors hover:bg-[var(--bg-subtle)]"
-            style={{ color: 'var(--text-body)' }}
-          >
-            <span>{expanded ? 'Hide' : 'Show'} {hits.length} match{hits.length === 1 ? '' : 'es'}</span>
-            {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </button>
-          {expanded && (
-            <div className="mt-2 border-t pt-3" style={{ borderColor: 'var(--bg-border)' }}>
-              <div className="space-y-2">
-                {hits.map((h) => {
-                  const tone: Status = h.hit_type === 'sanction' ? 'hit' : 'review';
-                  const tm = STATUS_META[tone];
-                  return (
-                    <div
-                      key={h.id}
-                      className="rounded-md border p-3 flex items-start justify-between gap-3"
-                      style={{ borderColor: 'var(--bg-border)' }}
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-medium text-sm" style={{ color: 'var(--text-heading)' }}>
-                            {h.entity_name}
-                          </span>
-                          {h.entity_role && (
-                            <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ backgroundColor: 'var(--bg-subtle)', color: 'var(--text-muted)' }}>
-                              {h.entity_role}
-                            </span>
-                          )}
-                          <span
-                            className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded font-semibold"
-                            style={{ backgroundColor: tm.bg, color: tm.color }}
-                          >
-                            {HIT_TYPE_LABEL[h.hit_type] ?? h.hit_type}
-                          </span>
-                          {h.match_strength && (
-                            <span className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
-                              {h.match_strength} match
-                            </span>
-                          )}
-                        </div>
-                        {h.source_lists && h.source_lists.length > 0 && (
-                          <p className="text-xs mt-1 truncate" style={{ color: 'var(--text-muted)' }}>
-                            Sources: {h.source_lists.slice(0, 4).join(', ')}{h.source_lists.length > 4 ? '…' : ''}
-                          </p>
-                        )}
-                      </div>
-                      {h.share_url && (
-                        <a
-                          href={h.share_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs inline-flex items-center gap-1 hover:underline flex-shrink-0"
-                          style={{ color: 'var(--brand-primary)' }}
-                        >
-                          View <ExternalLink className="w-3 h-3" />
-                        </a>
-                      )}
+      {/* 2. PEP */}
+      <Section title="Politically Exposed Persons (PEP)" subtitle="Directors, officers and persons with significant control">
+        {people.length === 0 ? (
+          <ClearSeal text="No individuals were available to screen." />
+        ) : (
+          <div className="space-y-1.5">
+            {people.map((p, idx) => {
+              const matches = pepByName.get(p.name.toLowerCase()) ?? [];
+              const isPep = matches.length > 0;
+              return (
+                <div
+                  key={`${p.name}-${idx}`}
+                  className="flex items-start justify-between gap-3 rounded-md border px-3 py-2"
+                  style={{
+                    borderColor: isPep ? 'var(--risk-medium)' : 'var(--bg-border)',
+                    backgroundColor: isPep ? 'var(--risk-medium-bg)' : '#fff',
+                  }}
+                >
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium" style={{ color: 'var(--text-heading)' }}>
+                      {p.name}
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </>
-      )}
+                    <div className="text-[11px] uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
+                      {ROLE_META[p.role]?.label ?? p.role}
+                    </div>
+                    {isPep && matches[0].source_lists?.length ? (
+                      <p className="text-xs mt-1" style={{ color: 'var(--text-body)' }}>
+                        {formatSources(matches[0].source_lists)}
+                      </p>
+                    ) : null}
+                  </div>
+                  <span
+                    className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded font-semibold flex-shrink-0"
+                    style={{
+                      backgroundColor: isPep ? 'var(--risk-medium)' : 'var(--risk-low-bg)',
+                      color: isPep ? '#fff' : 'var(--risk-low)',
+                    }}
+                  >
+                    {isPep ? 'PEP identified' : 'No PEP records'}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Section>
 
-      <p className="text-[11px] mt-3" style={{ color: 'var(--text-muted)' }}>
-        Screened {new Date(result.screened_at).toLocaleString('en-GB')} · WorldAML
+      {/* 3. Regulatory enforcements */}
+      <Section
+        title="Regulatory Enforcements &amp; Warnings"
+        subtitle="Regulator fines, disciplinary actions and disqualifications"
+      >
+        {enforcementHits.length === 0 ? (
+          <ClearSeal text="No regulatory enforcement actions or official warnings found." />
+        ) : (
+          <div className="space-y-2">
+            {enforcementHits.map((h) => (
+              <HitRow key={h.id} hit={h} tone="review" />
+            ))}
+          </div>
+        )}
+      </Section>
+
+      <p className="text-[11px] mt-4 pt-3 border-t" style={{ color: 'var(--text-muted)', borderColor: 'var(--bg-border)' }}>
+        Results are stored with your order. Screening is charged once — revisiting this tab does not re-run or re-charge it.
       </p>
+    </div>
+  );
+}
+
+function formatStamp(iso: string) {
+  const d = new Date(iso);
+  return `${d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' })} at ${d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })} UTC`;
+}
+
+const SOURCE_LABELS: Record<string, string> = {
+  'company-am': 'Corporate media monitoring',
+  'fca-final-notices': 'UK FCA Final Notices',
+  'ofac-civil-penalties': 'US OFAC Civil Penalties',
+  'sec-litigation-releases': 'US SEC Litigation Releases',
+  'uk-hmt-sanctions': 'UK HM Treasury Sanctions',
+  'eu-consolidated': 'EU Consolidated Sanctions',
+  'un-consolidated': 'UN Security Council Sanctions',
+};
+
+function prettySource(s: string) {
+  return SOURCE_LABELS[s] ?? s.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function formatSources(list: string[]) {
+  const named = list.slice(0, 3).map(prettySource);
+  return `Sources: ${named.join(', ')}${list.length > 3 ? ` +${list.length - 3} more` : ''}`;
+}
+
+function Section({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
+  return (
+    <div className="mb-4">
+      <div className="mb-2">
+        <h3 className="text-sm font-semibold" style={{ color: 'var(--text-heading)' }}>
+          {title.replace('&amp;', '&')}
+        </h3>
+        <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{subtitle}</p>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function ClearSeal({ text }: { text: string }) {
+  return (
+    <div
+      className="flex items-center gap-2 rounded-md border px-3 py-2.5"
+      style={{ borderColor: 'var(--risk-low)', backgroundColor: 'var(--risk-low-bg)' }}
+    >
+      <ShieldCheck className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--risk-low)' }} />
+      <span className="text-sm" style={{ color: 'var(--text-body)' }}>{text}</span>
+    </div>
+  );
+}
+
+function HitRow({ hit, tone }: { hit: Hit; tone: Status }) {
+  const tm = STATUS_META[tone];
+  return (
+    <div className="rounded-md border p-3" style={{ borderColor: tm.color, backgroundColor: tm.bg }}>
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="font-medium text-sm" style={{ color: 'var(--text-heading)' }}>{hit.entity_name}</span>
+        {hit.entity_role && (
+          <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ backgroundColor: '#fff', color: 'var(--text-muted)' }}>
+            {ROLE_META[hit.entity_role]?.label ?? hit.entity_role}
+          </span>
+        )}
+        <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded font-semibold" style={{ backgroundColor: tm.color, color: '#fff' }}>
+          {HIT_TYPE_LABEL[hit.hit_type] ?? hit.hit_type}
+        </span>
+        {hit.match_strength && (
+          <span className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
+            {hit.match_strength} match
+          </span>
+        )}
+      </div>
+      {hit.source_lists && hit.source_lists.length > 0 && (
+        <p className="text-xs mt-1" style={{ color: 'var(--text-body)' }}>{formatSources(hit.source_lists)}</p>
+      )}
     </div>
   );
 }
