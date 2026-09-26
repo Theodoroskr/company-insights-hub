@@ -7,6 +7,7 @@ import { useTenant } from '../../lib/tenant';
 import { supabase } from '../../lib/supabase';
 import { useCart } from '../../contexts/CartContext';
 import CurrencySwitcher from './CurrencySwitcher';
+import CountrySwitcher, { CountrySwitcherList } from './CountrySwitcher';
 import BrandMark from './BrandMark';
 import type { Product, Company } from '../../types/database';
 
@@ -469,6 +470,9 @@ export default function Navbar() {
 
             {/* ── Auth / User ── */}
             <div className="hidden md:flex items-center gap-2">
+              {/* Country site switcher */}
+              <CountrySwitcher />
+
               {/* Currency switcher */}
               <CurrencySwitcher />
 
@@ -763,6 +767,11 @@ function MobileMenu({
           <Link to="/uk" onClick={onClose} className={mobileLinkClass} style={{ color: 'var(--text-body)' }}>
             <span className="text-sm">🇬🇧</span> UK Companies
           </Link>
+
+          {/* Country sites */}
+          <MobileAccordion title="Our countries">
+            <CountrySwitcherList onNavigate={onClose} />
+          </MobileAccordion>
 
           {/* Certificates accordion */}
           <MobileAccordion title="Cyprus Certificates">
