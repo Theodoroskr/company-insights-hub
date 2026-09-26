@@ -62,9 +62,6 @@ export default function AboutPage() {
               <strong style={{ color: 'var(--text-heading)' }}>Infocredit Group Ltd</strong>, a company registered
               in the Republic of Cyprus under registration number <strong style={{ color: 'var(--text-heading)' }}>HE4404</strong>.
             </p>
-            <p className="mt-2 text-sm" style={{ color: 'var(--text-muted, var(--text-body))' }}>
-              Nicosia, Cyprus
-            </p>
           </div>
         </div>
       </section>
