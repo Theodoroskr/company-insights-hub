@@ -298,6 +298,8 @@ export default function Navbar() {
                 brandName={tenant?.brand_name ?? 'Companies House'}
                 variant="light"
                 size="md"
+                showEndorsement={false}
+                tagline="Company intelligence, worldwide."
               />
               <span className="text-xl leading-none" aria-hidden="true">
                 {getTenantLocale(tenant?.slug).flag}
@@ -721,6 +723,8 @@ function MobileMenu({
             brandName={tenant?.brand_name ?? 'Companies House'}
             variant="light"
             size="sm"
+            showEndorsement={false}
+            tagline="Company intelligence, worldwide."
           />
           <button type="button" onClick={onClose} style={{ color: 'var(--text-muted)' }}>
             <X className="w-5 h-5" />

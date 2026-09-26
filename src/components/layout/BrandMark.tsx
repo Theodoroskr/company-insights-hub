@@ -56,12 +56,35 @@ export default function BrandMark({
   size = 'md',
   className = '',
   showEndorsement = true,
+  tagline,
 }: BrandMarkProps) {
   const s = SIZE[size];
   const isDark = variant === 'dark';
 
   const endorsementColor = isDark ? 'rgba(255,255,255,0.6)' : 'rgba(15,36,68,0.55)';
   const dividerColor     = isDark ? 'rgba(255,255,255,0.25)' : 'rgba(15,36,68,0.18)';
+  const taglineColor     = isDark ? 'rgba(255,255,255,0.7)'  : 'rgba(15,36,68,0.65)';
+
+  // Tagline mode: wordmark with a small line beneath it (no endorsement).
+  if (tagline) {
+    return (
+      <span className={`inline-flex flex-col items-start gap-1 select-none ${className}`}>
+        <Wordmark height={s.logoH} isDark={isDark} />
+        <span
+          style={{
+            fontFamily: 'Inter, system-ui, sans-serif',
+            fontWeight: 500,
+            fontSize: s.tagline,
+            color: taglineColor,
+            whiteSpace: 'nowrap',
+            lineHeight: 1.1,
+          }}
+        >
+          {tagline}
+        </span>
+      </span>
+    );
+  }
 
   return (
     <span className={`inline-flex items-center gap-3 select-none ${className}`}>
