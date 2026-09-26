@@ -23,7 +23,7 @@ export default function PricingPage() {
     supabase
       .from('products')
       .select('*')
-      .eq('tenant_id', tenant.id)
+      .or(`tenant_id.eq.${tenant.id},country_scope.eq.global`)
       .eq('is_active', true)
       .order('display_order', { ascending: true })
       .then(({ data }) => {
