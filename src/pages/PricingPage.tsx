@@ -173,6 +173,27 @@ export default function PricingPage() {
           <p className="mt-4 text-lg" style={{ color: 'rgba(255,255,255,0.8)' }}>
             All prices exclude VAT. No hidden fees, no subscriptions required.
           </p>
+
+          {/* Pay-as-you-go / Prepaid bundles toggle */}
+          <div className="mt-8 inline-flex rounded-full p-1" style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}>
+            {([
+              { key: 'payg' as const, label: 'Pay as you go' },
+              { key: 'bundles' as const, label: 'Prepaid bundles' },
+            ]).map((t) => (
+              <button
+                key={t.key}
+                onClick={() => setView(t.key)}
+                className="px-5 py-2 rounded-full text-sm font-semibold transition-all"
+                style={
+                  view === t.key
+                    ? { backgroundColor: '#fff', color: 'var(--brand-primary)' }
+                    : { color: 'rgba(255,255,255,0.85)' }
+                }
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
         </div>
       </section>
 
