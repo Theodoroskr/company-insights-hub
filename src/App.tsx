@@ -56,6 +56,7 @@ import AdminProductsPage from "./pages/admin/AdminProductsPage";
 import AdminCustomersPage from "./pages/admin/AdminCustomersPage";
 import AdminPromoCodesPage from "./pages/admin/AdminPromoCodesPage";
 import AdminSourceHealthPage from "./pages/admin/AdminSourceHealthPage";
+import AdminPricingHealthPage from "./pages/admin/AdminPricingHealthPage";
 import AdminAuditLogsPage from "./pages/admin/AdminAuditLogsPage";
 import AdminSettingsPage from "./pages/admin/AdminSettingsPage";
 import AdminTenantsPage from "./pages/admin/AdminTenantsPage";
@@ -131,6 +132,7 @@ const App = () => (
               <Route path="/admin/customers" element={<AdminRoute><AdminCustomersPage /></AdminRoute>} />
               <Route path="/admin/promo-codes" element={<AdminRoute><AdminPromoCodesPage /></AdminRoute>} />
               <Route path="/admin/source-health" element={<AdminRoute><AdminSourceHealthPage /></AdminRoute>} />
+              <Route path="/admin/pricing-health" element={<AdminRoute><AdminPricingHealthPage /></AdminRoute>} />
               <Route path="/admin/audit-logs" element={<AdminRoute><AdminAuditLogsPage /></AdminRoute>} />
               <Route path="/admin/settings" element={<AdminRoute><AdminSettingsPage /></AdminRoute>} />
               <Route path="/admin/tenants" element={<AdminRoute><AdminTenantsPage /></AdminRoute>} />
