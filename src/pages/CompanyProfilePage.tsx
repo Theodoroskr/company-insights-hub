@@ -1,7 +1,7 @@
 import { formatDelivery } from '@/lib/delivery';
 import { useReportDates, getAvailability, formatArchiveDate, URGENT_LABEL } from '@/hooks/useReportAvailability';
 import React, { useEffect, useState, useCallback } from 'react';
-import { priceProduct } from '../lib/pricing';
+import { priceProduct, formatEur } from '../lib/pricing';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { Check, ShoppingCart, Lock, ShieldCheck } from 'lucide-react';
