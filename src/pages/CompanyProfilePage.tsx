@@ -1325,7 +1325,9 @@ export default function CompanyProfilePage() {
                               </span>
                             )}
                             <p className="text-xs italic mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                              via {display.length > 0 ? display.join(', ') : 'shared person'}
+                              {aff._relationship
+                                ? aff._relationship
+                                : `via ${display.length > 0 ? display.join(', ') : 'shared person'}`}
                             </p>
                           </div>
                           {aff.status && <StatusBadge status={aff.status} />}
