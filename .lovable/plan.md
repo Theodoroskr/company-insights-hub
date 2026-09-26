@@ -1,24 +1,31 @@
-# Make the Compliance & AML tab stand out
+# Fix company page: compliance tab visibility + relationship graph
 
-## What changes
+## 1. Compliance & AML tab — Premium highlight (direction picked: v2)
 
-The company profile page currently renders the tab strip as plain text: "Overview" (accent underline) and "Compliance & AML 🔒" (muted gray with a lock emoji). The compliance tab blends in, so visitors miss the upsell.
+`src/pages/CompanyProfilePage.tsx`, tab strip (~lines 867–884).
 
-Selected direction: **Premium highlight** (user picked it from prototypes).
+- **Compliance & AML tab (locked):** compact rounded pill with a soft brand-accent tinted background that deepens on hover; replace the lock emoji with a crisp SVG lock icon in the brand accent; label in semibold dark text.
+- **Unlocked (screening purchased):** same pill treatment, shield icon instead of the lock — premium look persists without the paywall cue.
+- **Active state:** pill keeps the accent underline/border the Overview tab uses.
+- **Overview tab:** unchanged.
+- All colors from CSS variables (`var(--brand-accent)`, `var(--text-main)`, `var(--text-muted)`, `var(--bg-border)`) so every tenant's branding applies.
 
-### Tab strip treatment (src/pages/CompanyProfilePage.tsx, tab strip at ~lines 867–884)
+## 2. Director Relationship Graph — Radial spoke diagram (direction picked: v1)
 
-- **Compliance & AML tab (locked):** render as a compact rounded pill with a soft brand-accent tinted background (`brand-accent` at low opacity), hover deepens the tint; replace the lock emoji with a crisp SVG lock icon in the brand accent; label in semibold dark text.
-- **Compliance & AML tab (unlocked / when screening is purchased):** same pill treatment but with a shield icon instead of the lock, so the premium look persists without the paywall cue.
-- **Active state:** when the compliance tab is selected, it keeps the pill plus the accent underline/border the Overview tab uses, so the active state stays obvious.
-- **Overview tab:** unchanged (accent underline, standard treatment).
+`src/components/company/DirectorRelationshipGraph.tsx` (212 lines, currently uses `react-force-graph-2d` physics, which overlaps all labels).
 
-### Guardrails
+Replace the physics simulation with a **deterministic static radial layout** rendered with SVG lines + positioned elements:
 
-- All colors from CSS variables (`var(--brand-accent)`, `var(--text-main)`, `var(--text-muted)`, `var(--bg-border)`) — no hardcoded hex, so every tenant's brand colors apply automatically.
-- Scope stays on the tab strip only; the tab panel contents are untouched.
+- Company node at the center (accent-filled circle with the company name).
+- Officers/directors/secretaries/PSCs evenly spaced on a circle around it, straight connecting lines, each node with a role-colored dot and its name below it (truncated, no collisions — labels anchored outside the ring).
+- Node colors keep the existing type legend (Company / Director / Secretary / PSC) using tenant CSS variables instead of hardcoded hex where possible.
+- **Locked state:** masked names (`maskLabel` logic stays) + the existing dark "Unlock full names & relationships" pill on hover position at the bottom.
+- **Unlocked:** full names.
+- **Scales with data:** 0 officers → existing empty message; few → single ring; many (30+) → two concentric rings with smaller nodes so nothing overlaps.
+- Header/footer updated: remove "Drag any node · scroll to zoom" (no interaction anymore) and show the count badge; keep the card title and legend.
+- Remove the `react-force-graph-2d` usage from this component (package stays installed; other usages are none — confirm before removing import only).
 
 ## Verification
 
-- Type-check with `npx tsgo --noEmit -p tsconfig.app.json`.
-- Playwright check on the Barclays page (`/company/barclays-bank-plc-01026167`): element screenshot of the tab strip, confirm the pill treatment renders with the tenant accent, the lock icon shows while locked, and both tabs still switch panels correctly.
+- `npx tsgo --noEmit -p tsconfig.app.json`.
+- Playwright on `/company/barclays-bank-plc-01026167`: element screenshots of the tab strip (pill treatment, lock icon while locked) and the new radial graph (labels readable, no overlap, masked names while locked), and click the compliance tab to confirm the panel still opens.
