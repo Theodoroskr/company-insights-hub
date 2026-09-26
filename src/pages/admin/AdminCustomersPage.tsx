@@ -4,6 +4,7 @@ import AdminLayout from '../../components/layout/AdminLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { toast } from '@/hooks/use-toast';
+import CustomerWalletPanel from '@/components/admin/CustomerWalletPanel';
 
 interface Customer {
   id: string;
@@ -207,6 +208,12 @@ export default function AdminCustomersPage() {
                     </dd>
                   </div>
                 </dl>
+              </div>
+
+              {/* Credit */}
+              <div>
+                <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">Prepaid credit</h3>
+                <CustomerWalletPanel key={selected.id} userId={selected.id} />
               </div>
 
               {/* Order history */}
