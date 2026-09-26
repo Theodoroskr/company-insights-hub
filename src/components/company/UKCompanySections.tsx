@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUpRight, ChevronDown, FileText, Shield, Users } from 'lucide-react';
+import { ArrowUpRight, ChevronDown, FileText, Landmark, Shield, Users } from 'lucide-react';
 import GatedContent from '@/components/ui/GatedContent';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { companiesHouseUK } from '@/lib/companiesHouseUK/client';
@@ -128,6 +128,8 @@ export default function UKCompanySections({
   const [filingsLoaded, setFilingsLoaded] = useState(false);
   const [charges, setCharges] = useState<ChargeItem[]>([]);
   const [chargesTotal, setChargesTotal] = useState(0);
+  const [accounts, setAccounts] = useState<FilingItem[]>([]);
+  const [accountsTotal, setAccountsTotal] = useState(0);
   const [psc, setPsc] = useState<PscItem[]>([]);
   const [pscTotal, setPscTotal] = useState(0);
   const [pscHrefs, setPscHrefs] = useState<Record<string, string>>({});
@@ -169,14 +171,19 @@ export default function UKCompanySections({
 
     (async () => {
       setLoading(true);
-      const [f, c, p] = await Promise.allSettled([
+      const [f, c, p, a] = await Promise.allSettled([
         companiesHouseUK.filingHistory(companyNumber, { itemsPerPage: 1, startIndex: 0 }),
         companiesHouseUK.charges(companyNumber),
         companiesHouseUK.psc(companyNumber),
+        companiesHouseUK.filingHistory(companyNumber, { itemsPerPage: 5, startIndex: 0, category: 'accounts' }),
       ]);
       if (cancelled) return;
 
       if (f.status === 'fulfilled') setFilingsTotal(f.value.total_count ?? 0);
+      if (a.status === 'fulfilled') {
+        setAccounts((a.value.items ?? []) as FilingItem[]);
+        setAccountsTotal(a.value.total_count ?? 0);
+      }
       if (c.status === 'fulfilled') {
         setCharges((c.value.items ?? []) as ChargeItem[]);
         setChargesTotal(c.value.total_count ?? 0);
@@ -246,7 +253,7 @@ export default function UKCompanySections({
     <>
       <div className="flex flex-col gap-4">
       {/* Filings & Documents (UK) */}
-      <div className="order-3">
+      <div className="order-4">
       <SectionCard>
         <Collapsible open={filingsOpen} onOpenChange={onFilingsOpenChange}>
         <CollapsibleTrigger className="group flex w-full items-center justify-between gap-3 text-left">
@@ -369,8 +376,68 @@ export default function UKCompanySections({
       </SectionCard>
       </div>
 
-      {/* Charges & Mortgages */}
+      {/* Latest Financial Statements */}
       <div className="order-2">
+      <SectionCard>
+        <SectionTitle icon={<Landmark className="w-4 h-4" />} count={accountsTotal}>
+          Latest Financial Statements
+        </SectionTitle>
+
+        {loading ? (
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Loading accounts…</p>
+        ) : accounts.length === 0 ? (
+          <p className="text-sm italic" style={{ color: 'var(--text-muted)' }}>
+            No financial statements filed for this company.
+          </p>
+        ) : (
+          <GatedContent
+            isUnlocked={isUnlocked}
+            message="Order the UK Company Report to view the latest financial statements"
+            ctaLabel="Order Report"
+            onCta={onOrderReport}
+          >
+            <div>
+              {accounts.map((filing, i) => {
+                const values = filing.description_values ?? {};
+                const periodEnd = values.made_up_date ?? values.period_end_date ?? values.to_date;
+                const periodStart = values.period_start_date ?? values.from_date;
+                return (
+                  <div
+                    key={i}
+                    className="text-sm py-2 border-b last:border-0 flex items-center justify-between gap-3"
+                    style={{ borderColor: 'var(--bg-border)' }}
+                  >
+                    <div className="min-w-0">
+                      <p style={{ color: 'var(--text-body)' }}>
+                        {periodStart && periodEnd
+                          ? `Accounts ${formatDate(periodStart)} – ${formatDate(periodEnd)}`
+                          : periodEnd
+                            ? `Accounts made up to ${formatDate(periodEnd)}`
+                            : 'Company accounts'}
+                      </p>
+                      <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                        Filed {formatDate(filing.date)}
+                        {filing.type && ` · Form ${filing.type}`}
+                        {filing.pages ? ` · ${filing.pages} page${filing.pages === 1 ? '' : 's'}` : ''}
+                      </p>
+                    </div>
+                    <span
+                      className="text-xs px-2 py-0.5 rounded-full shrink-0"
+                      style={{ backgroundColor: 'var(--bg-subtle)', color: 'var(--text-muted)' }}
+                    >
+                      {i === 0 ? 'Latest' : formatDate(filing.date).slice(-4)}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </GatedContent>
+        )}
+      </SectionCard>
+      </div>
+
+      {/* Charges & Mortgages */}
+      <div className="order-3">
       <SectionCard>
         <SectionTitle icon={<Shield className="w-4 h-4" />} count={chargesTotal}>
           Charges &amp; Mortgages
