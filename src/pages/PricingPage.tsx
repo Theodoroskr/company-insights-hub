@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { priceProduct, formatEur } from '../lib/pricing';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { Check, Clock, Zap, Star, ArrowRight, Award } from 'lucide-react';
+import { Check, Clock, Zap, Star, ArrowRight, Award, Wallet, Building2 } from 'lucide-react';
+import { CREDIT_BUNDLES } from '../lib/billing';
 import PageLayout from '../components/layout/PageLayout';
 import OrderReportModal from '../components/orders/OrderReportModal';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,6 +18,7 @@ export default function PricingPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalProduct, setModalProduct] = useState<Product | null>(null);
+  const [view, setView] = useState<'payg' | 'bundles'>('payg');
 
   useEffect(() => {
     if (!tenant?.id) return;
