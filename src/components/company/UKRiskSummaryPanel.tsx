@@ -63,13 +63,6 @@ function computeMetrics(bundle: Record<string, unknown> | null): { metrics: Metr
   const pscItems = asArray(bundle?.psc);
   const activePsc = pscItems.filter((p) => !((p as Record<string, unknown>).ceased_on) && !((p as Record<string, unknown>).ceased)).length;
 
-  // Charges — top-level array
-  const chargeItems = asArray(bundle?.charges);
-  const activeCharges = chargeItems.filter((c) => {
-    const s = (c as Record<string, unknown>).status as string | undefined;
-    return s === 'outstanding' || s === 'part-satisfied' || (!s && !(c as Record<string, unknown>).satisfied_on);
-  }).length;
-
   // Overdue filings (accounts or confirmation)
   const accountsOverdue = !!accounts.overdue;
   const csOverdue = !!confirmation.overdue;
@@ -99,13 +92,6 @@ function computeMetrics(bundle: Record<string, unknown> | null): { metrics: Metr
     value: String(overdueCount),
     hint: overdueCount === 0 ? 'Up to date' : [accountsOverdue ? 'Accounts' : null, csOverdue ? 'Confirmation' : null].filter(Boolean).join(' · '),
     tone: overdueCount === 0 ? 'good' : overdueCount === 1 ? 'warn' : 'bad',
-  });
-
-  metrics.push({
-    label: 'Active Charges',
-    value: String(activeCharges),
-    hint: chargeItems.length > 0 ? `${chargeItems.length} total` : undefined,
-    tone: activeCharges === 0 ? 'good' : activeCharges <= 2 ? 'warn' : 'bad',
   });
 
   metrics.push({
