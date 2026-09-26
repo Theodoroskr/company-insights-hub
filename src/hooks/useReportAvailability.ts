@@ -54,9 +54,11 @@ interface ProductLike { is_instant?: boolean | null; api4all_product_code?: stri
  * archived copy exists for this company; anything else keeps its catalogue SLA (null).
  */
 export function getAvailability(product: ProductLike, dates: DatesMap | null): Availability {
-  if (product.is_instant) return { kind: 'instant' };
   const code = product.api4all_product_code;
-  if (!code || !dates) return null;
+  // API4ALL products are only instant when an archived copy exists — the catalogue
+  // is_instant flag applies to live feeds (e.g. Companies House UK) only.
+  if (!code) return product.is_instant ? { kind: 'instant' } : null;
+  if (!dates) return null;
   const date = dates[String(code)];
   return date ? { kind: 'archive', date } : { kind: 'on_update' };
 }
