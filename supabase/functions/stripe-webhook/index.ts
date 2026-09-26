@@ -136,6 +136,24 @@ Deno.serve(async (req) => {
         );
       }
 
+      // ── Standalone AML screening (company / company + directors) ──
+      const screeningIds = (ukItems ?? [])
+        .filter((it) => ['company-aml-screening', 'aml-screening-with-directors'].includes((it.products as unknown as { slug?: string } | null)?.slug ?? ''))
+        .map((it) => it.id);
+      if (screeningIds.length > 0) {
+        const screenUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/complyadvantage-screen`;
+        await Promise.all(screeningIds.map(async (id) => {
+          try {
+            const r = await fetch(screenUrl, {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ order_item_id: id }),
+            });
+            if (!r.ok) console.error(`screening failed for ${id}:`, await r.text());
+          } catch (e) { console.error(`screening exception for ${id}:`, e); }
+        }));
+      }
+
       // Trigger API4All order creation (skips items without api4all_product_code)
       const createOrderUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/create-api4all-order`;
       const createRes = await fetch(createOrderUrl, {
