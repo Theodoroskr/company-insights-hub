@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { ArrowLeft, Printer } from 'lucide-react';
 import AccountLayout from '../../components/layout/AccountLayout';
+import UKComplianceScreeningPanel from '../../components/company/UKComplianceScreeningPanel';
 import { supabase } from '../../lib/supabase';
 
 /** Reports that are delivered only as analyst documents, never shown online. */
