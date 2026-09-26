@@ -777,28 +777,37 @@ export type Database = {
       }
       profiles: {
         Row: {
+          company_details: Json | null
+          country: string | null
           created_at: string | null
           email: string | null
           full_name: string | null
           id: string
           phone: string | null
           role: string | null
+          vat_no: string | null
         }
         Insert: {
+          company_details?: Json | null
+          country?: string | null
           created_at?: string | null
           email?: string | null
           full_name?: string | null
           id: string
           phone?: string | null
           role?: string | null
+          vat_no?: string | null
         }
         Update: {
+          company_details?: Json | null
+          country?: string | null
           created_at?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
           phone?: string | null
           role?: string | null
+          vat_no?: string | null
         }
         Relationships: []
       }
