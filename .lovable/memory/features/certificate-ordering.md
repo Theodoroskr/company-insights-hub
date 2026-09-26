@@ -3,7 +3,7 @@ name: Certificate ordering
 description: Structured certificate ordering page at /certificates with entity type tabs, bundles, apostille/urgent/courier add-ons
 type: feature
 ---
-- Certificate price: €40 each, Service & Delivery: €40 each
+- Certificate price: €40 each, Service & Delivery: €40 each (confirmed by user; DB service_fee=40 on all cy-only certificates)
 - Apostille: €100 per certificate — toggled in sidebar add-ons (not on individual cert cards)
 - Urgent Delivery: €20 per certificate (multiplied by cert count)
 - Courier Delivery: €25 flat
