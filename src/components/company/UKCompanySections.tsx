@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
-import { ChevronDown, FileText, Shield, Users } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ArrowUpRight, ChevronDown, FileText, Shield, Users } from 'lucide-react';
 import GatedContent from '@/components/ui/GatedContent';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { companiesHouseUK } from '@/lib/companiesHouseUK/client';
+import { corporatePscHref, isCorporatePsc, resolveCorporatePscs } from '@/lib/companiesHouseUK/corporatePsc';
 
 interface UKCompanySectionsProps {
   companyNumber: string;
