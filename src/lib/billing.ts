@@ -23,7 +23,6 @@ export function useBilling() {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [balance, setBalance] = useState(0);
-  const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [account, setAccount] = useState<BillingAccount | null>(null);
   const [unbilled, setUnbilled] = useState(0);
 
@@ -34,12 +33,11 @@ export function useBilling() {
     if (!uid) { setLoading(false); return; }
     const sb = supabase as any;
     const [w, a, o] = await Promise.all([
-      sb.from('user_wallets').select('balance_eur, expires_at').eq('user_id', uid).maybeSingle(),
+      sb.from('user_wallets').select('balance_eur').eq('user_id', uid).maybeSingle(),
       sb.from('billing_accounts').select('*').eq('user_id', uid).maybeSingle(),
       sb.from('orders').select('total').eq('user_id', uid).eq('payment_method', 'invoice').is('monthly_invoice_id', null).neq('status', 'cancelled'),
     ]);
     setBalance(Number(w.data?.balance_eur ?? 0));
-    setExpiresAt(w.data?.expires_at ?? null);
     setAccount(a.data ?? null);
     setUnbilled((o.data ?? []).reduce((s: number, r: any) => s + Number(r.total), 0));
     setLoading(false);
@@ -49,6 +47,5 @@ export function useBilling() {
 
   const accountApproved = account?.status === 'approved';
   const availableOnAccount = accountApproved ? Math.max(0, Number(account!.monthly_limit_eur) - unbilled) : 0;
-  const creditExpired = !!expiresAt && new Date(expiresAt).getTime() < Date.now();
-  return { loading, userId, balance, expiresAt, creditExpired, account, accountApproved, unbilled, availableOnAccount, refresh };
+  return { loading, userId, balance, account, accountApproved, unbilled, availableOnAccount, refresh };
 }

@@ -70,7 +70,7 @@ export default function AccountBillingPage() {
           <div className="flex items-center gap-3">
             <Wallet className="w-5 h-5" style={{ color: 'var(--brand-accent)' }} />
             <div>
-              <p className="text-xs text-muted-foreground">Prepaid credit balance · valid on every country site · never expires</p>
+              <p className="text-xs text-muted-foreground">Prepaid credit balance · valid on every country site</p>
               <p className="text-3xl font-bold" style={{ color: 'var(--text-heading)' }}>{formatEur(b.balance)}</p>
             </div>
           </div>
@@ -96,7 +96,7 @@ export default function AccountBillingPage() {
                 <p className="text-2xl font-bold mt-1" style={{ color: 'var(--text-heading)' }}>{formatEur(x.pay, 0)}</p>
                 <p className="text-sm text-muted-foreground mt-1">+{x.bonusPct}% bonus · {formatEur(x.bonus)} extra</p>
                 <p className="text-sm mt-2 font-medium">You get {formatEur(x.pay + x.bonus)} credit</p>
-                <p className="text-xs text-muted-foreground mt-1">Valid on every country site · no expiry</p>
+                <p className="text-xs text-muted-foreground mt-1">Valid on every country site</p>
                 <button disabled={!!buying} onClick={() => buy(x.tier, x.pay)}
                   className="mt-4 py-2 rounded text-sm font-semibold text-primary-foreground disabled:opacity-60"
                   style={{ backgroundColor: 'var(--brand-accent)' }}>
