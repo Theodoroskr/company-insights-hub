@@ -182,3 +182,73 @@ export default function AdminSourceHealthPage() {
     </AdminLayout>
   );
 }
+
+type ApiStatus = 'healthy' | 'degraded' | 'down' | 'not_configured';
+interface ApiCheck { id: string; name: string; description: string; status: ApiStatus; responseMs: number | null; details: string }
+
+const apiStatusConfig: Record<ApiStatus, { label: string; color: string; bg: string }> = {
+  healthy: { label: '✅ Healthy', color: 'text-green-700', bg: 'bg-green-50' },
+  degraded: { label: '⚠️ Degraded', color: 'text-amber-700', bg: 'bg-amber-50' },
+  down: { label: '❌ Down', color: 'text-red-700', bg: 'bg-red-50' },
+  not_configured: { label: '⚪ Not set up', color: 'text-muted-foreground', bg: 'bg-gray-50' },
+};
+
+function AllApisHealth() {
+  const [checks, setChecks] = useState<ApiCheck[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [checkedAt, setCheckedAt] = useState<Date | null>(null);
+  const [error, setError] = useState('');
+
+  const run = useCallback(async () => {
+    setLoading(true); setError('');
+    const { data, error } = await supabase.functions.invoke('api-health', { body: {} });
+    if (error) setError(error.message);
+    else { setChecks(data?.checks ?? []); setCheckedAt(new Date(data?.checkedAt ?? Date.now())); }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { run(); }, [run]);
+
+  const counts = checks.reduce((a, c) => ({ ...a, [c.status]: (a[c.status] ?? 0) + 1 }), {} as Record<string, number>);
+
+  return (
+    <div className="bg-card border rounded-xl overflow-hidden">
+      <div className="px-5 py-4 border-b flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h2 className="font-semibold text-sm" style={{ color: 'var(--text-heading)' }}>All APIs</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {checks.length > 0
+              ? `${counts.healthy ?? 0} healthy · ${counts.degraded ?? 0} degraded · ${counts.down ?? 0} down · ${counts.not_configured ?? 0} not set up`
+              : 'Live check of every connected service'}
+            {checkedAt && ` — checked ${format(checkedAt, 'HH:mm:ss')}`}
+          </p>
+        </div>
+        <button onClick={run} disabled={loading} className="text-xs px-2.5 py-1.5 border rounded hover:bg-muted transition-colors flex items-center gap-1 disabled:opacity-50">
+          <RefreshCw className={`h-3 w-3 ${loading ? 'animate-spin' : ''}`} /> {loading ? 'Checking…' : 'Check all'}
+        </button>
+      </div>
+      {error && <div className="px-5 py-4 text-sm text-red-700">Health check failed: {error}</div>}
+      {loading && checks.length === 0 && <div className="px-5 py-10 text-center text-muted-foreground text-sm">Checking all APIs…</div>}
+      <div className="grid sm:grid-cols-2 gap-3 p-4">
+        {checks.map(c => {
+          const s = apiStatusConfig[c.status];
+          return (
+            <div key={c.id} className={`border rounded-lg p-4 ${s.bg}`}>
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <div className="font-semibold text-sm" style={{ color: 'var(--text-heading)' }}>{c.name}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">{c.description}</div>
+                </div>
+                <span className={`text-xs font-semibold whitespace-nowrap ${s.color}`}>{s.label}</span>
+              </div>
+              <div className="flex justify-between mt-3 text-xs">
+                <span className="text-muted-foreground truncate pr-2">{c.details}</span>
+                <span className="tabular-nums font-medium">{c.responseMs !== null ? `${c.responseMs}ms` : '—'}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
