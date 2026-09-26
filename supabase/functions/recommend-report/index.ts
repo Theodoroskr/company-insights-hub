@@ -52,13 +52,9 @@ Deno.serve(async (req) => {
       req,
       { baseURL: "https://ai.gateway.lovable.dev/v1", apiKey, model: "openai/gpt-6-astra" },
       [
-        {
-          role: "system",
-          content:
-            "You are a company-intelligence advisor. Pick the single most suitable product from the catalog for the buyer's due-diligence needs, plus up to 2 alternatives. Only use slugs from the catalog. Reply with JSON only: {\"recommended\":\"slug\",\"reason\":\"2-3 sentences\",\"alternatives\":[{\"slug\":\"slug\",\"reason\":\"one sentence\"}]}",
-        },
         { role: "user", content: `Company country: ${cc}\nBuyer needs: ${text}\n\nCatalog:\n${list}` },
       ],
+      "You are a company-intelligence advisor. Pick the single most suitable product from the catalog for the buyer's due-diligence needs, plus up to 2 alternatives. Only use slugs from the catalog. Reply with JSON only: {\"recommended\":\"slug\",\"reason\":\"2-3 sentences\",\"alternatives\":[{\"slug\":\"slug\",\"reason\":\"one sentence\"}]}",
     );
     const out = await result.text;
     const match = out.match(/\{[\s\S]*\}/);
