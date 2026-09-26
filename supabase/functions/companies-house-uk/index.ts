@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const { action, query, companyNumber, itemsPerPage = 20, startIndex = 0 } =
+    const { action, query, companyNumber, itemsPerPage = 20, startIndex = 0, category } =
       await req.json();
 
     const supabase = createClient(
