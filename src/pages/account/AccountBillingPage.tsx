@@ -6,7 +6,7 @@ import { CREDIT_BUNDLES, useBilling } from '../../lib/billing';
 import { formatEur } from '../../lib/pricing';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useCart } from '../../contexts/CartContext';
 
 export default function AccountBillingPage() {
@@ -19,9 +19,9 @@ export default function AccountBillingPage() {
   useEffect(() => {
     if (picked) document.getElementById(`bundle-${picked}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, [picked]);
+  const navigate = useNavigate();
   const [tx, setTx] = useState<any[]>([]);
   const [invoices, setInvoices] = useState<any[]>([]);
-  const [buying, setBuying] = useState<string | null>(null);
   const [form, setForm] = useState({ company: '', vat: '', spend: '' });
   const [sending, setSending] = useState(false);
 
@@ -35,15 +35,12 @@ export default function AccountBillingPage() {
   };
   useEffect(() => { loadLists(); }, []);
 
-  const buy = async (tier: string, pay: number) => {
-    if (!confirm(`Buy this bundle for ${formatEur(pay)}? Your card will be charged.`)) return;
-    setBuying(tier);
-    const { error } = await (supabase as any).rpc('purchase_credit_bundle', { _tier: tier });
-    setBuying(null);
-    if (error) return toast({ title: 'Purchase failed', description: error.message, variant: 'destructive' });
-    toast({ title: 'Credit added to your account' });
-    setJustBought(true);
-    b.refresh(); loadLists();
+  const buy = (tier: string) => {
+    const bundle = CREDIT_BUNDLES.find((x) => x.tier === tier);
+    if (!bundle) return;
+    cart.addBundle({ tier: bundle.tier, name: bundle.name, pay: bundle.pay, bonus: bundle.bonus });
+    toast({ title: `${bundle.name} bundle added to your cart` });
+    navigate('/cart');
   };
 
   const apply = async (e: React.FormEvent) => {
@@ -97,10 +94,10 @@ export default function AccountBillingPage() {
                 <p className="text-sm text-muted-foreground mt-1">+{x.bonusPct}% bonus · {formatEur(x.bonus)} extra</p>
                 <p className="text-sm mt-2 font-medium">You get {formatEur(x.pay + x.bonus)} credit</p>
                 <p className="text-xs text-muted-foreground mt-1">Valid on every country site · valid for one year</p>
-                <button disabled={!!buying} onClick={() => buy(x.tier, x.pay)}
-                  className="mt-4 py-2 rounded text-sm font-semibold text-primary-foreground disabled:opacity-60"
+                <button onClick={() => buy(x.tier)}
+                  className="mt-4 py-2 rounded text-sm font-semibold text-primary-foreground"
                   style={{ backgroundColor: 'var(--brand-accent)' }}>
-                  {buying === x.tier ? 'Processing…' : 'Buy bundle'}
+                  Add to cart
                 </button>
               </div>
             ))}
