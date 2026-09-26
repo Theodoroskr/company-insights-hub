@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUpRight, ChevronDown, FileText, Shield, Users } from 'lucide-react';
+import { ArrowUpRight, ChevronDown, FileText, Landmark, Shield, Users } from 'lucide-react';
 import GatedContent from '@/components/ui/GatedContent';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { companiesHouseUK } from '@/lib/companiesHouseUK/client';
@@ -373,6 +373,66 @@ export default function UKCompanySections({
         )}
         </CollapsibleContent>
         </Collapsible>
+      </SectionCard>
+      </div>
+
+      {/* Latest Financial Statements */}
+      <div className="order-2">
+      <SectionCard>
+        <SectionTitle icon={<Landmark className="w-4 h-4" />} count={accountsTotal}>
+          Latest Financial Statements
+        </SectionTitle>
+
+        {loading ? (
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Loading accounts…</p>
+        ) : accounts.length === 0 ? (
+          <p className="text-sm italic" style={{ color: 'var(--text-muted)' }}>
+            No financial statements filed for this company.
+          </p>
+        ) : (
+          <GatedContent
+            isUnlocked={isUnlocked}
+            message="Order the UK Company Report to view the latest financial statements"
+            ctaLabel="Order Report"
+            onCta={onOrderReport}
+          >
+            <div>
+              {accounts.map((filing, i) => {
+                const values = filing.description_values ?? {};
+                const periodEnd = values.made_up_date ?? values.period_end_date ?? values.to_date;
+                const periodStart = values.period_start_date ?? values.from_date;
+                return (
+                  <div
+                    key={i}
+                    className="text-sm py-2 border-b last:border-0 flex items-center justify-between gap-3"
+                    style={{ borderColor: 'var(--bg-border)' }}
+                  >
+                    <div className="min-w-0">
+                      <p style={{ color: 'var(--text-body)' }}>
+                        {periodStart && periodEnd
+                          ? `Accounts ${formatDate(periodStart)} – ${formatDate(periodEnd)}`
+                          : periodEnd
+                            ? `Accounts made up to ${formatDate(periodEnd)}`
+                            : 'Company accounts'}
+                      </p>
+                      <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                        Filed {formatDate(filing.date)}
+                        {filing.type && ` · Form ${filing.type}`}
+                        {filing.pages ? ` · ${filing.pages} page${filing.pages === 1 ? '' : 's'}` : ''}
+                      </p>
+                    </div>
+                    <span
+                      className="text-xs px-2 py-0.5 rounded-full shrink-0"
+                      style={{ backgroundColor: 'var(--bg-subtle)', color: 'var(--text-muted)' }}
+                    >
+                      {i === 0 ? 'Latest' : formatDate(filing.date).slice(-4)}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </GatedContent>
+        )}
       </SectionCard>
       </div>
 
