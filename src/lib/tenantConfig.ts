@@ -67,6 +67,102 @@ export function getTenantHero(
     };
   }
 
+  if (slug === 'cy') {
+    return {
+      badge: 'Official Cyprus Registry Data · Instant Reports',
+      h1: 'Search and Verify Cyprus Companies',
+      subtitle:
+        'Instant access to the Cyprus Companies Registry — structure and credit reports, KYB intelligence and official certificates, delivered online.',
+      productLandingHeroH1: 'Company Insights in Cyprus',
+      productLandingHeroSubtitle:
+        'Explore comprehensive company structure and ownership information in Cyprus. Ensure invoicing accuracy and secure your business future.',
+      typingWords: [
+        'Unlocking',
+        'Structure Report',
+        'Credit Report',
+        'Certificates',
+        'Due Diligence',
+      ],
+      metaTitleSuffix: titleSuffix,
+    };
+  }
+
+  if (slug === 'gr') {
+    return {
+      badge: 'Greek Company Intelligence · Pay-Per-Report',
+      h1: 'Search and Verify Greece Companies',
+      subtitle:
+        'Company reports on Greek businesses — ownership, structure, credit and compliance intelligence sourced from the GEMI registry and international data providers.',
+      productLandingHeroH1: 'Company Insights in Greece',
+      productLandingHeroSubtitle:
+        'Explore comprehensive company structure and ownership information in Greece. Ensure invoicing accuracy and secure your business future.',
+      typingWords: [
+        'Unlocking',
+        'Structure Report',
+        'Credit Report',
+        'Due Diligence',
+      ],
+      metaTitleSuffix: titleSuffix,
+    };
+  }
+
+  if (slug === 'mt') {
+    return {
+      badge: 'Malta Business Registry Data · Instant Reports',
+      h1: 'Search and Verify Malta Companies',
+      subtitle:
+        'Instant company intelligence on Maltese businesses — structure reports, credit checks, KYB and compliance screening from the Malta Business Registry.',
+      productLandingHeroH1: 'Company Insights in Malta',
+      productLandingHeroSubtitle:
+        'Explore comprehensive company structure and ownership information in Malta. Ensure invoicing accuracy and secure your business future.',
+      typingWords: [
+        'Unlocking',
+        'Structure Report',
+        'Credit Report',
+        'Compliance Screening',
+      ],
+      metaTitleSuffix: titleSuffix,
+    };
+  }
+
+  if (slug === 'ro') {
+    return {
+      badge: 'Romanian Company Data · ONRC Registry',
+      h1: 'Search and Verify Romania Companies',
+      subtitle:
+        'Verify Romanian companies in seconds — structure and credit reports, ownership intelligence and due diligence sourced from the ONRC trade register.',
+      productLandingHeroH1: 'Company Insights in Romania',
+      productLandingHeroSubtitle:
+        'Explore comprehensive company structure and ownership information in Romania. Ensure invoicing accuracy and secure your business future.',
+      typingWords: [
+        'Unlocking',
+        'Structure Report',
+        'Credit Report',
+        'Due Diligence',
+      ],
+      metaTitleSuffix: titleSuffix,
+    };
+  }
+
+  if (slug === 'ae') {
+    return {
+      badge: 'Dubai & UAE Company Intelligence',
+      h1: 'Search and Verify UAE Companies',
+      subtitle:
+        'Company intelligence across Dubai and the UAE — structure reports, credit assessment and compliance screening for mainland and free-zone entities.',
+      productLandingHeroH1: 'Company Insights in the UAE',
+      productLandingHeroSubtitle:
+        'Explore comprehensive company structure and ownership information in the UAE. Ensure invoicing accuracy and secure your business future.',
+      typingWords: [
+        'Unlocking',
+        'Structure Report',
+        'Credit Report',
+        'Compliance Screening',
+      ],
+      metaTitleSuffix: titleSuffix,
+    };
+  }
+
   if (country) {
     return {
       h1: `Search and Verify ${country.name} Companies`,
