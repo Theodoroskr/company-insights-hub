@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { User, FileText, Receipt, Download, Bookmark } from 'lucide-react';
+import { User, FileText, Receipt, Download, Bookmark, LayoutDashboard } from 'lucide-react';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import { supabase } from '../../lib/supabase';
