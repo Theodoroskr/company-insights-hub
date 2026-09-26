@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTenant } from '@/lib/tenant';
-import { getVatRate } from '@/lib/tenantConfig';
+import { getVatRate } from '@/lib/pricing';
 
 interface PriceDisplayProps {
   basePrice: number;
@@ -28,7 +28,7 @@ export default function PriceDisplay({
   const { tenant } = useTenant();
   const effectiveVatRate = vatRate ?? getVatRate(tenant?.slug);
   const subtotal = basePrice + serviceFee;
-  const vatAmount = subtotal * effectiveVatRate;
+  const vatAmount = Math.round(subtotal * effectiveVatRate * 100) / 100;
   const total = subtotal + vatAmount;
 
   if (!showBreakdown) {
@@ -37,7 +37,7 @@ export default function PriceDisplay({
         className={`font-bold tabular-nums ${className}`}
         style={{ color: 'var(--text-heading)' }}
       >
-        {formatCurrency(basePrice, currency)}
+        {formatCurrency(subtotal, currency)}
       </span>
     );
   }

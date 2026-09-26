@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { priceProduct } from '../lib/pricing';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronUp, CheckCircle2 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
@@ -183,7 +184,7 @@ export default function ProductLandingPage() {
   );
 
   const productName = activeTab?.label ?? dbProduct?.name ?? 'Report';
-  const price = dbProduct?.base_price ?? null;
+  const price = dbProduct ? priceProduct(dbProduct, 0).net : null;
 
   return (
     <PageLayout>

@@ -7,7 +7,7 @@ import { useCart } from '../contexts/CartContext';
 import { useTenant } from '../lib/tenant';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { supabase } from '@/integrations/supabase/client';
-import { getVatRate } from '../lib/tenantConfig';
+import { getVatRate } from '../lib/pricing';
 
 const EU_COUNTRY_CODES = new Set([
   'AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU',

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { priceProduct, formatEur } from '../lib/pricing';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { Check, Clock, Zap, Star, ArrowRight, Award } from 'lucide-react';
@@ -37,9 +38,7 @@ export default function PricingPage() {
   const services = products.filter((p) => p.type === 'monitoring');
 
   const formatPrice = (p: Product) => {
-    const speeds = p.available_speeds;
-    const startPrice = p.base_price + (speeds?.[0]?.price_delta ?? 0);
-    return `€${startPrice.toFixed(2)}`;
+    return formatEur(priceProduct(p, 0).net);
   };
 
   const getDelivery = (p: Product) => {

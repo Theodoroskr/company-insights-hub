@@ -1,3 +1,5 @@
+import { getCountryPricing } from '../lib/pricing';
+const CY = getCountryPricing('cy');
 // ============================================================
 // Cyprus Certificate Catalog — structured by entity type
 // ============================================================
@@ -30,7 +32,7 @@ export interface BundleDefinition {
   entityType: EntityType;
 }
 
-const PRICE = 40;
+const PRICE = CY.certificateFee;
 const DELIVERY = 'Next working day';
 const SOURCE = 'Official certified document from the Cyprus Registrar';
 
@@ -334,13 +336,14 @@ export function getAllCertificatesForEntity(entityType: EntityType): Certificate
   return certificatesByEntity[entityType].flatMap((g) => g.certificates);
 }
 
-export const APOSTILLE_PRICE = 100;
-export const CERTIFIED_TRANSLATION_PRICE = 90;
-export const URGENT_DELIVERY_PRICE = 20;
-export const COURIER_DELIVERY_PRICE = 25;
-export const CERT_PRICE = 40;
-export const SERVICE_DELIVERY_FEE = 40;
-export const VAT_RATE = 0.19;
+// Derived from the single pricing source (src/lib/pricing.ts)
+export const APOSTILLE_PRICE = CY.apostille;
+export const CERTIFIED_TRANSLATION_PRICE = CY.certifiedTranslation;
+export const URGENT_DELIVERY_PRICE = CY.urgentDeliveryPerCert;
+export const COURIER_DELIVERY_PRICE = CY.courierDelivery;
+export const CERT_PRICE = CY.certificateFee;
+export const SERVICE_DELIVERY_FEE = CY.certificateServiceFee;
+export const VAT_RATE = CY.vatRate;
 
 /**
  * Map the legal_form string from API4ALL / company record to our EntityType.

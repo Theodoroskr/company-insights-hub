@@ -15,10 +15,10 @@ import {
   SERVICE_DELIVERY_FEE,
 } from '../data/cyprusCertificates';
 import { useTenant } from '../lib/tenant';
-import { getVatRate } from '../lib/tenantConfig';
+import { getCountryPricing, priceProduct, priceCertificateOrder, vatForNet } from '../lib/pricing';
 
 /** Compliance screening add-on price (EUR), shown alongside eligible reports */
-export const SCREENING_ADDON_PRICE_EUR = 45;
+export const SCREENING_ADDON_PRICE_EUR = getCountryPricing(null).screeningAddon;
 
 /** Products where ComplyAdvantage screening is bundled in the base price (no add-on shown) */
 export const SCREENING_INCLUDED_SLUGS = new Set([
@@ -127,34 +127,23 @@ function calcPrice(
   speedCode: string,
   vatRate: number,
 ): { price: number; vatAmount: number } {
-  const speeds: ProductSpeed[] = Array.isArray(product.available_speeds)
-    ? (product.available_speeds as ProductSpeed[])
-    : [];
-  const speed = speeds.find((s) => s.code === speedCode);
-  const base = product.base_price + (speed?.price_delta ?? 0);
-  const vat = product.vat_on_full_price ? base * vatRate : 0;
-  return { price: base, vatAmount: parseFloat(vat.toFixed(2)) };
+  const line = priceProduct(product, vatRate, speedCode);
+  return { price: line.net, vatAmount: line.vat };
 }
 
 function makeId(productId: string, icgCode: string, speedCode: string) {
   return `${productId}__${icgCode}__${speedCode}`;
 }
 
-function calcCertOrderTotals(order: CertificateOrder, vatRate: number) {
-  const certCount = order.certificates.length;
-  const certTotal = order.certificates.reduce((s, c) => s + c.price, 0);
-  const serviceDeliveryTotal = certCount * SERVICE_DELIVERY_FEE;
-  const apostilleTotal = order.certificates.filter((c) => c.apostille).length * APOSTILLE_PRICE;
-  const urgentTotal = order.urgentDelivery ? URGENT_DELIVERY_PRICE * certCount : 0;
-  const courierTotal = order.courierDelivery ? COURIER_DELIVERY_PRICE : 0;
-  const sub = certTotal + serviceDeliveryTotal + apostilleTotal + urgentTotal + courierTotal;
-  const vat = parseFloat((sub * vatRate).toFixed(2));
-  return { subtotal: sub, vat };
+function calcCertOrderTotals(order: CertificateOrder, pricing: ReturnType<typeof getCountryPricing>) {
+  const t = priceCertificateOrder(order, pricing);
+  return { subtotal: t.subtotal, vat: t.vat };
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const { tenant } = useTenant();
-  const vatRate = getVatRate(tenant?.slug);
+  const pricing = getCountryPricing(tenant?.slug);
+  const vatRate = pricing.vatRate;
 
   const [items, setItems] = useState<CartItem[]>(() => {
     try {
@@ -186,9 +175,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setItems((prev) =>
       prev.map((item) => {
-        const newVat = item.product.vat_on_full_price
-          ? parseFloat((item.price * vatRate).toFixed(2))
-          : 0;
+        const newVat = vatForNet(item.product, item.price, vatRate);
         return newVat === item.vatAmount ? item : { ...item, vatAmount: newVat };
       }),
     );
@@ -209,9 +196,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const id = makeId(product.id, company.icg_code, resolvedSpeed) + idSuffix;
       const computed = calcPrice(product, resolvedSpeed, vatRate);
       const price = typeof opts?.priceOverride === 'number' ? opts.priceOverride : computed.price;
-      const vatAmount = product.vat_on_full_price
-        ? parseFloat((price * vatRate).toFixed(2))
-        : 0;
+      const vatAmount = vatForNet(product, price, vatRate);
       const eligible = isScreeningEligible({ type: product.type as string, slug: product.slug, screening_enabled: (product as any).screening_enabled });
       const screeningAddon = !!opts?.screeningAddon && eligible;
 
@@ -303,7 +288,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const certTotals = certificateOrders.reduce(
     (acc, order) => {
-      const t = calcCertOrderTotals(order, vatRate);
+      const t = calcCertOrderTotals(order, pricing);
       return { subtotal: acc.subtotal + t.subtotal, vat: acc.vat + t.vat };
     },
     { subtotal: 0, vat: 0 }
