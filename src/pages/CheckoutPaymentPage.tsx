@@ -261,6 +261,7 @@ export default function CheckoutPaymentPage() {
           slaHours: Math.max(certificateOrders.length ? 72 : 0, ...items.map((i) => (i.product?.is_instant ? 0 : i.product?.delivery_sla_hours ?? 24))),
           isInstant: certificateOrders.length === 0 && items.every((i) => i.product?.is_instant),
           productNames: [...items.map((i) => i.product?.name), ...certificateOrders.flatMap((o) => o.certificates.map((c) => `${c.name} — ${o.companyName}`)), ...bundleOrders.map((b) => `${b.name} credit bundle`)].filter(Boolean),
+          bundles: bundleOrders.map((b) => ({ name: b.name, pay: b.pay, bonus: b.bonus })),
         })
       );
 
