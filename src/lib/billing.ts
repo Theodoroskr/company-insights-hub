@@ -23,7 +23,6 @@ export function useBilling() {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [balance, setBalance] = useState(0);
-  const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [account, setAccount] = useState<BillingAccount | null>(null);
   const [unbilled, setUnbilled] = useState(0);
 

@@ -312,7 +312,7 @@ export default function PricingPage() {
                   </li>
                   <li className="flex items-start gap-2 text-sm" style={{ color: 'var(--text-body)' }}>
                     <Check className="w-4 h-4 shrink-0 mt-0.5" style={{ color: 'var(--status-active)' }} />
-                    <span>Valid on every country site, no expiry</span>
+                    <span>Valid on every country site</span>
                   </li>
                 </ul>
                 <button
