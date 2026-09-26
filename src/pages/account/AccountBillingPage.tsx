@@ -21,8 +21,6 @@ export default function AccountBillingPage() {
   const navigate = useNavigate();
   const [tx, setTx] = useState<any[]>([]);
   const [invoices, setInvoices] = useState<any[]>([]);
-  const [form, setForm] = useState({ company: '', vat: '', spend: '' });
-  const [sending, setSending] = useState(false);
 
   const loadLists = async () => {
     const sb = supabase as any;
@@ -40,18 +38,6 @@ export default function AccountBillingPage() {
     cart.addBundle({ tier: bundle.tier, name: bundle.name, pay: bundle.pay, bonus: bundle.bonus });
     toast({ title: `${bundle.name} bundle added to your cart` });
     navigate('/cart');
-  };
-
-  const apply = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSending(true);
-    const { error } = await (supabase as any).rpc('request_billing_account', {
-      _company: form.company, _vat: form.vat || null, _spend: form.spend ? Number(form.spend) : null,
-    });
-    setSending(false);
-    if (error) return toast({ title: 'Could not send', description: error.message, variant: 'destructive' });
-    toast({ title: 'Application sent — we will review it shortly' });
-    b.refresh();
   };
 
   const card = 'rounded-lg border p-5 bg-card';
@@ -120,15 +106,7 @@ export default function AccountBillingPage() {
           ) : acc?.status === 'suspended' ? (
             <p className="text-sm text-muted-foreground">Monthly invoicing is currently suspended. Please contact us.</p>
           ) : (
-            <form onSubmit={apply} className="space-y-3 max-w-md">
-              <p className="text-sm text-muted-foreground">For firms ordering regularly: order now, pay one invoice at month end.{acc?.status === 'rejected' ? ' Your previous application was not approved; you can apply again.' : ''}</p>
-              <input required value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} placeholder="Company name" className="w-full border rounded px-3 py-2 text-sm" />
-              <input value={form.vat} onChange={(e) => setForm({ ...form, vat: e.target.value })} placeholder="VAT number (optional)" className="w-full border rounded px-3 py-2 text-sm" />
-              <input type="number" min={0} value={form.spend} onChange={(e) => setForm({ ...form, spend: e.target.value })} placeholder="Expected monthly spend (€)" className="w-full border rounded px-3 py-2 text-sm" />
-              <button disabled={sending} className="px-4 py-2 rounded text-sm font-semibold text-primary-foreground disabled:opacity-60" style={{ backgroundColor: 'var(--brand-accent)' }}>
-                {sending ? 'Sending…' : 'Apply for monthly invoicing'}
-              </button>
-            </form>
+            <p className="text-sm text-muted-foreground">Monthly invoicing is available for approved business accounts and is enabled by our team. Contact us if you'd like to be set up.</p>
           )}
         </div>
 
