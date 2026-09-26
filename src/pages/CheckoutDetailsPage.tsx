@@ -8,6 +8,7 @@ import { useTenant } from '../lib/tenant';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { supabase } from '@/integrations/supabase/client';
 import { getVatRate } from '../lib/pricing';
+import { useCountries } from '../lib/useCountries';
 
 const EU_COUNTRY_CODES = new Set([
   'AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU',
@@ -95,6 +96,7 @@ export default function CheckoutDetailsPage() {
   const { tenant } = useTenant();
   const { items, grandTotal, totalVat } = useCart();
   const navigate = useNavigate();
+  const countryOptions = useCountries();
 
   const [tab, setTab] = useState<'account' | 'guest'>('guest');
   const [session, setSession] = useState<null | { user: { email?: string; id: string } }>(null);
@@ -322,12 +324,8 @@ export default function CheckoutDetailsPage() {
                   onChange={(e) => set('country', e.target.value)}
                 >
                   <option value="">Select country…</option>
-                  {[
-                    ['CY', 'Cyprus'], ['GR', 'Greece'], ['GB', 'United Kingdom'],
-                    ['DE', 'Germany'], ['FR', 'France'], ['US', 'United States'],
-                    ['AE', 'UAE'], ['SG', 'Singapore'], ['CH', 'Switzerland'],
-                  ].map(([code, name]) => (
-                    <option key={code} value={code}>{name}</option>
+                  {countryOptions.map((c) => (
+                    <option key={c.code} value={c.code}>{c.name}</option>
                   ))}
                 </select>
                 {errors.country && <p className="text-xs text-red-500 mt-1">{errors.country}</p>}
