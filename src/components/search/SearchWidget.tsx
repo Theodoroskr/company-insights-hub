@@ -177,7 +177,7 @@ export default function SearchWidget({
     } else {
       const params = new URLSearchParams({ q: query });
       if (selectedCountry) params.set('country', selectedCountry);
-      navigate(`/search?${params.toString()}`);
+      navigate(`/company/search?${params.toString()}`);
     }
   }, [query, selectedCountry, onSearch, navigate]);
 
