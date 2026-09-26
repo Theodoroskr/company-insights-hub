@@ -25,7 +25,7 @@ import CompanyChangeTimeline from '../components/company/CompanyChangeTimeline';
 import { useTenant } from '../lib/tenant.tsx';
 import { isProductVisibleForTenant } from '../lib/tenantConfig';
 import { useCountries } from '../lib/countries';
-import { useCart } from '../contexts/CartContext';
+import { useCart, SCREENING_ADDON_PRICE_EUR } from '../contexts/CartContext';
 import { supabase } from '@/integrations/supabase/client';
 import { legalFormToEntityType } from '@/data/cyprusCertificates';
 import { useCertificateCountries, certificatesAvailableFor } from '@/lib/certificateAvailability';
