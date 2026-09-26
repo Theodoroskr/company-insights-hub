@@ -89,7 +89,7 @@ export default function OrderReportModal({
     supabase
       .from('products')
       .select('*')
-      .or(`tenant_id.eq.${tenant.id},country_scope.eq.global`)
+      .or(`tenant_id.eq.${tenant.id},country_scope.eq.global${(preselectedCompany?.country_code ?? selectedCompany?.country_code) ? `,allowed_countries.cs.{${preselectedCompany?.country_code ?? selectedCompany?.country_code}}` : ''}`)
       .eq('is_active', true)
       .order('display_order', { ascending: true })
       .then(({ data }) => {
@@ -108,7 +108,7 @@ export default function OrderReportModal({
         }
         setIsLoadingProducts(false);
       });
-  }, [isOpen, tenant?.id]);
+  }, [isOpen, tenant?.id, preselectedCompany?.country_code]);
 
   // Auto-select first product when products load (if none preselected)
   useEffect(() => {
