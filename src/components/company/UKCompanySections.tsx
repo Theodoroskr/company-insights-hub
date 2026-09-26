@@ -447,6 +447,7 @@ export default function UKCompanySections({
             <div className="space-y-2">
               {psc.slice(0, 5).map((p, i) => {
                 const isCeased = !!p.ceased_on;
+                const href = isCorporatePsc(p) ? pscHrefs[(p.name ?? '').toUpperCase()] : undefined;
                 return (
                   <div
                     key={i}
@@ -454,9 +455,20 @@ export default function UKCompanySections({
                     style={{ borderColor: 'var(--bg-border)', opacity: isCeased ? 0.6 : 1 }}
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-medium" style={{ color: 'var(--text-body)' }}>
-                        {p.name ?? '—'}
-                      </span>
+                      {href ? (
+                        <Link
+                          to={href}
+                          className="font-medium inline-flex items-center gap-1 hover:underline"
+                          style={{ color: 'var(--brand-accent)' }}
+                        >
+                          {p.name ?? '—'}
+                          <ArrowUpRight className="w-3.5 h-3.5" />
+                        </Link>
+                      ) : (
+                        <span className="font-medium" style={{ color: 'var(--text-body)' }}>
+                          {p.name ?? '—'}
+                        </span>
+                      )}
                       <span
                         className="text-xs px-2 py-0.5 rounded-full"
                         style={{ backgroundColor: 'var(--bg-subtle)', color: 'var(--text-muted)' }}
