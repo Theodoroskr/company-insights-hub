@@ -4,7 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { priceProduct } from '../lib/pricing';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { Check, ShoppingCart } from 'lucide-react';
+import { Check, ShoppingCart, Lock, ShieldCheck } from 'lucide-react';
 import PageLayout from '../components/layout/PageLayout';
 import StatusBadge from '../components/ui/StatusBadge';
 import GatedContent from '../components/ui/GatedContent';
@@ -865,22 +865,31 @@ export default function CompanyProfilePage() {
             />
 
             {/* Profile tabs */}
-            <div className="flex gap-1 mb-4 border-b" style={{ borderColor: 'var(--bg-border)' }} role="tablist">
-              {([['overview', 'Overview'], ['compliance', `Compliance & AML${isUnlocked && unlockedOrderItemId ? '' : ' 🔒'}`]] as const).map(([key, lbl]) => (
-                <button
-                  key={key}
-                  role="tab"
-                  aria-selected={profileTab === key}
-                  onClick={() => setProfileTab(key)}
-                  className="px-4 py-2 text-sm font-medium -mb-px border-b-2"
-                  style={{
-                    borderColor: profileTab === key ? 'var(--brand-accent)' : 'transparent',
-                    color: profileTab === key ? 'var(--brand-accent)' : 'var(--text-muted)',
-                  }}
-                >
-                  {lbl}
-                </button>
-              ))}
+            <div className="flex items-end gap-2 mb-4 border-b" style={{ borderColor: 'var(--bg-border)' }} role="tablist">
+              <button
+                role="tab"
+                aria-selected={profileTab === 'overview'}
+                onClick={() => setProfileTab('overview')}
+                className="px-4 py-2 text-sm font-medium -mb-px border-b-2"
+                style={{
+                  borderColor: profileTab === 'overview' ? 'var(--brand-accent)' : 'transparent',
+                  color: profileTab === 'overview' ? 'var(--brand-accent)' : 'var(--text-muted)',
+                }}
+              >
+                Overview
+              </button>
+              <button
+                role="tab"
+                aria-selected={profileTab === 'compliance'}
+                onClick={() => setProfileTab('compliance')}
+                className="compliance-tab-pill inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-semibold -mb-px"
+                style={{ color: 'var(--text-main)' }}
+              >
+                {isUnlocked && unlockedOrderItemId
+                  ? <ShieldCheck className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--brand-accent)' }} />
+                  : <Lock className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--brand-accent)' }} />}
+                Compliance &amp; AML
+              </button>
             </div>
 
             {profileTab === 'overview' ? (
