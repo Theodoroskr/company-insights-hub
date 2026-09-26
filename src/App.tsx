@@ -123,19 +123,21 @@ const App = () => (
               <Route path="/dashboard/invoices" element={<Navigate to="/account/invoices" replace />} />
 
               {/* ── Admin only ── */}
-              <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-              <Route path="/admin/orders" element={<AdminRoute><AdminOrdersPage /></AdminRoute>} />
-              <Route path="/admin/orders/:id" element={<AdminRoute><AdminOrderDetailPage /></AdminRoute>} />
-              <Route path="/admin/fulfillment" element={<AdminRoute><AdminFulfillmentPage /></AdminRoute>} />
-              <Route path="/admin/products" element={<AdminRoute><AdminProductsPage /></AdminRoute>} />
-              <Route path="/admin/customers" element={<AdminRoute><AdminCustomersPage /></AdminRoute>} />
-              <Route path="/admin/promo-codes" element={<AdminRoute><AdminPromoCodesPage /></AdminRoute>} />
-              <Route path="/admin/source-health" element={<AdminRoute><AdminSourceHealthPage /></AdminRoute>} />
-              <Route path="/admin/pricing-health" element={<AdminRoute><AdminPricingHealthPage /></AdminRoute>} />
-              <Route path="/admin/certificates" element={<AdminRoute><AdminCertificatesPage /></AdminRoute>} />
-              <Route path="/admin/audit-logs" element={<AdminRoute><AdminAuditLogsPage /></AdminRoute>} />
-              <Route path="/admin/settings" element={<AdminRoute><AdminSettingsPage /></AdminRoute>} />
-              <Route path="/admin/tenants" element={<AdminRoute><AdminTenantsPage /></AdminRoute>} />
+              <Route path="/admin" element={<AdminRoute section="dashboard"><AdminDashboard /></AdminRoute>} />
+              <Route path="/admin/orders" element={<AdminRoute section="orders"><AdminOrdersPage /></AdminRoute>} />
+              <Route path="/admin/orders/:id" element={<AdminRoute section="orders"><AdminOrderDetailPage /></AdminRoute>} />
+              <Route path="/admin/fulfillment" element={<AdminRoute section="fulfillment"><AdminFulfillmentPage /></AdminRoute>} />
+              <Route path="/admin/products" element={<AdminRoute section="products"><AdminProductsPage /></AdminRoute>} />
+              <Route path="/admin/customers" element={<AdminRoute section="customers"><AdminCustomersPage /></AdminRoute>} />
+              <Route path="/admin/promo-codes" element={<AdminRoute section="promo_codes"><AdminPromoCodesPage /></AdminRoute>} />
+              <Route path="/admin/source-health" element={<AdminRoute section="source_health"><AdminSourceHealthPage /></AdminRoute>} />
+              <Route path="/admin/pricing-health" element={<AdminRoute section="pricing_health"><AdminPricingHealthPage /></AdminRoute>} />
+              <Route path="/admin/certificates" element={<AdminRoute section="certificates"><AdminCertificatesPage /></AdminRoute>} />
+              <Route path="/admin/audit-logs" element={<AdminRoute section="audit_logs"><AdminAuditLogsPage /></AdminRoute>} />
+              <Route path="/admin/settings" element={<AdminRoute section="settings"><AdminSettingsPage /></AdminRoute>} />
+              <Route path="/admin/tenants" element={<AdminRoute section="tenants"><AdminTenantsPage /></AdminRoute>} />
+              <Route path="/admin/roles" element={<AdminRoute section="roles"><AdminRolesPage /></AdminRoute>} />
+
 
               {/* ── Catch-all ── */}
               <Route path="*" element={<NotFound />} />
