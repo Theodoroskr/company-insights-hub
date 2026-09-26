@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { FileText, Shield, Users } from 'lucide-react';
+import { ChevronDown, FileText, Shield, Users } from 'lucide-react';
 import GatedContent from '@/components/ui/GatedContent';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { companiesHouseUK } from '@/lib/companiesHouseUK/client';
 
 interface UKCompanySectionsProps {
@@ -13,8 +14,12 @@ interface UKCompanySectionsProps {
 interface FilingItem {
   type?: string;
   category?: string;
+  subcategory?: string;
   description?: string;
   date?: string;
+  action_date?: string;
+  pages?: number;
+  description_values?: Record<string, string | undefined>;
 }
 
 interface ChargeItem {
@@ -66,6 +71,46 @@ function formatDate(iso?: string): string {
   return new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+function titleCase(value?: string): string {
+  if (!value) return '';
+  return value
+    .replace(/-/g, ' ')
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function getFilingTitle(filing: FilingItem): string {
+  const values = filing.description_values ?? {};
+  if (values.officer_name && filing.subcategory === 'termination') {
+    return `Director termination — ${values.officer_name}`;
+  }
+  if (values.officer_name && filing.category === 'officers') {
+    return `Director appointment — ${values.officer_name}`;
+  }
+  if (values.charge_number) return `Mortgage or charge — ${values.charge_number}`;
+  if (filing.category === 'accounts') return 'Company accounts filed';
+  if (filing.category === 'resolution') return 'Company resolution filed';
+  return titleCase(filing.description ?? filing.type) || 'Company filing';
+}
+
+function getFilingDetails(filing: FilingItem): string[] {
+  const values = filing.description_values ?? {};
+  const details: string[] = [];
+  if (filing.type) details.push(`Form ${filing.type}`);
+  if (filing.action_date && filing.action_date !== filing.date) {
+    details.push(`Effective ${formatDate(filing.action_date)}`);
+  }
+  if (values.charge_creation_date && values.charge_creation_date !== filing.action_date) {
+    details.push(`Created ${formatDate(values.charge_creation_date)}`);
+  }
+  const periodStart = values.period_start_date ?? values.from_date;
+  const periodEnd = values.period_end_date ?? values.made_up_date ?? values.to_date;
+  if (periodStart && periodEnd) details.push(`Period ${formatDate(periodStart)}–${formatDate(periodEnd)}`);
+  else if (periodEnd) details.push(`Made up to ${formatDate(periodEnd)}`);
+  if (values.resolution_type) details.push(titleCase(values.resolution_type));
+  if (filing.pages) details.push(`${filing.pages} page${filing.pages === 1 ? '' : 's'}`);
+  return details;
+}
+
 export default function UKCompanySections({
   companyNumber,
   isUnlocked = false,
@@ -76,6 +121,8 @@ export default function UKCompanySections({
   const [filingCategory, setFilingCategory] = useState<string>('all');
   const [filingsLoading, setFilingsLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [filingsOpen, setFilingsOpen] = useState(false);
+  const [filingsLoaded, setFilingsLoaded] = useState(false);
   const [charges, setCharges] = useState<ChargeItem[]>([]);
   const [chargesTotal, setChargesTotal] = useState(0);
   const [psc, setPsc] = useState<PscItem[]>([]);
@@ -109,6 +156,7 @@ export default function UKCompanySections({
     }
     setFilingsTotal(res.total_count ?? 0);
     setFilings((prev) => (append ? [...prev, ...items] : items));
+    setFilingsLoaded(true);
   };
 
   useEffect(() => {
@@ -117,14 +165,14 @@ export default function UKCompanySections({
 
     (async () => {
       setLoading(true);
-      setFilingsLoading(true);
       const [f, c, p] = await Promise.allSettled([
-        fetchFilings('all', 0, false),
+        companiesHouseUK.filingHistory(companyNumber, { itemsPerPage: 1, startIndex: 0 }),
         companiesHouseUK.charges(companyNumber),
         companiesHouseUK.psc(companyNumber),
       ]);
       if (cancelled) return;
 
+      if (f.status === 'fulfilled') setFilingsTotal(f.value.total_count ?? 0);
       if (c.status === 'fulfilled') {
         setCharges((c.value.items ?? []) as ChargeItem[]);
         setChargesTotal(c.value.total_count ?? 0);
@@ -133,12 +181,22 @@ export default function UKCompanySections({
         setPsc((p.value.items ?? []) as PscItem[]);
         setPscTotal(p.value.total_results ?? 0);
       }
-      setFilingsLoading(false);
       setLoading(false);
     })();
 
     return () => { cancelled = true; };
   }, [companyNumber]);
+
+  const onFilingsOpenChange = async (open: boolean) => {
+    setFilingsOpen(open);
+    if (!open || filingsLoaded || filingsLoading) return;
+    setFilingsLoading(true);
+    try {
+      await fetchFilings(filingCategory, 0, false);
+    } finally {
+      setFilingsLoading(false);
+    }
+  };
 
   const onSelectCategory = async (key: string) => {
     if (key === filingCategory || filingsLoading) return;
@@ -173,11 +231,29 @@ export default function UKCompanySections({
 
   return (
     <>
+      <div className="flex flex-col gap-4">
       {/* Filings & Documents (UK) */}
+      <div className="order-3">
       <SectionCard>
-        <SectionTitle icon={<FileText className="w-4 h-4" />} count={filingsTotal}>
-          UK Filing History
-        </SectionTitle>
+        <Collapsible open={filingsOpen} onOpenChange={onFilingsOpenChange}>
+        <CollapsibleTrigger className="group flex w-full items-center justify-between gap-3 text-left">
+          <span className="font-semibold text-base flex items-center gap-2" style={{ color: 'var(--text-subheading)' }}>
+            <FileText className="w-4 h-4" />
+            UK Filing History
+            <span
+              className="text-xs px-2 py-0.5 rounded-full ml-1 font-normal"
+              style={{ backgroundColor: 'var(--bg-subtle)', color: 'var(--text-muted)' }}
+            >
+              {filingsTotal.toLocaleString()} record{filingsTotal === 1 ? '' : 's'}
+            </span>
+          </span>
+          <ChevronDown
+            className={`w-4 h-4 shrink-0 transition-transform ${filingsOpen ? 'rotate-180' : ''}`}
+            style={{ color: 'var(--text-muted)' }}
+          />
+        </CollapsibleTrigger>
+
+        <CollapsibleContent className="pt-4">
 
         {/* Category filter chips */}
         <div className="flex flex-wrap gap-1.5 mb-3">
@@ -211,7 +287,7 @@ export default function UKCompanySections({
         ) : (
           <GatedContent
             isUnlocked={isUnlocked}
-            message="Order the UK Company Report to download original filing PDFs"
+            message="Order the UK Company Report to view the detailed filing history"
             ctaLabel="Order Report"
             onCta={onOrderReport}
           >
@@ -225,13 +301,12 @@ export default function UKCompanySections({
                     {year}
                   </div>
                   {items.map((f, i) => {
-                    const label = (f.description ?? f.type ?? '')
-                      .replace(/-/g, ' ')
-                      .replace(/^./, (s) => s.toUpperCase());
+                    const label = getFilingTitle(f);
+                    const details = getFilingDetails(f);
                     return (
                       <div
                         key={`${year}-${i}`}
-                        className="flex items-baseline gap-3 py-1.5 border-b last:border-0"
+                        className="grid grid-cols-[5rem_minmax(0,1fr)] sm:grid-cols-[5rem_minmax(0,1fr)_auto] gap-x-3 gap-y-1 py-2.5 border-b last:border-0"
                         style={{ borderColor: 'var(--bg-border)' }}
                       >
                         <span
@@ -240,11 +315,16 @@ export default function UKCompanySections({
                         >
                           {formatDate(f.date)}
                         </span>
-                        <span className="flex-1" style={{ color: 'var(--text-body)' }}>
-                          {label}
+                        <span className="min-w-0" style={{ color: 'var(--text-body)' }}>
+                          <span className="block font-medium">{label}</span>
+                          {details.length > 0 && (
+                            <span className="block text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                              {details.join(' · ')}
+                            </span>
+                          )}
                         </span>
-                        <span className="text-xs shrink-0" style={{ color: 'var(--text-muted)' }}>
-                          {f.category ?? ''}
+                        <span className="col-start-2 sm:col-start-3 text-xs shrink-0" style={{ color: 'var(--text-muted)' }}>
+                          {titleCase(f.subcategory ?? f.category)}
                         </span>
                       </div>
                     );
@@ -271,9 +351,13 @@ export default function UKCompanySections({
             )}
           </GatedContent>
         )}
+        </CollapsibleContent>
+        </Collapsible>
       </SectionCard>
+      </div>
 
       {/* Charges & Mortgages */}
+      <div className="order-2">
       <SectionCard>
         <SectionTitle icon={<Shield className="w-4 h-4" />} count={chargesTotal}>
           Charges &amp; Mortgages
@@ -323,8 +407,10 @@ export default function UKCompanySections({
           </GatedContent>
         )}
       </SectionCard>
+      </div>
 
       {/* Persons with Significant Control */}
+      <div className="order-1">
       <SectionCard>
         <SectionTitle icon={<Users className="w-4 h-4" />} count={pscTotal}>
           Persons with Significant Control (PSC)
@@ -380,6 +466,8 @@ export default function UKCompanySections({
           </GatedContent>
         )}
       </SectionCard>
+      </div>
+      </div>
     </>
   );
 }
