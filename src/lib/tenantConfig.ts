@@ -170,8 +170,8 @@ export function getTenantHero(
   if (country) {
     return {
       h1: `Search and Verify ${country.name} Companies`,
-      subtitle:
-        'Instant access to official registry data, structure reports, KYB intelligence and official certificates',
+      subtitle: `Instant company intelligence in ${country.name} — structure reports, credit checks, KYB intelligence and official certificates`,
+
       productLandingHeroH1: `Company Insights in ${country.name}`,
       productLandingHeroSubtitle: `Explore comprehensive company structure and ownership information in ${country.name}. Ensure invoicing accuracy and secure your business future.`,
       typingWords: [
@@ -188,7 +188,7 @@ export function getTenantHero(
   // Fallback (no tenant resolved yet)
   return {
     h1: 'Search and Verify Companies',
-    subtitle: 'Instant access to official registry data and company intelligence.',
+    subtitle: 'Instant company reports and business intelligence, on demand.',
     productLandingHeroH1: 'Company Intelligence',
     productLandingHeroSubtitle:
       'Comprehensive company structure, ownership and compliance reports.',
