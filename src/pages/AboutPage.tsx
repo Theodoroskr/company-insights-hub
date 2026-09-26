@@ -2,6 +2,7 @@ import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import PageLayout from '../components/layout/PageLayout';
 import { useTenant } from '../lib/tenant';
+import eurocertBadge from '../assets/eurocert-iso-22301.png.asset.json';
 
 export default function AboutPage() {
   const { tenant } = useTenant();
@@ -54,6 +55,31 @@ export default function AboutPage() {
             are delivered digitally within minutes, and our platform is secured with enterprise-grade encryption
             and GDPR-compliant data handling.
           </p>
+        </div>
+      </section>
+
+      {/* Certifications */}
+      <section className="py-12 px-4" style={{ backgroundColor: 'var(--bg-surface, #f8fafc)' }}>
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-xl font-semibold" style={{ color: 'var(--text-heading)' }}>Certifications</h2>
+          <div className="mt-6 flex flex-col sm:flex-row items-center sm:items-start gap-6 rounded-xl border p-6" style={{ borderColor: 'var(--border-color, #e2e8f0)', backgroundColor: 'var(--bg-card, #fff)' }}>
+            <img
+              src={eurocertBadge.url}
+              alt="EURO CERT — Certified Management System, ISO 22301:2019"
+              className="w-40 h-auto shrink-0"
+              loading="lazy"
+            />
+            <div className="text-base leading-relaxed" style={{ color: 'var(--text-body)' }}>
+              <p className="font-semibold" style={{ color: 'var(--text-heading)' }}>
+                ISO 22301:2019 — Business Continuity Management System
+              </p>
+              <p className="mt-2">
+                Our management system is certified by EURO CERT (certificate no. 00.24.0127), confirming
+                that our processes meet the international standard for business continuity — so the service
+                you rely on stays available, secure and consistent.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
     </PageLayout>
