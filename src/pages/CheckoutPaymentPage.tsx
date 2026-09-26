@@ -7,6 +7,7 @@ import { useCart, SCREENING_ADDON_PRICE_EUR } from '../contexts/CartContext';
 import { useTenant } from '../lib/tenant';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { supabase } from '@/integrations/supabase/client';
+import { getCountryPricing, priceCertificateOrder } from '../lib/pricing';
 
 const CHECKOUT_STEPS = ['Cart', 'Details', 'Payment', 'Confirmation'];
 
@@ -46,7 +47,7 @@ function StepBar({ current }: { current: number }) {
 
 export default function CheckoutPaymentPage() {
   const { tenant } = useTenant();
-  const { items, screeningTotal, clearCart } = useCart();
+  const { items, certificateOrders, subtotal: cartSubtotal, grandTotal, clearCart } = useCart();
   const { currency, rate, format } = useCurrency();
   const navigate = useNavigate();
 
@@ -63,7 +64,7 @@ export default function CheckoutPaymentPage() {
     else navigate('/checkout/details');
   }, [navigate]);
 
-  if (items.length === 0) {
+  if (items.length === 0 && certificateOrders.length === 0) {
     return (
       <PageLayout>
         <div className="max-w-xl mx-auto py-20 text-center">
@@ -76,7 +77,7 @@ export default function CheckoutPaymentPage() {
     );
   }
 
-  const effectiveTotalEur = ((details?.effectiveTotal as number) ?? items.reduce((s, i) => s + i.price + i.vatAmount, 0)) + screeningTotal;
+  const effectiveTotalEur = (details?.effectiveTotal as number) ?? grandTotal;
   const customerEmail = (details?.email as string) ?? '';
 
   const formatCardNumber = (val: string) =>
@@ -103,7 +104,7 @@ export default function CheckoutPaymentPage() {
       const orderRef = `ICG-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
       // Create order record (canonical EUR amounts; display currency snapshotted)
-      const subtotal = items.reduce((s, i) => s + i.price, 0) + screeningTotal;
+      const subtotal = cartSubtotal;
       const vatAmount = (details?.effectiveVat as number) ?? 0;
       const total = subtotal + vatAmount;
 
@@ -154,6 +155,35 @@ export default function CheckoutPaymentPage() {
         )
       );
 
+      // Certificate lines: one order item per certificate, priced via the shared pricing module
+      const pricing = getCountryPricing(tenant?.slug);
+      const certSlugs = Array.from(new Set(certificateOrders.flatMap((o) => o.certificates.map((c) => c.slug))));
+      if (certSlugs.length > 0) {
+        const { data: certProducts } = await supabase.from('products').select('id, slug').in('slug', certSlugs);
+        const idBySlug = new Map((certProducts ?? []).map((p) => [p.slug, p.id]));
+        for (const o of certificateOrders) {
+          const t = priceCertificateOrder(o, pricing);
+          const n = o.certificates.length || 1;
+          const extrasPerCert = (t.urgent + t.courier) / n;
+          for (const c of o.certificates) {
+            const net = Math.round((c.price + pricing.certificateServiceFee + (c.apostille ? pricing.apostille : 0) + extrasPerCert) * 100) / 100;
+            const res = await supabase.from('order_items').insert({
+              order_id: orderData.id,
+              product_id: idBySlug.get(c.slug) ?? null,
+              company_id: null,
+              speed: o.urgentDelivery ? 'Urgent' : 'Normal',
+              fresh_investigation: false,
+              unit_price: net,
+              vat_amount: Math.round(net * pricing.vatRate * 100) / 100,
+              fulfillment_status: 'pending',
+              screening_addon: false,
+              screening_price_eur: 0,
+            }).select('id').single();
+            orderItemResults.push(res as any);
+          }
+        }
+      }
+
       const orderItemError = orderItemResults.find((result) => result.error);
       if (orderItemError?.error) {
         throw new Error(orderItemError.error.message || 'Failed to create order items');
@@ -198,9 +228,9 @@ export default function CheckoutPaymentPage() {
           orderRef,
           email: customerEmail,
           // Slowest item decides the promised delivery time
-          slaHours: Math.max(0, ...items.map((i) => (i.product?.is_instant ? 0 : i.product?.delivery_sla_hours ?? 24))),
-          isInstant: items.every((i) => i.product?.is_instant),
-          productNames: items.map((i) => i.product?.name).filter(Boolean),
+          slaHours: Math.max(certificateOrders.length ? 72 : 0, ...items.map((i) => (i.product?.is_instant ? 0 : i.product?.delivery_sla_hours ?? 24))),
+          isInstant: certificateOrders.length === 0 && items.every((i) => i.product?.is_instant),
+          productNames: [...items.map((i) => i.product?.name), ...certificateOrders.flatMap((o) => o.certificates.map((c) => `${c.name} — ${o.companyName}`))].filter(Boolean),
         })
       );
 

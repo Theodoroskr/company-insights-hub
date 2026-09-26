@@ -703,6 +703,7 @@ function MobileMenu({
   onSignOut: () => void;
 }) {
   const mobileLinkClass = 'flex items-center gap-2 py-2 pl-2 text-sm rounded transition-colors';
+  const mobileCertsOn = certificatesAvailableFor(tenant?.country_code, useCertificateCountries());
 
   return (
     <div className="md:hidden fixed inset-0 z-40" onClick={onClose}>

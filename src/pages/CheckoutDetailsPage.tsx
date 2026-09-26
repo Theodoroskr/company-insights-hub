@@ -52,7 +52,7 @@ function StepBar({ current }: { current: number }) {
 }
 
 function OrderSummary({ compact = false }: { compact?: boolean }) {
-  const { items, subtotal, totalVat, grandTotal } = useCart();
+  const { items, certificateOrders, subtotal, totalVat, grandTotal } = useCart();
   const { format } = useCurrency();
   return (
     <div
@@ -63,6 +63,11 @@ function OrderSummary({ compact = false }: { compact?: boolean }) {
         Order Summary
       </h3>
       <div className="space-y-2 mb-3">
+        {certificateOrders.flatMap((o) => o.certificates.map((c) => (
+          <div key={o.id + c.slug} className="flex justify-between text-sm gap-2">
+            <span className="truncate" style={{ color: 'var(--text-body)' }}>{c.name} — {o.companyName}</span>
+          </div>
+        )))}
         {items.map((item) => (
           <div key={item.id} className="flex justify-between text-sm gap-2">
             <span className="truncate" style={{ color: 'var(--text-body)' }}>
