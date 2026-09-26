@@ -696,7 +696,6 @@ export default function CompanyProfilePage() {
   const countryInfo = getCountryInfo(company.country_code);
   const reportProducts = products.filter((p) => p.type !== 'monitoring' && p.type !== 'certificate');
   const certificateProducts = products.filter((p) => p.type === 'certificate');
-  const monitoringProduct = products.find((p) => p.type === 'monitoring');
   const kybProduct = products.find((p) => p.type === 'kyb' || p.slug === 'cyprus-kyb-report');
   const enhancedKybProduct = products.find((p) => p.slug === 'enhanced-uk-kyb-report');
   const structureProduct = products.find((p) => p.slug?.includes('structure') || p.name?.toLowerCase().includes('structure'));
@@ -832,7 +831,7 @@ export default function CompanyProfilePage() {
             <CompanyChangeTimeline
               company={company}
               isUnlocked={isUnlocked}
-              onUnlockClick={() => (monitoringProduct ? setKybModalOpen(true) : (kybProduct ? setKybModalOpen(true) : openStructureModal()))}
+              onUnlockClick={() => (kybProduct ? setKybModalOpen(true) : openStructureModal())}
             />
 
             {/* B0 — UK Risk Summary (unlocked only) */}
@@ -1428,47 +1427,6 @@ export default function CompanyProfilePage() {
                   </Link>
                 );
               })()}
-              <div
-                className="rounded-lg border-2 border-dashed p-5"
-                style={{
-                  borderColor: 'var(--bg-border)',
-                  backgroundColor: '#fff',
-                  borderRadius: '8px',
-                }}
-              >
-                <div className="text-3xl mb-2">👁️</div>
-                <h2 className="font-semibold" style={{ color: 'var(--text-heading)' }}>
-                  Monitor this company
-                </h2>
-                <p className="text-sm mt-2" style={{ color: 'var(--text-muted)' }}>
-                  Get instant alerts when directors, shareholders, or company status changes
-                </p>
-
-                <ul className="mt-3 space-y-1 text-sm" style={{ color: 'var(--text-body)' }}>
-                  {['Weekly change detection', 'Email alerts for all changes', 'Cancel anytime'].map(
-                    (f) => (
-                      <li key={f} className="flex items-center gap-2">
-                        <span style={{ color: 'var(--status-active)' }}>✓</span> {f}
-                      </li>
-                    )
-                  )}
-                </ul>
-
-                <p className="mt-3 font-semibold" style={{ color: 'var(--text-heading)' }}>
-                  from €{monitoringProduct?.base_price ?? 9}
-                  {(monitoringProduct?.base_price ?? 9) >= 50 ? '/year' : '/month'}
-                </p>
-
-                <button
-                  className="mt-3 w-full py-2 rounded text-sm font-semibold text-white transition-all active:scale-95"
-                  style={{ backgroundColor: 'var(--brand-primary)', borderRadius: '6px' }}
-                  onClick={() =>
-                    navigate(`/checkout?product=monitoring&company=${company.icg_code}`)
-                  }
-                >
-                  Start Monitoring
-                </button>
-              </div>
 
               {/* Card 3 — Dicover internationally */}
               <div
