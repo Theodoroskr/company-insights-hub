@@ -46,7 +46,6 @@ export default function AboutPage() {
             <li>Official company structure and credit reports</li>
             <li>Certificates of incorporation, good standing, and incumbency</li>
             <li>Director and shareholder intelligence</li>
-            <li>Ongoing company monitoring and change alerts</li>
             <li>KYB (Know Your Business) compliance solutions</li>
           </ul>
           <h2 className="text-xl font-semibold pt-4" style={{ color: 'var(--text-heading)' }}>Why Choose Us</h2>
