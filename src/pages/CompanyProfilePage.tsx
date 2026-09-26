@@ -282,7 +282,7 @@ function ProductSection({
       </h3>
       <div
         className="overflow-hidden transition-all duration-300"
-        style={{ maxHeight: expanded ? `${products.length * 80}px` : `${defaultVisible * 80}px` }}
+        style={{ maxHeight: expanded ? `${products.length * 104}px` : `${defaultVisible * 104}px` }}
       >
         {visible.map((product) => (
           <ProductOrderRow key={product.id} product={product} company={company} />

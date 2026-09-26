@@ -60,6 +60,8 @@ export interface CartItem {
   isUpgrade?: boolean;
   /** Human label like "Upgrade from UK Company Report" */
   upgradeLabel?: string;
+  /** API4ALL: true = fresh investigation (Urgent), false = instant archived copy */
+  freshInvestigation?: boolean;
 }
 
 export interface CertificateCartItem {
@@ -86,7 +88,7 @@ interface CartContextValue {
     product: Product,
     company: CartItem['company'],
     speedCode?: string,
-    opts?: { screeningAddon?: boolean; priceOverride?: number; isUpgrade?: boolean; upgradeLabel?: string }
+    opts?: { screeningAddon?: boolean; priceOverride?: number; isUpgrade?: boolean; upgradeLabel?: string; freshInvestigation?: boolean }
   ) => void;
   removeItem: (id: string) => void;
   updateSpeed: (id: string, speedCode: string) => void;
@@ -186,7 +188,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       product: Product,
       company: CartItem['company'],
       speedCode?: string,
-      opts?: { screeningAddon?: boolean; priceOverride?: number; isUpgrade?: boolean; upgradeLabel?: string }
+      opts?: { screeningAddon?: boolean; priceOverride?: number; isUpgrade?: boolean; upgradeLabel?: string; freshInvestigation?: boolean }
     ) => {
       const speeds: ProductSpeed[] = Array.isArray(product.available_speeds)
         ? (product.available_speeds as ProductSpeed[])
@@ -225,6 +227,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             screeningAddon,
             isUpgrade: !!opts?.isUpgrade,
             upgradeLabel: opts?.upgradeLabel,
+            freshInvestigation: opts?.freshInvestigation ?? true,
           },
         ];
       });

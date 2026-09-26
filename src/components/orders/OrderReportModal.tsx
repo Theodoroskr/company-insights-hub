@@ -14,6 +14,7 @@ import { isProductVisibleForTenant } from '@/lib/tenantConfig';
 import { useCart, isScreeningEligible, isScreeningIncluded, SCREENING_ADDON_PRICE_EUR, type CartItem } from '@/contexts/CartContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { ShieldCheck } from 'lucide-react';
+import { useReportDates, getAvailability, formatArchiveDate, URGENT_LABEL } from '@/hooks/useReportAvailability';
 import type { Company, Product, ProductSpeed } from '@/types/database';
 
 interface OrderReportModalProps {
@@ -48,6 +49,7 @@ export default function OrderReportModal({
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
   const [addScreening, setAddScreening] = useState(false);
+  const [useArchive, setUseArchive] = useState(true);
   /** Eligible upgrade: user already bought standard UK Company Report (within 30d) for this company */
   const [eligibleUpgrade, setEligibleUpgrade] = useState<{ standardPrice: number } | null>(null);
 
@@ -59,6 +61,8 @@ export default function OrderReportModal({
   const visibleProducts = products.filter((p) =>
     isProductVisibleForTenant(p, selectedCompany?.country_code),
   );
+  const reportDates = useReportDates(selectedCompany?.icg_code, selectedCompany?.country_code);
+  const availability = selectedProduct && !isCertificateMode ? getAvailability(selectedProduct, reportDates) : null;
   const certificates = visibleProducts.filter((p) => p.type === 'certificate');
   const nonCertificates = visibleProducts.filter((p) => p.type !== 'certificate');
 
@@ -234,6 +238,7 @@ export default function OrderReportModal({
         priceOverride: upgradeDelta,
         isUpgrade,
         upgradeLabel: isUpgrade ? 'Upgrade from UK Company Report' : undefined,
+        freshInvestigation: availability?.kind === 'archive' ? !useArchive : true,
       });
     }
     setJustAdded(true);
@@ -429,6 +434,34 @@ export default function OrderReportModal({
             </>
           )}
         </div>
+
+        {/* Delivery choice from API4ALL archive availability */}
+        {availability && availability.kind !== 'instant' && !justAdded && (
+          <div className="mt-4">
+            <p className="text-sm font-medium mb-2" style={{ color: 'var(--text-subheading)' }}>Delivery</p>
+            {availability.kind === 'archive' ? (
+              <div className="space-y-2">
+                {[
+                  { v: true, t: 'Instant archive copy', d: `Last investigated ${formatArchiveDate(availability.date)} — delivered immediately` },
+                  { v: false, t: 'Fresh investigation (on update)', d: `Registry re-checked and report updated — ${URGENT_LABEL}` },
+                ].map((o) => (
+                  <label key={String(o.v)} className="flex items-start gap-2 rounded-md border p-2.5 cursor-pointer"
+                    style={{ borderColor: useArchive === o.v ? 'var(--brand-accent)' : 'var(--bg-border)' }}>
+                    <input type="radio" className="mt-1" checked={useArchive === o.v} onChange={() => setUseArchive(o.v)} />
+                    <span>
+                      <span className="block text-sm font-medium" style={{ color: 'var(--text-heading)' }}>{o.t}</span>
+                      <span className="block text-xs" style={{ color: 'var(--text-muted)' }}>{o.d}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs rounded-md border p-2.5" style={{ borderColor: 'var(--bg-border)', color: 'var(--text-muted)' }}>
+                📋 No archived copy yet — a fresh investigation will be carried out ({URGENT_LABEL}).
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Comment */}
         <div className="mt-4">
