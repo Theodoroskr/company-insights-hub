@@ -689,6 +689,27 @@ export type Database = {
           },
         ]
       }
+      pricing_settings: {
+        Row: {
+          bundle_tiers: Json
+          id: string
+          screening_addon_eur: number
+          updated_at: string
+        }
+        Insert: {
+          bundle_tiers?: Json
+          id?: string
+          screening_addon_eur?: number
+          updated_at?: string
+        }
+        Update: {
+          bundle_tiers?: Json
+          id?: string
+          screening_addon_eur?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           allowed_countries: string[] | null
@@ -1220,6 +1241,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_adjust_user_wallet: {
+        Args: { _amount: number; _reason: string; _user_id: string }
+        Returns: number
+      }
       admin_set_user_password: {
         Args: { new_password: string; user_email: string }
         Returns: undefined
