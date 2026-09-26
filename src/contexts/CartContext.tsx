@@ -81,6 +81,15 @@ export interface CertificateOrder {
   courierDelivery: boolean;
 }
 
+/** Prepaid credit bundle added to the cart; credit is granted after payment succeeds */
+export interface BundleOrder {
+  id: string;
+  tier: string;
+  name: string;
+  pay: number;
+  bonus: number;
+}
+
 interface CartContextValue {
   items: CartItem[];
   certificateOrders: CertificateOrder[];
