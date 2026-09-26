@@ -130,7 +130,7 @@ export default function UKComplianceScreeningPanel({ orderItemId, isEnhanced, on
           ))}
         </div>
         <p className="text-sm mb-3" style={{ color: 'var(--text-body)' }}>
-          Upgrade to <strong>Enhanced UK KYB Report</strong> to screen the company, all officers and PSCs against
+          Upgrade to <strong>UK Company Report + AML &amp; Compliance</strong> to screen the company, all officers and PSCs against
           global sanctions lists, PEPs and adverse media.
         </p>
         <button
@@ -138,7 +138,7 @@ export default function UKComplianceScreeningPanel({ orderItemId, isEnhanced, on
           className="w-full py-2 px-4 rounded-md font-medium text-sm text-white transition-opacity hover:opacity-90"
           style={{ backgroundColor: 'var(--brand-primary)' }}
         >
-          Upgrade to Enhanced UK KYB — £59
+          Upgrade to AML &amp; Compliance — €59
         </button>
       </div>
     );

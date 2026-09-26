@@ -1213,7 +1213,7 @@ export default function CompanyProfilePage() {
                   return (
                     <p className="text-sm italic" style={{ color: 'var(--text-muted)' }}>
                       {personFilter
-                        ? `No other companies in our index are currently linked to ${personFilter}. Order an Enhanced KYB report to run a deeper officer cross-check.`
+                        ? `No other companies in our index are currently linked to ${personFilter}. Order the AML & Compliance report to run a deeper officer cross-check.`
                         : 'No affiliated companies found yet. More connections appear as companies are searched.'}
                     </p>
                   );
