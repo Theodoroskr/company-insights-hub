@@ -58,7 +58,7 @@ export default function CheckoutSuccessPage() {
         </div>
 
         <h1 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-heading)' }}>
-          Order Confirmed!
+          {creditOnly ? 'Credit Added!' : 'Order Confirmed!'}
         </h1>
 
         <p className="text-base mb-1" style={{ color: 'var(--text-muted)' }}>
