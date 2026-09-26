@@ -74,11 +74,43 @@ export default function UKCompanySections({
 }: UKCompanySectionsProps) {
   const [filings, setFilings] = useState<FilingItem[]>([]);
   const [filingsTotal, setFilingsTotal] = useState(0);
+  const [filingCategory, setFilingCategory] = useState<string>('all');
+  const [filingsLoading, setFilingsLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [charges, setCharges] = useState<ChargeItem[]>([]);
   const [chargesTotal, setChargesTotal] = useState(0);
   const [psc, setPsc] = useState<PscItem[]>([]);
   const [pscTotal, setPscTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+
+  const FILING_PAGE = 25;
+  const FILING_CATEGORIES: Array<{ key: string; label: string; apiCategory?: string }> = [
+    { key: 'all', label: 'All' },
+    { key: 'mortgage', label: 'Mortgages & charges', apiCategory: 'mortgage' },
+    { key: 'accounts', label: 'Accounts', apiCategory: 'accounts' },
+    { key: 'officers', label: 'Officers', apiCategory: 'officers' },
+    { key: 'resolution', label: 'Resolutions', apiCategory: 'resolution' },
+    { key: 'other', label: 'Other' },
+  ];
+
+  const fetchFilings = async (category: string, startIndex: number, append: boolean) => {
+    const cat = FILING_CATEGORIES.find((c) => c.key === category);
+    const apiCategory =
+      cat?.apiCategory ?? (category === 'other' ? undefined : undefined);
+    // 'all' and 'other' both fetch unfiltered; 'other' filters client-side
+    const res = await companiesHouseUK.filingHistory(companyNumber, {
+      itemsPerPage: FILING_PAGE,
+      startIndex,
+      category: apiCategory,
+    });
+    let items = (res.items ?? []) as FilingItem[];
+    if (category === 'other') {
+      const known = new Set(['mortgage', 'accounts', 'officers', 'resolution']);
+      items = items.filter((f) => !known.has(f.category ?? ''));
+    }
+    setFilingsTotal(res.total_count ?? 0);
+    setFilings((prev) => (append ? [...prev, ...items] : items));
+  };
 
   useEffect(() => {
     if (!companyNumber) return;
@@ -86,17 +118,14 @@ export default function UKCompanySections({
 
     (async () => {
       setLoading(true);
+      setFilingsLoading(true);
       const [f, c, p] = await Promise.allSettled([
-        companiesHouseUK.filingHistory(companyNumber, 10),
+        fetchFilings('all', 0, false),
         companiesHouseUK.charges(companyNumber),
         companiesHouseUK.psc(companyNumber),
       ]);
       if (cancelled) return;
 
-      if (f.status === 'fulfilled') {
-        setFilings((f.value.items ?? []) as FilingItem[]);
-        setFilingsTotal(f.value.total_count ?? 0);
-      }
       if (c.status === 'fulfilled') {
         setCharges((c.value.items ?? []) as ChargeItem[]);
         setChargesTotal(c.value.total_count ?? 0);
@@ -105,11 +134,43 @@ export default function UKCompanySections({
         setPsc((p.value.items ?? []) as PscItem[]);
         setPscTotal(p.value.total_results ?? 0);
       }
+      setFilingsLoading(false);
       setLoading(false);
     })();
 
     return () => { cancelled = true; };
   }, [companyNumber]);
+
+  const onSelectCategory = async (key: string) => {
+    if (key === filingCategory || filingsLoading) return;
+    setFilingCategory(key);
+    setFilingsLoading(true);
+    try {
+      await fetchFilings(key, 0, false);
+    } finally {
+      setFilingsLoading(false);
+    }
+  };
+
+  const onLoadMore = async () => {
+    setLoadingMore(true);
+    try {
+      await fetchFilings(filingCategory, filings.length, true);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  // Group filings by year for a timeline feel
+  const filingsByYear: Array<[string, FilingItem[]]> = (() => {
+    const map = new Map<string, FilingItem[]>();
+    for (const f of filings) {
+      const year = f.date ? String(new Date(f.date).getFullYear()) : 'Undated';
+      if (!map.has(year)) map.set(year, []);
+      map.get(year)!.push(f);
+    }
+    return Array.from(map.entries());
+  })();
 
   return (
     <>
