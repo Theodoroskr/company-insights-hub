@@ -1,3 +1,5 @@
+import { getCountryPricing } from '../lib/pricing';
+const CY = getCountryPricing('cy');
 // ============================================================
 // Cyprus Certificate Catalog — structured by entity type
 // ============================================================
@@ -30,7 +32,7 @@ export interface BundleDefinition {
   entityType: EntityType;
 }
 
-const PRICE = 40;
+const PRICE = CY.certificateFee;
 const DELIVERY = 'Next working day';
 const SOURCE = 'Official certified document from the Cyprus Registrar';
 
@@ -335,8 +337,6 @@ export function getAllCertificatesForEntity(entityType: EntityType): Certificate
 }
 
 // Derived from the single pricing source (src/lib/pricing.ts)
-import { getCountryPricing } from '../lib/pricing';
-const CY = getCountryPricing('cy');
 export const APOSTILLE_PRICE = CY.apostille;
 export const CERTIFIED_TRANSLATION_PRICE = CY.certifiedTranslation;
 export const URGENT_DELIVERY_PRICE = CY.urgentDeliveryPerCert;
