@@ -69,10 +69,11 @@ export function getTenantHero(
 
   if (slug === 'cy') {
     return {
-      badge: 'Official Cyprus Registry Data · Instant Reports',
+      badge: 'Cyprus Company Intelligence · Instant Reports',
       h1: 'Search and Verify Cyprus Companies',
       subtitle:
-        'Instant access to the Cyprus Companies Registry — structure and credit reports, KYB intelligence and official certificates, delivered online.',
+        'Instant intelligence on Cyprus companies — structure and credit reports, KYB intelligence and official certificates, delivered online.',
+
       productLandingHeroH1: 'Company Insights in Cyprus',
       productLandingHeroSubtitle:
         'Explore comprehensive company structure and ownership information in Cyprus. Ensure invoicing accuracy and secure your business future.',
@@ -92,7 +93,8 @@ export function getTenantHero(
       badge: 'Greek Company Intelligence · Pay-Per-Report',
       h1: 'Search and Verify Greece Companies',
       subtitle:
-        'Company reports on Greek businesses — ownership, structure, credit and compliance intelligence sourced from the GEMI registry and international data providers.',
+        'Company reports on Greek businesses — ownership, structure, credit and compliance intelligence for companies across Greece.',
+
       productLandingHeroH1: 'Company Insights in Greece',
       productLandingHeroSubtitle:
         'Explore comprehensive company structure and ownership information in Greece. Ensure invoicing accuracy and secure your business future.',
@@ -108,10 +110,11 @@ export function getTenantHero(
 
   if (slug === 'mt') {
     return {
-      badge: 'Malta Business Registry Data · Instant Reports',
+      badge: 'Malta Company Intelligence · Instant Reports',
       h1: 'Search and Verify Malta Companies',
       subtitle:
-        'Instant company intelligence on Maltese businesses — structure reports, credit checks, KYB and compliance screening from the Malta Business Registry.',
+        'Instant company intelligence on Maltese businesses — structure reports, credit checks, KYB and compliance screening across Malta.',
+
       productLandingHeroH1: 'Company Insights in Malta',
       productLandingHeroSubtitle:
         'Explore comprehensive company structure and ownership information in Malta. Ensure invoicing accuracy and secure your business future.',
@@ -127,10 +130,11 @@ export function getTenantHero(
 
   if (slug === 'ro') {
     return {
-      badge: 'Romanian Company Data · ONRC Registry',
+      badge: 'Romanian Company Intelligence · Instant Reports',
       h1: 'Search and Verify Romania Companies',
       subtitle:
-        'Verify Romanian companies in seconds — structure and credit reports, ownership intelligence and due diligence sourced from the ONRC trade register.',
+        'Verify Romanian companies in seconds — structure and credit reports, ownership intelligence and due diligence for companies across Romania.',
+
       productLandingHeroH1: 'Company Insights in Romania',
       productLandingHeroSubtitle:
         'Explore comprehensive company structure and ownership information in Romania. Ensure invoicing accuracy and secure your business future.',
