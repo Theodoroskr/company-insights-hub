@@ -27,7 +27,7 @@ export default function ReportAdvisorPage() {
   const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
-    supabase.from('products').select('*').eq('is_active', true).then(({ data }) => setProducts((data as Product[]) ?? []));
+    supabase.from('products').select('*').eq('is_active', true).then(({ data }) => setProducts((data as unknown as Product[]) ?? []));
   }, []);
 
   const submit = async (e: React.FormEvent) => {
