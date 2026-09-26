@@ -32,6 +32,8 @@ import { resolveCorporatePscs, type RawPscLike } from '@/lib/companiesHouseUK/co
 import { legalFormToEntityType } from '@/data/cyprusCertificates';
 import { useCertificateCountries, certificatesAvailableFor } from '@/lib/certificateAvailability';
 import type { Company, Product, ProductSpeed, DirectorEntry } from '../types/database';
+import PurchaseStatusBanner, { type PurchaseInfo } from '@/components/company/PurchaseStatusBanner';
+import { reportAccessUntil } from '@/lib/delivery';
 
 // ── Helpers ──────────────────────────────────────────────────
 
@@ -454,6 +456,7 @@ export default function CompanyProfilePage() {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [reportPsc, setReportPsc] = useState<Array<Record<string, unknown>>>([]);
   const [reportBundle, setReportBundle] = useState<Record<string, unknown> | null>(null);
+  const [purchaseInfo, setPurchaseInfo] = useState<PurchaseInfo | null>(null);
   const [unlockedOrderItemId, setUnlockedOrderItemId] = useState<string | null>(null);
   const [hasEnhancedKyb, setHasEnhancedKyb] = useState(false);
   const [screeningPending, setScreeningPending] = useState(false);
@@ -610,18 +613,33 @@ export default function CompanyProfilePage() {
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) {
-        if (!cancelled) setIsUnlocked(false);
+        if (!cancelled) { setIsUnlocked(false); setPurchaseInfo(null); }
         return;
       }
 
-      const { data, error } = await supabase
+      const { data: rawData, error } = await supabase
         .from('order_items')
-        .select('id, fulfillment_status, screening_addon, products:product_id(slug), orders!inner(user_id, status), generated_reports(api4all_raw_json, generated_at)')
+        .select('id, created_at, fulfillment_status, screening_addon, products:product_id(slug), orders!inner(id, order_ref, user_id, status), generated_reports(api4all_raw_json, generated_at, download_expires_at)')
         .eq('company_id', company.id)
         .eq('orders.user_id', session.user.id)
         .in('fulfillment_status', ['completed', 'fulfilled', 'delivered']);
 
       if (cancelled) return;
+      // Access is time-limited: only items whose report access window is still open count.
+      type Row = { id: string; created_at: string; orders?: { id: string; order_ref: string | null } | null; generated_reports?: Array<{ download_expires_at?: string | null }> | null };
+      const now = Date.now();
+      const withAccess = ((rawData ?? []) as unknown as Row[]).map((r) => ({ r, until: reportAccessUntil(r.created_at, r.generated_reports) }));
+      const active = withAccess.filter((x) => x.until && x.until.getTime() > now);
+      const latest = [...withAccess].sort((a, b) => (b.r.created_at ?? '').localeCompare(a.r.created_at ?? ''))[0];
+      const pick = active.sort((a, b) => (b.r.created_at ?? '').localeCompare(a.r.created_at ?? ''))[0] ?? latest;
+      setPurchaseInfo(pick && pick.until ? {
+        orderId: pick.r.orders?.id ?? '',
+        orderRef: pick.r.orders?.order_ref ?? null,
+        purchasedAt: pick.r.created_at,
+        accessUntil: pick.until.toISOString(),
+        expired: active.length === 0,
+      } : null);
+      const data = active.map((x) => x.r) as unknown as typeof rawData;
       const SCREEN_ONLY = ['company-aml-screening', 'aml-screening-with-directors'];
       const allRows = (data ?? []) as unknown as Array<{ products?: { slug?: string } | null }>;
       // Standalone screening unlocks only the Compliance tab, not the report data
@@ -868,6 +886,13 @@ export default function CompanyProfilePage() {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* ── MAIN CONTENT ── */}
           <div className="flex-1 min-w-0 space-y-4">
+
+            {purchaseInfo && (
+              <PurchaseStatusBanner
+                info={purchaseInfo}
+                onReorder={() => (kybProduct ? setKybModalOpen(true) : openStructureModal())}
+              />
+            )}
 
             {/* A — Company Header */}
             <div>

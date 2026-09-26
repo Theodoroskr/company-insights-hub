@@ -214,6 +214,15 @@ export default function AccountOrderDetailPage() {
                         )}
                       </div>
                       <div className="flex items-center gap-2">
+                      {item.report.download_expires_at && new Date(item.report.download_expires_at).getTime() < Date.now() ? (
+                        <Link
+                          to={item.company?.slug ? `/company/${item.company.slug}` : '/'}
+                          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded"
+                          style={{ backgroundColor: 'var(--brand-accent)', color: 'var(--bg-surface, #fff)' }}
+                        >
+                          Order updated report
+                        </Link>
+                      ) : (<>
                       {item.product?.slug !== 'edd-report' && (item.company?.slug || item.id) && (
                         <Link
                           to={item.company?.slug ? `/company/${item.company.slug}` : `/account/reports/${item.id}`}
@@ -237,6 +246,7 @@ export default function AccountOrderDetailPage() {
                         <Download className="w-4 h-4" />
                         Download Report
                       </button>
+                      </>)}
                       </div>
                     </div>
                   )}
