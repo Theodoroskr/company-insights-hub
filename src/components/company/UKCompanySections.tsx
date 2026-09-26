@@ -180,7 +180,32 @@ export default function UKCompanySections({
           UK Filing History
         </SectionTitle>
 
-        {loading ? (
+        {/* Category filter chips */}
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {FILING_CATEGORIES.map((c) => {
+            const active = filingCategory === c.key;
+            return (
+              <button
+                key={c.key}
+                type="button"
+                onClick={() => onSelectCategory(c.key)}
+                className="text-xs px-2.5 py-1 rounded-full border transition-colors"
+                style={{
+                  borderColor: active ? 'var(--brand-accent)' : 'var(--bg-border)',
+                  backgroundColor: active
+                    ? 'color-mix(in srgb, var(--brand-accent) 10%, transparent)'
+                    : 'transparent',
+                  color: active ? 'var(--brand-accent)' : 'var(--text-muted)',
+                  fontWeight: active ? 600 : 400,
+                }}
+              >
+                {c.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {filingsLoading ? (
           <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Loading filings…</p>
         ) : filings.length === 0 ? (
           <p className="text-sm italic" style={{ color: 'var(--text-muted)' }}>No filings on record.</p>
@@ -191,49 +216,81 @@ export default function UKCompanySections({
             ctaLabel="Order Report"
             onCta={onOrderReport}
           >
-            <table className="w-full text-sm">
-              <tbody>
-                {filings.slice(0, 10).map((f, i) => {
-                  const docMeta = f.links?.document_metadata;
-                  // CH document_metadata URLs look like https://document-api.company-information.service.gov.uk/document/{id}
-                  // The public viewer is at https://find-and-update.company-information.service.gov.uk/document/{id}
-                  const docId = docMeta?.split('/document/')[1];
-                  const viewerUrl = docId
-                    ? `https://find-and-update.company-information.service.gov.uk/document/${docId}`
-                    : null;
-                  const label = (f.description ?? f.type ?? '')
-                    .replace(/-/g, ' ')
-                    .replace(/^./, (s) => s.toUpperCase());
-                  return (
-                    <tr key={i} className="border-b last:border-0" style={{ borderColor: 'var(--bg-border)' }}>
-                      <td className="py-2 pr-4" style={{ color: 'var(--text-body)' }}>
-                        {isUnlocked && viewerUrl ? (
-                          <a
-                            href={viewerUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="hover:underline inline-flex items-center gap-1"
-                            style={{ color: 'var(--brand-accent)' }}
-                            title="Open original PDF on Companies House"
-                          >
-                            {label}
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
-                        ) : (
-                          label
-                        )}
-                      </td>
-                      <td className="py-2 pr-4 whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>
-                        {formatDate(f.date)}
-                      </td>
-                      <td className="py-2 text-xs" style={{ color: 'var(--text-muted)' }}>
-                        {f.category ?? ''}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <div className="text-sm">
+              {filingsByYear.map(([year, items]) => (
+                <div key={year}>
+                  <div
+                    className="text-xs font-semibold uppercase tracking-wide mt-4 first:mt-0 mb-1"
+                    style={{ color: 'var(--text-muted)' }}
+                  >
+                    {year}
+                  </div>
+                  {items.map((f, i) => {
+                    const docMeta = f.links?.document_metadata;
+                    // CH document_metadata URLs look like https://document-api.company-information.service.gov.uk/document/{id}
+                    // The public viewer is at https://find-and-update.company-information.service.gov.uk/document/{id}
+                    const docId = docMeta?.split('/document/')[1];
+                    const viewerUrl = docId
+                      ? `https://find-and-update.company-information.service.gov.uk/document/${docId}`
+                      : null;
+                    const label = (f.description ?? f.type ?? '')
+                      .replace(/-/g, ' ')
+                      .replace(/^./, (s) => s.toUpperCase());
+                    return (
+                      <div
+                        key={`${year}-${i}`}
+                        className="flex items-baseline gap-3 py-1.5 border-b last:border-0"
+                        style={{ borderColor: 'var(--bg-border)' }}
+                      >
+                        <span
+                          className="whitespace-nowrap text-xs w-20 shrink-0"
+                          style={{ color: 'var(--text-muted)' }}
+                        >
+                          {formatDate(f.date)}
+                        </span>
+                        <span className="flex-1" style={{ color: 'var(--text-body)' }}>
+                          {isUnlocked && viewerUrl ? (
+                            <a
+                              href={viewerUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="hover:underline inline-flex items-center gap-1"
+                              style={{ color: 'var(--brand-accent)' }}
+                              title="Open original PDF on Companies House"
+                            >
+                              {label}
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          ) : (
+                            label
+                          )}
+                        </span>
+                        <span className="text-xs shrink-0" style={{ color: 'var(--text-muted)' }}>
+                          {f.category ?? ''}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+
+            {filings.length < filingsTotal && (
+              <button
+                type="button"
+                onClick={onLoadMore}
+                disabled={loadingMore}
+                className="mt-3 text-sm font-medium px-4 py-1.5 rounded-md border transition-colors disabled:opacity-50"
+                style={{
+                  borderColor: 'var(--brand-accent)',
+                  color: 'var(--brand-accent)',
+                }}
+              >
+                {loadingMore
+                  ? 'Loading…'
+                  : `Load more (${filings.length} of ${filingsTotal.toLocaleString()})`}
+              </button>
+            )}
           </GatedContent>
         )}
 
