@@ -26,6 +26,7 @@ interface OrderRow {
 
 const STATUS_STYLES: Record<string, { bg: string; color: string; label: string }> = {
   pending:    { bg: '#F1F5F9', color: '#64748B', label: 'Pending' },
+  paid:       { bg: '#DBEAFE', color: '#1D4ED8', label: 'Paid' },
   processing: { bg: '#DBEAFE', color: '#1D4ED8', label: 'Processing' },
   completed:  { bg: '#DCFCE7', color: '#16A34A', label: 'Completed' },
   cancelled:  { bg: '#FEE2E2', color: '#DC2626', label: 'Cancelled' },
