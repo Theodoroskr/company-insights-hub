@@ -17,10 +17,7 @@ import type { ProductContent, TabDef } from '../data/productContent';
 // Per business decision: 19% only on Cyprus, 0% everywhere else
 // (Cyprus entity invoices all customers, but cross-border B2C/EU rules
 // are handled outside the storefront for now).
-export function getVatRate(tenantSlug?: string | null): number {
-  if (tenantSlug === 'cy') return 0.19;
-  return 0;
-}
+export { getVatRate } from './pricing';
 
 // ── Country names per tenant slug ─────────────────────────────
 const COUNTRY_NAMES: Record<string, { name: string; adjective: string }> = {

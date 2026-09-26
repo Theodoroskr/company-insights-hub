@@ -81,13 +81,8 @@ export function priceProduct(
   const base = Number(product.base_price) + Number(speed?.price_delta ?? 0);
   const serviceFee = Number(product.service_fee ?? 0);
   const net = base + serviceFee;
-  return withVat(base, serviceFee, product, vatRate);
-
-  function withVat(b: number, f: number, p: PricedProduct, rate: number): LinePrice {
-    const taxable = p.vat_on_fee_only ? f : p.vat_on_full_price === false ? 0 : net;
-    const vat = round2(taxable * rate);
-    return { base: round2(b), serviceFee: round2(f), net: round2(net), vat, total: round2(net + vat) };
-  }
+  const vat = vatForNet(product, net, vatRate);
+  return { base: round2(base), serviceFee: round2(serviceFee), net: round2(net), vat, total: round2(net + vat) };
 }
 
 /** VAT on an arbitrary net amount (e.g. upgrade price overrides) using the product's VAT rule. */
