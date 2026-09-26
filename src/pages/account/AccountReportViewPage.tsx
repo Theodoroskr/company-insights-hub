@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { ArrowLeft, Printer } from 'lucide-react';
 import AccountLayout from '../../components/layout/AccountLayout';
+import UKComplianceScreeningPanel from '../../components/company/UKComplianceScreeningPanel';
 import { supabase } from '../../lib/supabase';
 
 /** Reports that are delivered only as analyst documents, never shown online. */
@@ -89,22 +90,23 @@ function Section({ title, value }: { title: string; value: unknown }) {
 
 export default function AccountReportViewPage() {
   const { itemId } = useParams<{ itemId: string }>();
-  const [state, setState] = useState<{ loading: boolean; error?: string; title?: string; company?: string; orderId?: string; data?: Record<string, unknown>; generated?: string | null }>({ loading: true });
+  const [state, setState] = useState<{ loading: boolean; error?: string; title?: string; company?: string; orderId?: string; data?: Record<string, unknown>; generated?: string | null; screening?: boolean }>({ loading: true });
 
   useEffect(() => {
     if (!itemId) return;
     (async () => {
       const { data, error } = await supabase
         .from('order_items')
-        .select('id, order_id, products ( name, slug ), companies ( name ), generated_reports ( api4all_raw_json, generated_at )')
+        .select('id, order_id, screening_addon, products ( name, slug ), companies ( name ), generated_reports ( api4all_raw_json, generated_at )')
         .eq('id', itemId)
         .maybeSingle();
       const i = data as any;
       if (error || !i) return setState({ loading: false, error: 'Report not found.' });
       if (OFFLINE_ONLY_SLUGS.includes(i.products?.slug)) return setState({ loading: false, error: 'This report is delivered as a document only. Please use Download.', orderId: i.order_id });
+      const screening = i.screening_addon === true || i.products?.slug === 'enhanced-uk-kyb-report';
       const rep = [...(i.generated_reports ?? [])].sort((a: any, b: any) => (b.generated_at ?? '').localeCompare(a.generated_at ?? ''))[0];
       if (!rep?.api4all_raw_json) return setState({ loading: false, error: 'This report is not ready yet.', orderId: i.order_id });
-      setState({ loading: false, title: i.products?.name, company: i.companies?.name, orderId: i.order_id, data: rep.api4all_raw_json, generated: rep.generated_at });
+      setState({ loading: false, title: i.products?.name, company: i.companies?.name, orderId: i.order_id, data: rep.api4all_raw_json, generated: rep.generated_at, screening });
     })();
   }, [itemId]);
 
@@ -137,7 +139,13 @@ export default function AccountReportViewPage() {
           </div>
           {Object.keys(topFields).length > 0 && <Section title="Summary" value={topFields} />}
           {sections.map(([k, v]) => <Section key={k} title={label(k)} value={v} />)}
+          {state.screening && itemId && (
+            <div className="mb-4 break-inside-avoid">
+              <UKComplianceScreeningPanel orderItemId={itemId} isEnhanced />
+            </div>
+          )}
         </>
+
       )}
     </AccountLayout>
   );
