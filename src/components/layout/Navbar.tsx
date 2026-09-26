@@ -456,6 +456,16 @@ export default function Navbar() {
               </Link>
 
               <Link
+                to="/report-advisor"
+                className="px-3 py-2 text-sm font-medium rounded transition-colors"
+                style={{ color: 'var(--text-body)' }}
+                onMouseOver={(e) => (e.currentTarget.style.color = 'var(--brand-accent)')}
+                onMouseOut={(e) => (e.currentTarget.style.color = 'var(--text-body)')}
+              >
+                Which report?
+              </Link>
+
+              <Link
                 to="/about"
                 className="px-3 py-2 text-sm font-medium rounded transition-colors"
                 style={{ color: 'var(--text-body)' }}
@@ -745,6 +755,7 @@ function MobileMenu({
             { to: '/', label: 'Home' },
             { to: '/company/search', label: 'Search Companies' },
             { to: '/pricing', label: 'Pricing' },
+            { to: '/report-advisor', label: 'Which report?' },
           ].map(({ to, label }) => (
             <Link
               key={to}

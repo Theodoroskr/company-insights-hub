@@ -22,6 +22,7 @@ import CompanySetUpPage from "./pages/CompanySetUpPage";
 import BusinessNameApprovalPage from "./pages/BusinessNameApprovalPage";
 import PricingPage from "./pages/PricingPage";
 import CertificatesPage from "./pages/CertificatesPage";
+import ReportAdvisorPage from "./pages/ReportAdvisorPage";
 import CartPage from "./pages/CartPage";
 import CheckoutDetailsPage from "./pages/CheckoutDetailsPage";
 import CheckoutPaymentPage from "./pages/CheckoutPaymentPage";
@@ -92,6 +93,7 @@ const App = () => (
               <Route path="/terms" element={<TermsPage />} />
               <Route path="/privacy" element={<PrivacyPage />} />
               <Route path="/pricing" element={<PricingPage />} />
+              <Route path="/report-advisor" element={<ReportAdvisorPage />} />
               <Route path="/certificates" element={<CertificatesPage />} />
 
               {/* ── Cart & Checkout ── */}
