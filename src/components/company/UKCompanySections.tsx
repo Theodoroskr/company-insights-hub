@@ -15,7 +15,6 @@ interface FilingItem {
   category?: string;
   description?: string;
   date?: string;
-  links?: { document_metadata?: string };
 }
 
 interface ChargeItem {
