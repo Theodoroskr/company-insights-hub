@@ -244,16 +244,6 @@ export default function OrderReportModal({
     setJustAdded(true);
   };
 
-  const handleContinueShopping = () => {
-    setJustAdded(false);
-    setSelectedProduct(null);
-    setSelectedCertIds(new Set());
-    setSelectedCompany(preselectedCompany ?? null);
-    setComment('');
-    setAddScreening(false);
-    setEligibleUpgrade(null);
-  };
-
   const handleGoToSearch = () => {
     onClose();
     navigate('/company/search');
