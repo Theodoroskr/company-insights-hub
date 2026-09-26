@@ -44,7 +44,7 @@ async function appendDisclaimerPage(pdfBytes: Uint8Array, disclaimer: string): P
   const page = doc.addPage([595.28, 841.89]);
   const margin = 56;
   const maxWidth = page.getWidth() - margin * 2;
-  let y = 140;
+  let y = page.getHeight() - margin;
 
   page.drawText('Disclaimer', { x: margin, y, size: 14, font: bold, color: rgb(0.1, 0.1, 0.15) });
   y -= 30;
