@@ -110,6 +110,8 @@ export default function CartPage() {
   const {
     items,
     certificateOrders,
+    bundleOrders,
+    removeBundle,
     removeItem,
     removeCertificateOrder,
     updateSpeed,
@@ -183,6 +185,31 @@ export default function CartPage() {
           <div className="flex flex-col lg:flex-row gap-6">
             {/* ── Left: cart items ── */}
             <div className="flex-1 min-w-0">
+              {/* Credit bundles */}
+              {bundleOrders.map((b) => (
+                <div key={b.id} className="py-5 border-b" style={{ borderColor: 'var(--bg-border)' }}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-semibold" style={{ color: 'var(--text-heading)' }}>
+                        💳 {b.name} credit bundle
+                      </p>
+                      <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                        {format(b.pay)} + {format(b.bonus)} bonus = {format(b.pay + b.bonus)} account credit · valid on every country site
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => removeBundle(b.id)}
+                      className="shrink-0 p-1 rounded hover:bg-red-50 transition-colors"
+                      style={{ color: 'var(--text-muted)' }}
+                      aria-label="Remove bundle"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <p className="mt-2 font-bold text-base" style={{ color: 'var(--text-heading)' }}>{format(b.pay)}</p>
+                </div>
+              ))}
+
               {/* Certificate orders */}
               {certificateOrders.map((order) => (
                 <CertOrderBlock
