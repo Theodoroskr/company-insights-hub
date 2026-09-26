@@ -143,7 +143,7 @@ export default function CompanyChangeTimeline({ company, isUnlocked, onUnlockCli
           <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
             {realEvents.length > 0
               ? `${realEvents.length} monitored change${realEvents.length > 1 ? 's' : ''} · synthetic baseline below`
-              : 'Synthetic timeline · subscribe to monitoring for live change detection'}
+              : 'Baseline timeline built from registry data'}
           </p>
         </div>
         {!isUnlocked && (
@@ -223,21 +223,6 @@ export default function CompanyChangeTimeline({ company, isUnlocked, onUnlockCli
           </ol>
         )}
 
-        {realEvents.length === 0 && (
-          <div
-            className="mt-4 px-3 py-2.5 rounded-lg text-xs flex items-center justify-between gap-3"
-            style={{ background: 'var(--bg-subtle)', border: '1px solid var(--bg-border)', color: 'var(--text-muted)' }}
-          >
-            <span>Want real-time alerts when registry data changes?</span>
-            <button
-              onClick={onUnlockClick}
-              className="font-semibold hover:underline"
-              style={{ color: 'var(--brand-accent)' }}
-            >
-              Subscribe to monitoring →
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );
