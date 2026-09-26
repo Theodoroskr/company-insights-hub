@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, Navigate, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { ArrowLeft, Printer } from 'lucide-react';
 import AccountLayout from '../../components/layout/AccountLayout';
@@ -94,6 +94,7 @@ function Section({ title, value }: { title: string; value: unknown }) {
 export default function AccountReportViewPage() {
   const { itemId } = useParams<{ itemId: string }>();
   const { tenant } = useTenant();
+  const [redirect, setRedirect] = useState<string | null>(null);
   const [state, setState] = useState<{ loading: boolean; error?: string; title?: string; company?: string; orderId?: string; orderRef?: string | null; data?: Record<string, unknown>; generated?: string | null; screening?: boolean }>({ loading: true });
 
   useEffect(() => {
@@ -101,18 +102,22 @@ export default function AccountReportViewPage() {
     (async () => {
       const { data, error } = await supabase
         .from('order_items')
-        .select('id, order_id, screening_addon, products ( name, slug ), companies ( name ), orders ( order_ref ), generated_reports ( api4all_raw_json, generated_at )')
+        .select('id, order_id, screening_addon, products ( name, slug ), companies ( name, slug ), orders ( order_ref ), generated_reports ( api4all_raw_json, generated_at )')
         .eq('id', itemId)
         .maybeSingle();
       const i = data as any;
       if (error || !i) return setState({ loading: false, error: 'Report not found.' });
       if (OFFLINE_ONLY_SLUGS.includes(i.products?.slug)) return setState({ loading: false, error: 'This report is delivered as a document only. Please use Download.', orderId: i.order_id });
+      // The interactive company dossier replaces this simplified document view.
+      if (i.companies?.slug) return setRedirect(`/company/${i.companies.slug}`);
       const screening = i.screening_addon === true || ['enhanced-uk-kyb-report','company-aml-screening','aml-screening-with-directors'].includes(i.products?.slug ?? '');
       const rep = [...(i.generated_reports ?? [])].sort((a: any, b: any) => (b.generated_at ?? '').localeCompare(a.generated_at ?? ''))[0];
       if (!rep?.api4all_raw_json) return setState({ loading: false, error: 'This report is not ready yet.', orderId: i.order_id });
       setState({ loading: false, title: i.products?.name, company: i.companies?.name, orderId: i.order_id, orderRef: i.orders?.order_ref ?? null, data: rep.api4all_raw_json, generated: rep.generated_at, screening });
     })();
   }, [itemId]);
+
+  if (redirect) return <Navigate to={redirect} replace />;
 
   const data = state.data ?? {};
   const topFields = Object.fromEntries(Object.entries(data).filter(([, v]) => !Array.isArray(v) && !isPlain(v)));

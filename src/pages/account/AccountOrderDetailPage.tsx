@@ -214,9 +214,9 @@ export default function AccountOrderDetailPage() {
                         )}
                       </div>
                       <div className="flex items-center gap-2">
-                      {item.product?.slug !== 'edd-report' && (
+                      {item.product?.slug !== 'edd-report' && (item.company?.slug || item.id) && (
                         <Link
-                          to={`/account/reports/${item.id}`}
+                          to={item.company?.slug ? `/company/${item.company.slug}` : `/account/reports/${item.id}`}
                           className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold border rounded"
                           style={{ borderColor: 'var(--brand-accent)', color: 'var(--brand-accent)' }}
                         >

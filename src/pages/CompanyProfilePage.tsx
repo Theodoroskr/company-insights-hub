@@ -4,7 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { priceProduct, formatEur } from '../lib/pricing';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { Check, ShoppingCart, Lock, ShieldCheck } from 'lucide-react';
+import { Check, ShoppingCart, Lock, ShieldCheck, Printer } from 'lucide-react';
 import PageLayout from '../components/layout/PageLayout';
 import StatusBadge from '../components/ui/StatusBadge';
 import GatedContent from '../components/ui/GatedContent';
@@ -880,6 +880,17 @@ export default function CompanyProfilePage() {
                 </h1>
                 {company.status && <StatusBadge status={company.status} className="text-sm px-3 py-1" />}
                 <SaveCompanyButton companyId={company.id} variant="full" stopPropagation={false} />
+                {isUnlocked && (
+                  <button
+                    type="button"
+                    onClick={() => window.print()}
+                    className="print:hidden inline-flex items-center gap-2 px-3 py-1.5 text-sm font-semibold border rounded-md hover:opacity-90"
+                    style={{ borderColor: 'var(--brand-accent)', color: 'var(--brand-accent)' }}
+                  >
+                    <Printer className="w-4 h-4" />
+                    Print dossier
+                  </button>
+                )}
               </div>
 
               <div
