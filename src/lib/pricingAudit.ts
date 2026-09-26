@@ -56,6 +56,13 @@ export function isOfficialCertificate(p: Pick<Product, 'type' | 'slug'>): boolea
   return p.type === 'certificate' && p.slug.startsWith('certificate_');
 }
 
+/** Cyprus registry certificates follow the fixed €40 + €40, VAT-on-fee rule. */
+export function isCyprusCertificate(p: Pick<Product, 'type' | 'slug'> & { allowed_countries?: string[] | null; country_scope?: string | null }): boolean {
+  if (!isOfficialCertificate(p)) return false;
+  const ac = p.allowed_countries ?? [];
+  return ac.length ? ac.includes('CY') : p.country_scope === 'cy-only';
+}
+
 export function isPack(p: Pick<Product, 'type' | 'slug'>): boolean {
   return p.type === 'certificate' && !p.slug.startsWith('certificate_');
 }
@@ -65,7 +72,8 @@ export function checkServiceFees(products: Product[], pricing: CountryPricing): 
   const out: Finding[] = [];
   for (const p of products) {
     const fee = Number(p.service_fee ?? 0);
-    if (isOfficialCertificate(p)) {
+    if (isOfficialCertificate(p) && !isCyprusCertificate(p)) continue; // other countries: fees set per country
+    if (isCyprusCertificate(p)) {
       if (!eq(fee, pricing.certificateServiceFee)) {
         out.push({
           severity: 'error',
@@ -113,7 +121,7 @@ export function checkVatFlags(products: Product[]): Finding[] {
       });
       continue;
     }
-    if (isOfficialCertificate(p) && !feeOnly) {
+    if (isCyprusCertificate(p) && !feeOnly) {
       out.push({
         severity: 'error',
         kind: 'vat_flags',
@@ -125,7 +133,7 @@ export function checkVatFlags(products: Product[]): Finding[] {
         link: '/admin/products',
       });
     }
-    if (!isOfficialCertificate(p) && feeOnly) {
+    if (!isCyprusCertificate(p) && feeOnly) {
       out.push({
         severity: 'error',
         kind: 'vat_flags',

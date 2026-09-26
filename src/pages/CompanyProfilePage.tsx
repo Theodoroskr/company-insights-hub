@@ -26,6 +26,7 @@ import { useCountries } from '../lib/countries';
 import { useCart } from '../contexts/CartContext';
 import { supabase } from '@/integrations/supabase/client';
 import { legalFormToEntityType } from '@/data/cyprusCertificates';
+import { useCertificateCountries, certificatesAvailableFor } from '@/lib/certificateAvailability';
 import type { Company, Product, ProductSpeed, DirectorEntry } from '../types/database';
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -424,6 +425,7 @@ export default function CompanyProfilePage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { tenant } = useTenant();
+  const certCountries = useCertificateCountries();
   const { countries } = useCountries();
 
   const [company, setCompany] = useState<Company | null>(null);
@@ -696,7 +698,9 @@ export default function CompanyProfilePage() {
 
   const countryInfo = getCountryInfo(company.country_code);
   const reportProducts = products.filter((p) => p.type !== 'monitoring' && p.type !== 'certificate');
-  const certificateProducts = products.filter((p) => p.type === 'certificate');
+  const certificateProducts = certificatesAvailableFor(company?.country_code, certCountries)
+    ? products.filter((p) => p.type === 'certificate')
+    : [];
   const kybProduct = products.find((p) => p.type === 'kyb' || p.slug === 'cyprus-kyb-report');
   const enhancedKybProduct = products.find((p) => p.slug === 'enhanced-uk-kyb-report');
   const structureProduct = products.find((p) => p.slug?.includes('structure') || p.name?.toLowerCase().includes('structure'));
@@ -1395,6 +1399,7 @@ export default function CompanyProfilePage() {
 
               {/* Card — Order Official Certificates (linked to /certificates) */}
               {(() => {
+                if (!certificatesAvailableFor(company.country_code, certCountries) || company.country_code?.toUpperCase() !== 'CY') return null;
                 const entityType = legalFormToEntityType(company.legal_form, company.reg_no);
                 if (!entityType) return null;
                 const params = new URLSearchParams({

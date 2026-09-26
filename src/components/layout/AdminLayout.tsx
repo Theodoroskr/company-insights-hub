@@ -26,6 +26,7 @@ const NAV_ITEMS: { label: string; icon: any; to: string; superAdminOnly?: boolea
   { label: 'Customers',     icon: Users,            to: '/admin/customers' },
   { label: 'Promo Codes',   icon: Tag,              to: '/admin/promo-codes' },
   { label: 'Source Health', icon: Activity,         to: '/admin/source-health' },
+  { label: 'Certificates',  icon: Activity,        to: '/admin/certificates' },
   { label: 'Pricing Health', icon: Activity,        to: '/admin/pricing-health' },
   { label: 'Audit Logs',    icon: ScrollText,       to: '/admin/audit-logs' },
   { label: 'Settings',      icon: Settings,         to: '/admin/settings' },
