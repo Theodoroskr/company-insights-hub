@@ -1,5 +1,6 @@
 import React from 'react';
 import { Building2, FileBarChart, History, MapPin } from 'lucide-react';
+import { describeSicCode } from '../../lib/sicCodes';
 
 interface UKCompanyFactsPanelProps {
   bundle: Record<string, unknown> | null;
@@ -188,7 +189,7 @@ export default function UKCompanyFactsPanel({ bundle }: UKCompanyFactsPanelProps
           </p>
           <div className="space-y-2">
             {sicCodes.map((code) => {
-              const desc = sicDescriptions?.[code];
+              const desc = sicDescriptions?.[code] ?? describeSicCode(code);
               return (
                 <div
                   key={code}
