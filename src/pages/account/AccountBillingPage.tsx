@@ -14,8 +14,7 @@ export default function AccountBillingPage() {
   const [params] = useSearchParams();
   const picked = params.get('bundle');
   const cart: any = useCart();
-  const hasCart = (cart?.items?.length ?? 0) + (cart?.certificateOrders?.length ?? 0) > 0;
-  const [justBought, setJustBought] = useState(false);
+  const hasCart = (cart?.items?.length ?? 0) + (cart?.certificateOrders?.length ?? 0) + (cart?.bundleOrders?.length ?? 0) > 0;
   useEffect(() => {
     if (picked) document.getElementById(`bundle-${picked}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, [picked]);
@@ -73,12 +72,12 @@ export default function AccountBillingPage() {
           </div>
         </div>
 
-        {justBought && (
+        {hasCart && (
           <div className={card + ' flex flex-col sm:flex-row sm:items-center gap-3'} style={{ borderColor: 'var(--brand-accent)' }}>
             <Check className="w-5 h-5" style={{ color: 'var(--status-active)' }} />
-            <p className="flex-1 text-sm">Your credit is ready. At checkout, choose <strong>Pay with account credit</strong> — no card needed.</p>
-            <Link to={hasCart ? '/checkout/details' : '/search'} className="px-4 py-2 rounded text-sm font-semibold text-primary-foreground" style={{ backgroundColor: 'var(--brand-accent)' }}>
-              {hasCart ? 'Continue to checkout' : 'Find a company to order'}
+            <p className="flex-1 text-sm">You have items in your cart. Credit is added to your account as soon as payment completes.</p>
+            <Link to="/cart" className="px-4 py-2 rounded text-sm font-semibold text-primary-foreground" style={{ backgroundColor: 'var(--brand-accent)' }}>
+              Go to cart
             </Link>
           </div>
         )}
