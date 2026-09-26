@@ -290,6 +290,12 @@ export default function CartPage() {
                         );
                       })()}
 
+                      {item.screeningAddon && (
+                        <p className="mt-2 text-xs inline-flex items-center gap-1 font-medium" style={{ color: 'var(--brand-accent)' }}>
+                          <ShieldCheck className="w-3 h-3" /> incl. Compliance Screening +{format(SCREENING_ADDON_PRICE_EUR, { decimals: 0 })}
+                        </p>
+                      )}
+
                       <div className="mt-3 flex items-center gap-4 text-sm" style={{ color: 'var(--text-muted)' }}>
                         <span className="font-bold text-base" style={{ color: 'var(--text-heading)' }}>
                           {format(item.price)}
