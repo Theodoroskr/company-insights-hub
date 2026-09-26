@@ -519,6 +519,42 @@ export default function CompanyProfilePage() {
         for (const p of raw!.psc) if (p?.name) namePool.add(p.name.toUpperCase().trim());
       }
 
+      const matches: Array<Company & { _sharedNames?: string[]; _relationship?: string }> = [];
+
+      // 1. Corporate parents / beneficial owners declared as PSC at Companies House
+      if (comp.country_code === 'GB' && comp.reg_no) {
+        try {
+          const pscRes = await companiesHouseUK.psc(comp.reg_no);
+          const corporates = await resolveCorporatePscs(
+            (pscRes.items ?? []) as RawPscLike[],
+            tenant!.id,
+          );
+          const parentIds = corporates.map((c) => c.companyId).filter(Boolean) as string[];
+          if (parentIds.length > 0) {
+            const { data: parentRows } = await supabase
+              .from('companies')
+              .select('id, name, slug, reg_no, status, country_code, icg_code, directors_json, raw_source_json, tenant_id, vat_no, legal_form, registered_address, cached_at, meta_title, meta_description')
+              .in('id', parentIds);
+            for (const row of (parentRows ?? []) as unknown as Company[]) {
+              const entry = corporates.find((c) => c.companyId === row.id);
+              const control = (entry?.naturesOfControl ?? [])
+                .slice(0, 1)
+                .map((n) => n.replace(/-/g, ' '))
+                .join('');
+              matches.push({
+                ...row,
+                _relationship: control
+                  ? `Corporate parent / beneficial owner · ${control}`
+                  : 'Corporate parent / beneficial owner',
+              });
+            }
+          }
+        } catch {
+          // Registry lookup is best-effort; name matching below still applies
+        }
+      }
+
+      // 2. Companies sharing directors, officers or beneficial owners
       if (namePool.size > 0) {
         // Pull a generous candidate set from the same tenant (cached_at desc)
         const { data: affData } = await supabase
@@ -531,8 +567,8 @@ export default function CompanyProfilePage() {
           .limit(300);
 
         if (affData) {
-          const matches: Array<Company & { _sharedNames?: string[] }> = [];
           for (const c of affData as unknown as Company[]) {
+            if (matches.some((m) => m.id === c.id)) continue;
             const theirNames = new Set<string>();
             const theirDirectors: DirectorEntry[] = Array.isArray(c.directors_json) ? c.directors_json : [];
             for (const d of theirDirectors) if (d?.name) theirNames.add(d.name.toUpperCase().trim());
@@ -549,11 +585,10 @@ export default function CompanyProfilePage() {
               matches.push({ ...c, _sharedNames: shared });
             }
           }
-          setAffiliated(matches.slice(0, 25));
         }
-      } else {
-        setAffiliated([]);
       }
+
+      setAffiliated(matches.slice(0, 25));
 
       setIsLoading(false);
     }
