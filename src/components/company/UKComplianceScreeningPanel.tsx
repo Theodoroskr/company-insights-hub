@@ -127,7 +127,7 @@ export default function UKComplianceScreeningPanel({ orderItemId, isEnhanced, on
               Compliance Screening
             </h2>
             <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
-              Sanctions · PEP · Adverse Media — Powered by WorldAML
+              Sanctions · Politically Exposed Persons · Regulatory Enforcements
             </p>
           </div>
         </div>
@@ -135,7 +135,7 @@ export default function UKComplianceScreeningPanel({ orderItemId, isEnhanced, on
           className="rounded-md border p-4 grid grid-cols-3 gap-3 mb-4"
           style={{ borderColor: 'var(--bg-border)', backgroundColor: 'var(--bg-subtle)' }}
         >
-          {(['Sanctions', 'PEP', 'Adverse Media'] as const).map((label) => (
+          {(['Sanctions', 'PEP', 'Enforcements'] as const).map((label) => (
             <div key={label} className="text-center">
               <div className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>
                 {label}
@@ -147,8 +147,8 @@ export default function UKComplianceScreeningPanel({ orderItemId, isEnhanced, on
           ))}
         </div>
         <p className="text-sm mb-3" style={{ color: 'var(--text-body)' }}>
-          Upgrade to <strong>UK Company Report + AML &amp; Compliance</strong> to screen the company, all officers and PSCs against
-          global sanctions lists, PEPs and adverse media.
+          Add <strong>AML &amp; Compliance screening</strong> to screen the company, all officers and persons with significant
+          control against global sanctions lists, PEP databases and regulatory enforcement records. One-time charge.
         </p>
         <button
           onClick={onUpgrade}
