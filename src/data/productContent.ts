@@ -372,6 +372,7 @@ export const PRODUCT_TABS: TabDef[] = [
   { slug: 'industry',                  label: 'Industry Analysis Report',             content: industry },
   { slug: 'global-structure-report',   label: 'Global Structure Report',              content: globalStructure },
   { slug: 'global-credit-report',      label: 'Global Credit Report',                 content: globalCredit },
+  { slug: 'edd-report',                label: 'EDD Report',                           content: eddReport },
   // Backwards-compat: old URL still resolves to the renamed product
   { slug: 'global-kyb-report',         label: 'Global Credit Report',                 content: globalCredit },
 ];
