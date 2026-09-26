@@ -14,9 +14,11 @@ import {
   Menu,
   X,
   Globe,
+  Shield,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/lib/tenant';
+import { useMyAccess } from '@/lib/permissions';
 
 const NAV_ITEMS: { label: string; icon: any; to: string; section: string }[] = [
   { label: 'Dashboard',     icon: LayoutDashboard, to: '/admin',                 section: 'dashboard' },
