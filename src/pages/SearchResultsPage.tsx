@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import type { Company } from '../types/database';
+import { useCertificateCountries, certificatesAvailableFor } from '@/lib/certificateAvailability';
 import {
   legalFormToEntityType,
   getPrimaryCertificatesForEntity,
@@ -35,6 +36,7 @@ const CORE_REGISTRIES = ['gb', 'cy', 'gr', 'mt', 'ro', 'ae'];
 export default function SearchResultsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const certCountries = useCertificateCountries();
   const { tenant } = useTenant();
   const { countries } = useCountries();
 
@@ -374,7 +376,7 @@ export default function SearchResultsPage() {
               <div className="space-y-3">
                   {filtered.map((company) => {
                     // Cyprus registrar certificates only apply to Cyprus companies
-                    const entityType = company.country_code?.toUpperCase() === 'CY'
+                    const entityType = company.country_code?.toUpperCase() === 'CY' && certificatesAvailableFor(company.country_code, certCountries)
                       ? legalFormToEntityType(company.legal_form, company.reg_no)
                       : null;
                     const topCerts = entityType ? getPrimaryCertificatesForEntity(entityType, 3) : [];

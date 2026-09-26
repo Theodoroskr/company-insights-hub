@@ -44,6 +44,8 @@ const officialCert = (over: Partial<Product> = {}) =>
     slug: 'certificate_incorporation',
     name: 'Certificate of Incorporation',
     type: 'certificate',
+    country_scope: 'cy-only',
+    allowed_countries: ['CY'],
     base_price: 40,
     service_fee: 40,
     vat_on_full_price: false,
@@ -63,6 +65,14 @@ describe('pricing audit — service fees', () => {
   it('flags a report that wrongly carries a service fee', () => {
     const f = checkServiceFees([product({ service_fee: 15 })], cy);
     expect(f[0]).toMatchObject({ kind: 'service_fee', expected: '€0.00', actual: '€15.00' });
+  });
+});
+
+describe('pricing audit — non-Cyprus certificates', () => {
+  it('does not force the Cyprus €40 fee on other countries', () => {
+    const uk = officialCert({ slug: 'certificate_uk_good_standing', allowed_countries: ['GB'], country_scope: 'uk-only', service_fee: 25, vat_on_fee_only: false, vat_on_full_price: true });
+    expect(checkServiceFees([uk], cy)).toHaveLength(0);
+    expect(checkVatFlags([uk])).toHaveLength(0);
   });
 });
 
