@@ -1139,18 +1139,21 @@ export type Database = {
         Row: {
           balance_eur: number
           created_at: string
+          expires_at: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           balance_eur?: number
           created_at?: string
+          expires_at?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           balance_eur?: number
           created_at?: string
+          expires_at?: string | null
           updated_at?: string
           user_id?: string
         }
