@@ -46,8 +46,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const navigate = useNavigate();
   const { tenant } = useTenant();
   const [adminName, setAdminName] = useState('');
-  const [adminRole, setAdminRole] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const { can, loading: accessLoading } = useMyAccess();
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
@@ -58,12 +58,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           .eq('id', data.session.user.id)
           .maybeSingle();
         setAdminName(profile?.full_name || profile?.email || 'Admin');
-        setAdminRole(profile?.role || '');
       }
     });
   }, []);
 
-  const visibleNav = NAV_ITEMS.filter(item => !item.superAdminOnly || adminRole === 'super_admin');
+  const visibleNav = accessLoading ? [] : NAV_ITEMS.filter(item => can(item.section));
+
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
