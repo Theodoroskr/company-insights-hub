@@ -78,7 +78,7 @@ const App = () => (
               {/* ── Public ── */}
               <Route path="/" element={<HomePage />} />
               <Route path="/company/search" element={<SearchResultsPage />} />
-              <Route path="/search" element={<Navigate to="/company/search" replace />} />
+              <Route path="/search" element={<SearchResultsPage />} />
               <Route path="/report" element={<ProductLandingPage />} />
               <Route path="/company-set-up" element={<CompanySetUpPage />} />
               <Route path="/business-name-approval" element={<BusinessNameApprovalPage />} />
