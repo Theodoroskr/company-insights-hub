@@ -43,7 +43,7 @@ export default function AccountProfilePage() {
       setEmail(session.user.email ?? '');
 
       const [{ data: profile }, { data: countriesData }] = await Promise.all([
-        supabase.from('profiles').select('full_name, phone').eq('id', session.user.id).maybeSingle(),
+        supabase.from('profiles').select('full_name, phone, country, vat_no, company_details').eq('id', session.user.id).maybeSingle(),
         supabase.from('countries').select('code, name, flag_emoji').order('name', { ascending: true }),
       ]);
 
@@ -52,6 +52,14 @@ export default function AccountProfilePage() {
         setFirstName(parts[0] ?? '');
         setLastName(parts.slice(1).join(' '));
         setPhone(profile.phone ?? '');
+        setCountry(profile.country ?? '');
+        setVat(profile.vat_no ?? '');
+        const cd = (profile.company_details ?? {}) as { name?: string; reg?: string; vat?: string; country?: string };
+        setCompanyName(cd.name ?? '');
+        setCompanyReg(cd.reg ?? '');
+        setCompanyVat(cd.vat ?? '');
+        setCompanyCountry(cd.country ?? '');
+        if (cd.name || cd.reg || cd.vat || cd.country) setShowCompany(true);
       }
       setCountries((countriesData as Country[]) ?? []);
       setLoading(false);
@@ -66,7 +74,7 @@ export default function AccountProfilePage() {
     const fullName = `${firstName} ${lastName}`.trim();
     const { error } = await supabase
       .from('profiles')
-      .update({ full_name: fullName, phone })
+      .update({ full_name: fullName, phone, country: country || null, vat_no: vat || null })
       .eq('id', userId);
     setSaving(false);
     if (error) {
@@ -78,11 +86,25 @@ export default function AccountProfilePage() {
 
   async function handleSaveCompany(e: React.FormEvent) {
     e.preventDefault();
+    if (!userId) return;
     setSavingCompany(true);
-    // Company info stored in profile notes / metadata — for now just show success
-    await new Promise((r) => setTimeout(r, 600));
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        company_details: {
+          name: companyName || null,
+          reg: companyReg || null,
+          vat: companyVat || null,
+          country: companyCountry || null,
+        },
+      })
+      .eq('id', userId);
     setSavingCompany(false);
-    toast({ title: 'Company details saved' });
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Company details saved' });
+    }
   }
 
   if (loading) {
