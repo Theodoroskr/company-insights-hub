@@ -454,6 +454,7 @@ export default function CompanyProfilePage() {
   const [reportBundle, setReportBundle] = useState<Record<string, unknown> | null>(null);
   const [unlockedOrderItemId, setUnlockedOrderItemId] = useState<string | null>(null);
   const [hasEnhancedKyb, setHasEnhancedKyb] = useState(false);
+  const [screeningPending, setScreeningPending] = useState(false);
   const [profileTab, setProfileTab] = useState<'overview' | 'compliance'>('overview');
 
   const getCountryInfo = (code: string) => {
@@ -638,6 +639,27 @@ export default function CompanyProfilePage() {
     return () => {
       cancelled = true;
     };
+  }, [company?.id]);
+
+  // Paid screening (add-on or AML report) whose report is still being prepared
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!company?.id) return;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+      const { data } = await supabase
+        .from('order_items')
+        .select('id, screening_addon, products:product_id(slug), orders!inner(user_id, status)')
+        .eq('company_id', company.id)
+        .eq('orders.user_id', session.user.id)
+        .in('orders.status', ['paid', 'processing'])
+        .not('fulfillment_status', 'in', '(completed,fulfilled,delivered,failed,cancelled)');
+      if (cancelled) return;
+      const rows = (data ?? []) as unknown as Array<{ screening_addon?: boolean; products?: { slug?: string } | null }>;
+      setScreeningPending(rows.some((r) => r.screening_addon || r.products?.slug === 'enhanced-uk-kyb-report'));
+    })();
+    return () => { cancelled = true; };
   }, [company?.id]);
 
   const handleFreshDataRequest = async () => {
@@ -1281,7 +1303,19 @@ export default function CompanyProfilePage() {
 
             </>
             ) : (
-              isUnlocked && unlockedOrderItemId ? (
+              screeningPending && !hasEnhancedKyb ? (
+                <SectionCard>
+                  <div className="text-center py-8">
+                    <p className="text-3xl mb-3">⏳</p>
+                    <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-heading)' }}>
+                      AML &amp; Compliance screening purchased
+                    </h3>
+                    <p className="text-sm max-w-md mx-auto" style={{ color: 'var(--text-muted)' }}>
+                      Your screening runs automatically as soon as the report is ready. Results will appear here.
+                    </p>
+                  </div>
+                </SectionCard>
+              ) : isUnlocked && unlockedOrderItemId ? (
                 <UKComplianceScreeningPanel
                   orderItemId={unlockedOrderItemId}
                   isEnhanced={hasEnhancedKyb}

@@ -86,6 +86,24 @@ export default function UKComplianceScreeningPanel({ orderItemId, isEnhanced, on
         if (!cancelled && h) setHits(h as Hit[]);
       }
       setLoading(false);
+      // Paid but never screened (e.g. background trigger failed) → run it now
+      if (!r && !cancelled) {
+        setTriggering(true);
+        try {
+          await supabase.functions.invoke('complyadvantage-screen', { body: { order_item_id: orderItemId } });
+          const { data: r2 } = await supabase
+            .from('screening_results').select('*')
+            .eq('order_item_id', orderItemId)
+            .order('screened_at', { ascending: false }).limit(1).maybeSingle();
+          if (r2 && !cancelled) {
+            setResult(r2 as ScreeningResult);
+            const { data: h2 } = await supabase.from('screening_entity_hits').select('*').eq('screening_result_id', r2.id);
+            if (h2 && !cancelled) setHits(h2 as Hit[]);
+          }
+        } finally {
+          if (!cancelled) setTriggering(false);
+        }
+      }
     }
     load();
     return () => { cancelled = true; };
