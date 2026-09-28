@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,40 +10,28 @@ const API4ALL_BASE = 'https://v3.api4all.io/a4a/3.0/api';
 async function getApi4AllToken(supabase: any): Promise<string> {
   const { data: existingToken } = await supabase
     .from('api4all_tokens')
-    .select('access_token, expires_at')
+    .select('access_token')
     .gt('expires_at', new Date(Date.now() + 5 * 60 * 1000).toISOString())
     .order('created_at', { ascending: false })
     .limit(1)
-    .single();
-
+    .maybeSingle();
   if (existingToken?.access_token) return existingToken.access_token;
 
-  const username = Deno.env.get('API4ALL_USERNAME');
-  const password = Deno.env.get('API4ALL_PASSWORD');
-  const projectCode = Deno.env.get('API4ALL_PROJECT_CODE');
-
-  const tokenRes = await fetch(`${API4ALL_BASE}/token`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password, project_code: projectCode }),
+  const username = Deno.env.get('API4ALL_USERNAME') ?? '';
+  const password = Deno.env.get('API4ALL_PASSWORD') ?? '';
+  const projectCode = Deno.env.get('API4ALL_PROJECT_CODE') ?? '';
+  // Same auth as api4all-proxy: GET /token/{project_code} with Basic auth
+  const tokenRes = await fetch(`${API4ALL_BASE}/token/${encodeURIComponent(projectCode)}`, {
+    headers: { Authorization: `Basic ${btoa(`${username}:${password}`)}`, Accept: 'application/json' },
   });
-
-  if (!tokenRes.ok) throw new Error(`API4All auth failed: ${tokenRes.status}`);
-
+  if (!tokenRes.ok) throw new Error(`API4All auth failed: ${tokenRes.status} ${await tokenRes.text()}`);
   const tokenData = await tokenRes.json();
-  const accessToken = tokenData.access_token;
-
-  const serviceClient = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-  );
-  await serviceClient.from('api4all_tokens').insert({
-    access_token: accessToken,
-    expires_at: new Date(Date.now() + 55 * 60 * 1000).toISOString(),
-    project_code: projectCode ?? null,
+  await supabase.from('api4all_tokens').insert({
+    access_token: tokenData.access_token,
+    expires_at: new Date(Date.now() + ((tokenData.expires_in ?? 3600) - 300) * 1000).toISOString(),
+    project_code: projectCode || null,
   });
-
-  return accessToken;
+  return tokenData.access_token;
 }
 
 // Map product type → API4All report endpoint segment
@@ -82,7 +70,7 @@ Deno.serve(async (req) => {
     const { data: orderItem, error: itemErr } = await supabase
       .from('order_items')
       .select(`
-        id, api4all_order_id, api4all_item_code, order_id, fulfillment_status,
+        id, api4all_order_id, api4all_item_code, order_id, company_id, fulfillment_status,
         products:product_id(type, name, api4all_product_code),
         companies:company_id(icg_code, name, country_code)
       `)
