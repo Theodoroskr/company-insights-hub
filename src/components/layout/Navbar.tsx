@@ -10,6 +10,7 @@ import { useCart } from '../../contexts/CartContext';
 import CurrencySwitcher from './CurrencySwitcher';
 import CountrySwitcher, { CountrySwitcherList } from './CountrySwitcher';
 import BrandMark from './BrandMark';
+import NotificationBell from './NotificationBell';
 import type { Product, Company } from '../../types/database';
 
 // ── Debounce hook ─────────────────────────────────────────────
@@ -477,6 +478,9 @@ export default function Navbar() {
 
               {/* Currency switcher */}
               <CurrencySwitcher />
+
+              {/* Notifications */}
+              <NotificationBell />
 
               {/* Cart icon */}
               <Link
