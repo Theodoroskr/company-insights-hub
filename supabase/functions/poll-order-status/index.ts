@@ -7,30 +7,17 @@ const corsHeaders = {
 
 const API4ALL_BASE = 'https://v3.api4all.io/a4a/3.0/api';
 
-async function getApi4AllToken(supabase: any): Promise<string> {
-  const { data: existingToken } = await supabase
-    .from('api4all_tokens')
-    .select('access_token')
-    .gt('expires_at', new Date(Date.now() + 5 * 60 * 1000).toISOString())
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (existingToken?.access_token) return existingToken.access_token;
-
+async function getApi4AllToken(_supabase: any): Promise<string> {
+  // Always mint a fresh token per run (issuing a new token can invalidate older
+  // ones, so a shared DB cache goes stale). Same auth as api4all-proxy.
+  const clientId = Deno.env.get('API4ALL_CLIENT_ID') ?? 'F25Y0RU2M5';
   const username = Deno.env.get('API4ALL_USERNAME') ?? '';
   const password = Deno.env.get('API4ALL_PASSWORD') ?? '';
-  const projectCode = Deno.env.get('API4ALL_PROJECT_CODE') ?? '';
-  // Same auth as api4all-proxy: GET /token/{project_code} with Basic auth
-  const tokenRes = await fetch(`${API4ALL_BASE}/token/${encodeURIComponent(projectCode)}`, {
+  const tokenRes = await fetch(`${API4ALL_BASE}/token/${clientId}`, {
     headers: { Authorization: `Basic ${btoa(`${username}:${password}`)}`, Accept: 'application/json' },
   });
   if (!tokenRes.ok) throw new Error(`API4All auth failed: ${tokenRes.status} ${await tokenRes.text()}`);
   const tokenData = await tokenRes.json();
-  await supabase.from('api4all_tokens').insert({
-    access_token: tokenData.access_token,
-    expires_at: new Date(Date.now() + ((tokenData.expires_in ?? 3600) - 300) * 1000).toISOString(),
-    project_code: projectCode || null,
-  });
   return tokenData.access_token;
 }
 
