@@ -101,7 +101,9 @@ Deno.serve(async (req) => {
         });
 
         if (!statusRes.ok) {
-          console.error(`Failed to get status for order ${api4allOrderId}: ${statusRes.status}`);
+          const body = await statusRes.text();
+          console.error(`Failed to get status for order ${api4allOrderId}: ${statusRes.status} ${body}`);
+          for (const it of groupItems) results.push({ item_id: it.id, status: `http_${statusRes.status}`, action: body.slice(0, 200) });
           continue;
         }
 
@@ -229,6 +231,7 @@ Deno.serve(async (req) => {
         }
       } catch (orderErr) {
         console.error(`Error checking order ${api4allOrderId}:`, orderErr);
+        results.push({ item_id: api4allOrderId, status: 'error', action: String(orderErr).slice(0, 200) });
       }
     }
 
