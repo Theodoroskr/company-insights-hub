@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,41 +10,44 @@ const API4ALL_BASE = 'https://v3.api4all.io/a4a/3.0/api';
 async function getApi4AllToken(supabase: any): Promise<string> {
   const { data: existingToken } = await supabase
     .from('api4all_tokens')
-    .select('access_token, expires_at')
+    .select('access_token')
     .gt('expires_at', new Date(Date.now() + 5 * 60 * 1000).toISOString())
     .order('created_at', { ascending: false })
     .limit(1)
-    .single();
-
+    .maybeSingle();
   if (existingToken?.access_token) return existingToken.access_token;
 
-  const username = Deno.env.get('API4ALL_USERNAME');
-  const password = Deno.env.get('API4ALL_PASSWORD');
-  const projectCode = Deno.env.get('API4ALL_PROJECT_CODE');
-
-  const tokenRes = await fetch(`${API4ALL_BASE}/token`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password, project_code: projectCode }),
+  const username = Deno.env.get('API4ALL_USERNAME') ?? '';
+  const password = Deno.env.get('API4ALL_PASSWORD') ?? '';
+  const projectCode = Deno.env.get('API4ALL_PROJECT_CODE') ?? '';
+  // Same auth as api4all-proxy: GET /token/{project_code} with Basic auth
+  const tokenRes = await fetch(`${API4ALL_BASE}/token/${encodeURIComponent(projectCode)}`, {
+    headers: { Authorization: `Basic ${btoa(`${username}:${password}`)}`, Accept: 'application/json' },
   });
-
-  if (!tokenRes.ok) throw new Error(`API4All auth failed: ${tokenRes.status}`);
-
+  if (!tokenRes.ok) throw new Error(`API4All auth failed: ${tokenRes.status} ${await tokenRes.text()}`);
   const tokenData = await tokenRes.json();
-  const accessToken = tokenData.access_token;
-
-  const serviceClient = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-  );
-  await serviceClient.from('api4all_tokens').insert({
-    access_token: accessToken,
-    expires_at: new Date(Date.now() + 55 * 60 * 1000).toISOString(),
-    project_code: projectCode ?? null,
+  await supabase.from('api4all_tokens').insert({
+    access_token: tokenData.access_token,
+    expires_at: new Date(Date.now() + ((tokenData.expires_in ?? 3600) - 300) * 1000).toISOString(),
+    project_code: projectCode || null,
   });
-
-  return accessToken;
+  return tokenData.access_token;
 }
+
+/** API4ALL embeds the report as base64 of UTF-16LE JSON. */
+function decodeReport(b64: string): unknown {
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  let text = new TextDecoder('utf-16le').decode(bytes).replace(/^\uFEFF/, '');
+  try { return JSON.parse(text); } catch {
+    text = new TextDecoder('utf-8').decode(bytes);
+    return JSON.parse(text);
+  }
+}
+
+const DONE = new Set(['ready', 'completed', 'delivered']);
+const FAILED = new Set(['failed', 'cancelled', 'canceled', 'rejected']);
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -60,7 +63,7 @@ Deno.serve(async (req) => {
     // Get all order items that need polling
     const { data: items, error } = await supabase
       .from('order_items')
-      .select('id, api4all_order_id, api4all_item_code, order_id, fulfillment_status')
+      .select('id, api4all_order_id, api4all_item_code, order_id, company_id, fulfillment_status, products:product_id(type)')
       .in('fulfillment_status', ['submitted', 'processing'])
       .not('api4all_order_id', 'is', null);
 
@@ -90,7 +93,7 @@ Deno.serve(async (req) => {
 
     for (const [api4allOrderId, groupItems] of orderGroups) {
       try {
-        const statusRes = await fetch(`${API4ALL_BASE}/order/id/${api4allOrderId}`, {
+        const statusRes = await fetch(`${API4ALL_BASE}/orders/id/${api4allOrderId}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -103,33 +106,60 @@ Deno.serve(async (req) => {
         }
 
         const statusData = await statusRes.json();
-        const apiOrderStatus: string = statusData.status ?? statusData.orders?.[0]?.status ?? '';
-        const apiItems: Array<{ id: number; status: string; report_url?: string }> =
-          statusData.items ?? statusData.orders?.[0]?.items ?? [];
+        const apiOrder = statusData.orders?.[0] ?? statusData;
+        const apiOrderStatus: string = String(apiOrder?.status ?? '');
+        const apiItems: Array<{ id: string | number; reference?: string; status?: string; report?: string }> =
+          Array.isArray(apiOrder?.details) ? apiOrder.details : Array.isArray(apiOrder?.items) ? apiOrder.items : [];
 
         for (const item of groupItems) {
-          // Find matching item in response
-          const apiItem = apiItems.find((ai) => String(ai.id) === item.api4all_item_code);
-          const itemStatus = apiItem?.status ?? apiOrderStatus;
+          const apiItem = apiItems.find((ai) => String(ai.id) === item.api4all_item_code || ai.reference === item.id);
+          const itemStatus = String(apiItem?.status ?? apiOrderStatus);
+          const st = itemStatus.toLowerCase();
 
-          if (itemStatus === 'Completed') {
-            // Trigger fetch-report
-            await supabase
-              .from('order_items')
-              .update({ fulfillment_status: 'completed_api' })
-              .eq('id', item.id);
-
-            // Call fetch-report function
-            const fetchReportUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/fetch-report`;
-            await fetch(fetchReportUrl, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ order_item_id: item.id }),
-            });
-
+          if (DONE.has(st)) {
+            let stored = false;
+            if (apiItem?.report) {
+              try {
+                const reportJson = decodeReport(apiItem.report);
+                const { data: existing } = await supabase
+                  .from('generated_reports').select('id').eq('order_item_id', item.id).maybeSingle();
+                if (!existing) {
+                  const { error: insErr } = await supabase.from('generated_reports').insert({
+                    order_item_id: item.id,
+                    company_id: (item as any).company_id ?? null,
+                    report_type: (item as any).products?.type ?? 'structure',
+                    api4all_raw_json: reportJson,
+                    download_token: crypto.randomUUID(),
+                    download_expires_at: new Date(Date.now() + 30 * 86400000).toISOString(),
+                    generated_at: new Date().toISOString(),
+                    version: 1,
+                  });
+                  if (insErr) throw insErr;
+                }
+                await supabase.from('order_items').update({ fulfillment_status: 'completed' }).eq('id', item.id);
+                stored = true;
+              } catch (e) {
+                console.error(`[poll] could not store embedded report for ${item.id}:`, e);
+              }
+            }
+            if (!stored) {
+              await supabase.from('order_items').update({ fulfillment_status: 'completed_api' }).eq('id', item.id);
+              await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/fetch-report`, {
+                method: 'POST',
+                headers: {
+                  Authorization: `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ order_item_id: item.id }),
+              });
+            }
+            // Close the parent order when every item is done
+            const { data: siblings } = await supabase
+              .from('order_items').select('fulfillment_status').eq('order_id', item.order_id);
+            if (siblings?.every((i: any) => ['completed', 'failed'].includes(i.fulfillment_status))) {
+              const anyFail = siblings.some((i: any) => i.fulfillment_status === 'failed');
+              await supabase.from('orders').update({ status: anyFail ? 'partial' : 'completed' }).eq('id', item.order_id);
+            }
             // If the customer added the screening add-on, trigger ComplyAdvantage
             // (fire-and-forget — fetch-report has already saved the bundle)
             try {
@@ -164,7 +194,7 @@ Deno.serve(async (req) => {
               .eq('order_item_id', item.id)
               .eq('type', 'poll_status');
 
-          } else if (itemStatus === 'Failed' || itemStatus === 'Cancelled') {
+          } else if (FAILED.has(st)) {
             await supabase
               .from('order_items')
               .update({ fulfillment_status: 'failed' })
