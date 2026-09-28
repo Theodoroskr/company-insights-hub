@@ -231,6 +231,15 @@ Deno.serve(async (req) => {
               console.error('[poll] screening lookup failed:', e);
             }
 
+            // Notify the customer: in-app + email
+            await notifyCustomer(supabase, (item as any).orders?.user_id, {
+              orderItemId: item.id,
+              orderId: item.order_id,
+              companyName: (item as any).companies?.name ?? 'your company',
+              productName: (item as any).products?.name ?? 'Report',
+              failed: false,
+            });
+
             results.push({ item_id: item.id, status: itemStatus, action: 'fetch_report_triggered' });
 
             // Update fulfillment task
@@ -251,6 +260,15 @@ Deno.serve(async (req) => {
               .update({ status: 'failed', last_attempt_at: new Date().toISOString() })
               .eq('order_item_id', item.id)
               .eq('type', 'poll_status');
+
+            // Notify the customer: in-app + email
+            await notifyCustomer(supabase, (item as any).orders?.user_id, {
+              orderItemId: item.id,
+              orderId: item.order_id,
+              companyName: (item as any).companies?.name ?? 'your company',
+              productName: (item as any).products?.name ?? 'Report',
+              failed: true,
+            });
 
             results.push({ item_id: item.id, status: itemStatus, action: 'marked_failed' });
 
