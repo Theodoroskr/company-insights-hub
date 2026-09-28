@@ -36,6 +36,63 @@ function decodeReport(b64: string): unknown {
 const DONE = new Set(['ready', 'completed', 'delivered']);
 const FAILED = new Set(['failed', 'cancelled', 'canceled', 'rejected']);
 
+/** Notify the customer: in-app notification always; email best-effort. */
+async function notifyCustomer(
+  supabase: any,
+  userId: string,
+  opts: { orderItemId: string; orderId: string | null; companyName: string; productName: string; failed: boolean }
+) {
+  try {
+    const kind = opts.failed ? 'report_failed' : 'report_ready';
+    const title = opts.failed
+      ? `Issue with your ${opts.productName} — ${opts.companyName}`
+      : `${opts.productName} ready — ${opts.companyName}`;
+    const body = opts.failed
+      ? 'We could not complete this report automatically. Our team has been notified and will follow up.'
+      : 'Your report is ready to view and download.';
+    const { data: existing } = await supabase
+      .from('notifications').select('id').eq('order_item_id', opts.orderItemId).eq('kind', kind).maybeSingle();
+    if (existing) return;
+    await supabase.from('notifications').insert({
+      user_id: userId,
+      order_id: opts.orderId,
+      order_item_id: opts.orderItemId,
+      kind,
+      title,
+      body,
+      link: '/account/orders',
+    });
+    // App email is best-effort: the template/infrastructure may not be set up yet.
+    try {
+      const { data: prof } = await supabase.from('profiles').select('email, full_name').eq('id', userId).maybeSingle();
+      if (prof?.email) {
+        await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-transactional-email`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            templateName: 'report-ready',
+            recipientEmail: prof.email,
+            idempotencyKey: `report-${opts.orderItemId}-${opts.failed ? 'failed' : 'ready'}`,
+            templateData: {
+              name: prof.full_name || undefined,
+              companyName: opts.companyName,
+              productName: opts.productName,
+              status: opts.failed ? 'failed' : 'ready',
+            },
+          }),
+        });
+      }
+    } catch (e) {
+      console.error('[poll] notification email skipped:', e);
+    }
+  } catch (e) {
+    console.error('[poll] notifyCustomer failed:', e);
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -50,7 +107,7 @@ Deno.serve(async (req) => {
     // Get all order items that need polling
     const { data: items, error } = await supabase
       .from('order_items')
-      .select('id, api4all_order_id, api4all_item_code, order_id, company_id, fulfillment_status, products:product_id(type)')
+      .select('id, api4all_order_id, api4all_item_code, order_id, company_id, fulfillment_status, products:product_id(type, name), orders:order_id(user_id, order_ref), companies:company_id(name)')
       .in('fulfillment_status', ['submitted', 'processing'])
       .not('api4all_order_id', 'is', null);
 
@@ -174,6 +231,15 @@ Deno.serve(async (req) => {
               console.error('[poll] screening lookup failed:', e);
             }
 
+            // Notify the customer: in-app + email
+            await notifyCustomer(supabase, (item as any).orders?.user_id, {
+              orderItemId: item.id,
+              orderId: item.order_id,
+              companyName: (item as any).companies?.name ?? 'your company',
+              productName: (item as any).products?.name ?? 'Report',
+              failed: false,
+            });
+
             results.push({ item_id: item.id, status: itemStatus, action: 'fetch_report_triggered' });
 
             // Update fulfillment task
@@ -194,6 +260,15 @@ Deno.serve(async (req) => {
               .update({ status: 'failed', last_attempt_at: new Date().toISOString() })
               .eq('order_item_id', item.id)
               .eq('type', 'poll_status');
+
+            // Notify the customer: in-app + email
+            await notifyCustomer(supabase, (item as any).orders?.user_id, {
+              orderItemId: item.id,
+              orderId: item.order_id,
+              companyName: (item as any).companies?.name ?? 'your company',
+              productName: (item as any).products?.name ?? 'Report',
+              failed: true,
+            });
 
             results.push({ item_id: item.id, status: itemStatus, action: 'marked_failed' });
 

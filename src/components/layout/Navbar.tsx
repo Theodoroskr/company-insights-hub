@@ -10,6 +10,7 @@ import { useCart } from '../../contexts/CartContext';
 import CurrencySwitcher from './CurrencySwitcher';
 import CountrySwitcher, { CountrySwitcherList } from './CountrySwitcher';
 import BrandMark from './BrandMark';
+import NotificationBell from './NotificationBell';
 import type { Product, Company } from '../../types/database';
 
 // ── Debounce hook ─────────────────────────────────────────────
@@ -478,6 +479,9 @@ export default function Navbar() {
               {/* Currency switcher */}
               <CurrencySwitcher />
 
+              {/* Notifications */}
+              <NotificationBell />
+
               {/* Cart icon */}
               <Link
                 to="/cart"
@@ -607,6 +611,7 @@ export default function Navbar() {
             {/* ── Mobile cart + hamburger ── */}
             <div className="md:hidden flex items-center gap-1">
               <CurrencySwitcher compact />
+              <NotificationBell />
               <Link
                 to="/cart"
                 className="relative p-2 rounded transition-colors"
