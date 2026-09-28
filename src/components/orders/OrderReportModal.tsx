@@ -238,7 +238,7 @@ export default function OrderReportModal({
         priceOverride: upgradeDelta,
         isUpgrade,
         upgradeLabel: isUpgrade ? 'Upgrade from UK Company Report' : undefined,
-        freshInvestigation: availability?.kind === 'archive' ? !useArchive : true,
+        freshInvestigation: availability?.kind === 'archive' ? !useArchive : availability?.kind === 'on_update',
       });
     }
     setJustAdded(true);
