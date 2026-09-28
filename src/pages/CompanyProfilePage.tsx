@@ -1,3 +1,4 @@
+import Api4AllReportPanel from '../components/report/Api4AllReportPanel';
 import { formatDelivery } from '@/lib/delivery';
 import { useReportDates, getAvailability, formatArchiveDate, URGENT_LABEL } from '@/hooks/useReportAvailability';
 import React, { useEffect, useState, useCallback } from 'react';
