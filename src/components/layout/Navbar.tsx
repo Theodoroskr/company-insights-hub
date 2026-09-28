@@ -611,6 +611,7 @@ export default function Navbar() {
             {/* ── Mobile cart + hamburger ── */}
             <div className="md:hidden flex items-center gap-1">
               <CurrencySwitcher compact />
+              <NotificationBell />
               <Link
                 to="/cart"
                 className="relative p-2 rounded transition-colors"
