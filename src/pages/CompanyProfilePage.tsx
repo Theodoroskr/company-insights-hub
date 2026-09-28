@@ -1,3 +1,4 @@
+import Api4AllReportPanel from '../components/report/Api4AllReportPanel';
 import { formatDelivery } from '@/lib/delivery';
 import { useReportDates, getAvailability, formatArchiveDate, URGENT_LABEL } from '@/hooks/useReportAvailability';
 import React, { useEffect, useState, useCallback } from 'react';
@@ -1009,6 +1010,10 @@ export default function CompanyProfilePage() {
             {/* B0b — UK Company Facts (unlocked only) */}
             {isUnlocked && company.country_code === 'GB' && reportBundle && (
               <UKCompanyFactsPanel bundle={reportBundle} />
+            )}
+            {/* Delivered API4ALL structure report (Cyprus / global) */}
+            {isUnlocked && reportBundle && Array.isArray((reportBundle as any).Company) && (
+              <Api4AllReportPanel bundle={reportBundle} />
             )}
 
 
