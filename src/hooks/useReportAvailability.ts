@@ -18,9 +18,10 @@ function loadDates(icgCode: string): Promise<DatesMap> {
         }
         return map;
       })
-      .catch(() => {
+      .catch((e) => {
+        // Never treat a failed lookup as "no archive" — retry once, then surface unknown.
         cache.delete(icgCode);
-        return {};
+        throw e;
       });
     cache.set(icgCode, p);
   }
@@ -34,7 +35,10 @@ export function useReportDates(icgCode: string | null | undefined, countryCode: 
   useEffect(() => {
     if (skip) { setDates(null); return; }
     let alive = true;
-    loadDates(icgCode!).then((d) => alive && setDates(d));
+    loadDates(icgCode!)
+      .catch(() => loadDates(icgCode!))
+      .then((d) => alive && setDates(d))
+      .catch(() => alive && setDates(null));
     return () => { alive = false; };
   }, [icgCode, skip]);
   return dates;
