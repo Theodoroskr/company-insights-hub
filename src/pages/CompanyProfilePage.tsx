@@ -1010,6 +1010,10 @@ export default function CompanyProfilePage() {
             {isUnlocked && company.country_code === 'GB' && reportBundle && (
               <UKCompanyFactsPanel bundle={reportBundle} />
             )}
+            {/* Delivered API4ALL structure report (Cyprus / global) */}
+            {isUnlocked && reportBundle && Array.isArray((reportBundle as any).Company) && (
+              <Api4AllReportPanel bundle={reportBundle} />
+            )}
 
 
             {/* B — Risk Indicator */}
