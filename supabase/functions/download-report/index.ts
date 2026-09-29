@@ -145,6 +145,42 @@ async function brandReportPdf(
   return doc.save();
 }
 
+async function buildJsonReportPdf(
+  rawData: unknown,
+  disclaimer: string,
+  details: { companyName: string; productName: string; registrationNumber: string | null; meta: string },
+): Promise<Uint8Array> {
+  const content = await PDFDocument.create();
+  const mono = await content.embedFont(StandardFonts.Courier);
+  const pageSize: [number, number] = [595.28, 841.89];
+  const margin = 48;
+  const lineHeight = 10;
+  const maxChars = 96;
+  const safeJson = JSON.stringify(rawData ?? {}, null, 2)
+    .normalize('NFKD')
+    .replace(/[^\x20-\x7E\n]/g, '?');
+  const lines: string[] = [];
+  for (const sourceLine of safeJson.split('\n')) {
+    if (!sourceLine.length) {
+      lines.push('');
+      continue;
+    }
+    for (let i = 0; i < sourceLine.length; i += maxChars) lines.push(sourceLine.slice(i, i + maxChars));
+  }
+
+  let page = content.addPage(pageSize);
+  let y = page.getHeight() - margin;
+  for (const line of lines) {
+    if (y < margin) {
+      page = content.addPage(pageSize);
+      y = page.getHeight() - margin;
+    }
+    page.drawText(line, { x: margin, y, size: 7, font: mono, color: rgb(0.18, 0.21, 0.27) });
+    y -= lineHeight;
+  }
+  return brandReportPdf(await content.save(), disclaimer, details);
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -261,22 +297,25 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Otherwise return the raw JSON data
-    const responsePayload = {
-      report_type: report.report_type,
-      generated_at: generatedAt,
-      expires_at: report.download_expires_at,
-      company: orderItem?.companies ?? null,
-      product: orderItem?.products ?? null,
-      disclaimer: metaParts.length ? `${disclaimer}\n\n${metaParts.join(' · ')}` : disclaimer,
-      data: report.api4all_raw_json,
+    // Reports stored as structured data are rendered as branded PDFs too.
+    const fullText = metaParts.length ? `${disclaimer}\n\n${metaParts.join('  ·  ')}` : disclaimer;
+    const details = {
+      companyName: orderItem?.companies?.name || 'Company report',
+      productName: orderItem?.products?.name || 'Company intelligence report',
+      registrationNumber: orderItem?.companies?.reg_no ?? null,
+      meta: metaParts.join('  ·  '),
     };
+    const pdfBytes = await buildJsonReportPdf(report.api4all_raw_json, fullText, details);
+    const base = [orderItem?.companies?.name, orderItem?.products?.name]
+      .filter(Boolean)
+      .map((s) => sanitizeFilename(String(s)))
+      .join('-') || `report-${report.id}`;
 
-    return new Response(JSON.stringify(responsePayload, null, 2), {
+    return new Response(pdfBytes, {
       headers: {
         ...corsHeaders,
-        'Content-Type': 'application/json',
-        'Content-Disposition': `attachment; filename=\"report-${report.id}.json\"`,
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="${base}.pdf"`,
       },
     });
   } catch (err) {
