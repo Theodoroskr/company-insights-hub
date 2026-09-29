@@ -1052,8 +1052,8 @@ export default function CompanyProfilePage() {
                   <p className="text-sm font-semibold mb-2" style={{ color: 'var(--text-subheading)' }}>
                     Screening status
                   </p>
-                  <span className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style={{ backgroundColor: 'var(--bg-subtle)', color: 'var(--text-muted)' }}>
-                    Not screened
+                  <span className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style={{ backgroundColor: hasEnhancedKyb ? 'var(--status-active-bg)' : 'var(--bg-subtle)', color: hasEnhancedKyb ? 'var(--status-active)' : 'var(--text-muted)' }}>
+                    {hasEnhancedKyb ? 'Screening available' : 'Not screened'}
                   </span>
                 </div>
                 <div className="flex-1 sm:border-l sm:pl-4 mt-3 sm:mt-0" style={{ borderColor: 'var(--bg-border)' }}>
@@ -1061,6 +1061,16 @@ export default function CompanyProfilePage() {
                     Check this company against sanctions, PEP and regulatory enforcement lists. Results are timestamped and saved to your account.
                   </p>
                   <div className="flex flex-wrap gap-2 mt-3">
+                    {hasEnhancedKyb && (
+                      <button
+                        className="text-sm hover:underline font-semibold"
+                        style={{ color: 'var(--brand-accent)' }}
+                        onClick={() => setProfileTab('compliance')}
+                      >
+                        View screening results →
+                      </button>
+                    )}
+                    {!hasEnhancedKyb && <>
                     {[companyAmlProduct, directorsAmlProduct].filter(Boolean).map((p) => (
                       <button
                         key={p!.id}
@@ -1080,6 +1090,7 @@ export default function CompanyProfilePage() {
                         Order Compliance &amp; AML Report →
                       </button>
                     )}
+                    </>}
                   </div>
                 </div>
               </div>
