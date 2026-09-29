@@ -1,11 +1,11 @@
 // ============================================================
 // complyadvantage-screen
 // Runs sanctions + PEP + adverse-media screening against
-// ComplyAdvantage for the company plus all best-effort officers
-// and shareholders/PSCs extracted from either:
+// ComplyAdvantage for the company plus its directors/officers
+// extracted from either:
 //   - a UK Companies House bundle (officers / psc), or
-//   - an API4ALL global report bundle (directors / shareholders /
-//     representatives / officers — shapes vary by country).
+//   - an API4ALL global report bundle (Company[0].Administrators).
+// Shareholders / UBOs are intentionally NOT screened.
 // Persists results into screening_results + screening_entity_hits.
 // ============================================================
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
