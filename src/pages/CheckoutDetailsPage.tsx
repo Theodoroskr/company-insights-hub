@@ -111,7 +111,8 @@ export default function CheckoutDetailsPage() {
 
   const [tab, setTab] = useState<'account' | 'guest'>('guest');
   const [session, setSession] = useState<null | { user: { email?: string; id: string } }>(null);
-  const [profile, setProfile] = useState<{ full_name?: string; email?: string; phone?: string } | null>(null);
+  const [profile, setProfile] = useState<{ full_name?: string | null; email?: string | null; phone?: string | null; company_details?: unknown } | null>(null);
+  const [saveToAccount, setSaveToAccount] = useState(true);
 
   // Form state
   const [form, setForm] = useState({
@@ -136,17 +137,31 @@ export default function CheckoutDetailsPage() {
 
   useEffect(() => {
     if (!session?.user?.id) return;
-    supabase.from('profiles').select('full_name, email, phone').eq('id', session.user.id).maybeSingle()
+    supabase.from('profiles').select('full_name, email, phone, country, vat_no, company_details').eq('id', session.user.id).maybeSingle()
       .then(({ data }) => {
         if (data) {
-          setProfile(data);
+          setProfile(data as typeof profile);
           const parts = (data.full_name ?? '').split(' ');
+          const cd = (data.company_details ?? {}) as {
+            name?: string; reg?: string; vat?: string; country?: string;
+            billing_address?: { street?: string; city?: string; state?: string; postcode?: string };
+          };
+          const ba = cd.billing_address ?? {};
           setForm((f) => ({
             ...f,
-            firstName: parts[0] ?? '',
-            lastName: parts.slice(1).join(' ') ?? '',
-            email: data.email ?? session?.user?.email ?? '',
-            phone: data.phone ?? '',
+            firstName: f.firstName || (parts[0] ?? ''),
+            lastName: f.lastName || parts.slice(1).join(' '),
+            email: f.email || (data.email ?? session?.user?.email ?? ''),
+            phone: f.phone || (data.phone ?? ''),
+            country: f.country || (data.country ?? cd.country ?? ''),
+            street: f.street || (ba.street ?? ''),
+            city: f.city || (ba.city ?? ''),
+            state: f.state || (ba.state ?? ''),
+            postcode: f.postcode || (ba.postcode ?? ''),
+            isBusiness: f.isBusiness || !!cd.name,
+            companyName: f.companyName || (cd.name ?? ''),
+            companyReg: f.companyReg || (cd.reg ?? ''),
+            vatNumber: f.vatNumber || (data.vat_no ?? cd.vat ?? ''),
           }));
         }
       });
@@ -186,6 +201,21 @@ export default function CheckoutDetailsPage() {
 
   const handleContinue = () => {
     if (!validate()) return;
+    if (session?.user?.id && saveToAccount) {
+      const prevCd = (profile?.company_details ?? {}) as Record<string, unknown>;
+      supabase.from('profiles').update({
+        full_name: `${form.firstName} ${form.lastName}`.trim(),
+        phone: form.phone || null,
+        country: form.country || null,
+        vat_no: form.vatNumber || null,
+        company_details: {
+          ...prevCd,
+          ...(form.isBusiness ? { name: form.companyName, reg: form.companyReg, vat: form.vatNumber } : {}),
+          country: form.country,
+          billing_address: { street: form.street, city: form.city, state: form.state, postcode: form.postcode },
+        },
+      }).eq('id', session.user.id).then(({ error }) => { if (error) console.warn('Save details failed', error); });
+    }
     // Store customer details in sessionStorage for payment page
     sessionStorage.setItem('checkout_details', JSON.stringify({
       ...form,
@@ -503,6 +533,20 @@ export default function CheckoutDetailsPage() {
             <p className="text-sm italic mb-4" style={{ color: 'var(--text-muted)' }}>
               Your report will be delivered to the email address above. Download link valid for 30 days from delivery.
             </p>
+
+            {session && (
+              <label className="flex items-center gap-2.5 cursor-pointer select-none mb-3">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 rounded accent-blue-600"
+                  checked={saveToAccount}
+                  onChange={(e) => setSaveToAccount(e.target.checked)}
+                />
+                <span className="text-sm" style={{ color: 'var(--text-body)' }}>
+                  Save these details to my account
+                </span>
+              </label>
+            )}
 
             {/* Terms */}
             <div className="mb-6">
