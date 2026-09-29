@@ -36,6 +36,30 @@ function decodeReport(b64: string): unknown {
 const DONE = new Set(['ready', 'completed', 'delivered']);
 const FAILED = new Set(['failed', 'cancelled', 'canceled', 'rejected']);
 
+// Fast follow-up after submission: wait DELAYS[attempt] seconds before hop attempt+1.
+// ~30s, 1m, 2m, 3.5m, 5m, 6.5m, 8m, 9.5m — then the 15-min cron takes over.
+const DELAYS = [30, 30, 60, 90, 90, 90, 90, 90];
+const MAX_ATTEMPTS = DELAYS.length;
+
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+}
+
+/** Schedule the next targeted check (only for internal chains with budget left). */
+function scheduleNext(orderItemId: string, attempt: number) {
+  if (attempt < 1 || attempt >= MAX_ATTEMPTS) return;
+  const delay = DELAYS[attempt] * 1000;
+  const p = new Promise<void>((resolve) => setTimeout(resolve, delay)).then(() =>
+    fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/poll-order-status`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ order_item_id: orderItemId, attempt: attempt + 1 }),
+    }).then((r) => r.body?.cancel()).catch((e) => console.error('[poll] next hop failed:', e))
+  );
+  // @ts-ignore EdgeRuntime is provided by the Supabase runtime
+  if (typeof EdgeRuntime !== 'undefined') EdgeRuntime.waitUntil(p);
+}
+
 /** Notify the customer: in-app notification always; email best-effort. */
 async function notifyCustomer(
   supabase: any,
@@ -103,9 +127,39 @@ Deno.serve(async (req) => {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   );
 
+  // Optional targeted mode: { order_item_id, attempt? }
+  let targetId: string | null = null;
+  let attempt = 0;
+  try {
+    const body = req.method === 'POST' ? await req.json() : {};
+    if (typeof body?.order_item_id === 'string' && /^[0-9a-f-]{36}$/i.test(body.order_item_id)) targetId = body.order_item_id;
+    if (Number.isInteger(body?.attempt)) attempt = Math.max(0, Math.min(body.attempt, MAX_ATTEMPTS));
+  } catch { /* no body = scheduled scan */ }
+
+  if (targetId) {
+    const token = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '');
+    const isService = token === Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    if (!isService) {
+      attempt = 0; // only internal calls may chain
+      const { data: u } = await supabase.auth.getUser(token);
+      const uid = u?.user?.id;
+      if (!uid) return json({ error: 'Unauthorized' }, 401);
+      const { data: row } = await supabase.from('order_items').select('orders:order_id(user_id)').eq('id', targetId).maybeSingle();
+      const { data: staff } = await supabase.rpc('is_staff', { _user_id: uid });
+      if ((row as any)?.orders?.user_id !== uid && !staff) return json({ error: 'Forbidden' }, 403);
+    }
+    // Single-flight: skip if this item was checked in the last 20s
+    const { data: task } = await supabase.from('fulfillment_tasks').select('last_attempt_at')
+      .eq('order_item_id', targetId).eq('type', 'poll_status').order('created_at', { ascending: false }).limit(1).maybeSingle();
+    if (task?.last_attempt_at && Date.now() - new Date(task.last_attempt_at).getTime() < 20000) {
+      scheduleNext(targetId, attempt);
+      return json({ success: true, skipped: 'recently_checked' });
+    }
+  }
+
   try {
     // Safety net: paid standalone AML screening with no result after 5 minutes (one retry per run, errors excluded)
-    try {
+    if (!targetId) try {
       const cutoff = new Date(Date.now() - 5 * 60 * 1000).toISOString();
       const { data: scr } = await supabase
         .from('order_items')
@@ -127,11 +181,13 @@ Deno.serve(async (req) => {
     } catch (e) { console.error('screening sweep error', e); }
 
     // Get all order items that need polling
-    const { data: items, error } = await supabase
+    let q = supabase
       .from('order_items')
       .select('id, api4all_order_id, api4all_item_code, order_id, company_id, fulfillment_status, products:product_id(type, name), orders:order_id(user_id, order_ref), companies:company_id(name)')
       .in('fulfillment_status', ['submitted', 'processing'])
       .not('api4all_order_id', 'is', null);
+    if (targetId) q = q.eq('id', targetId);
+    const { data: items, error } = await q;
 
     if (error) throw error;
 
@@ -317,6 +373,10 @@ Deno.serve(async (req) => {
         console.error(`Error checking order ${api4allOrderId}:`, orderErr);
         results.push({ item_id: api4allOrderId, status: 'error', action: String(orderErr).slice(0, 200) });
       }
+    }
+
+    if (targetId && !results.some((r) => r.action === 'fetch_report_triggered' || r.action === 'marked_failed')) {
+      scheduleNext(targetId, attempt);
     }
 
     return new Response(
