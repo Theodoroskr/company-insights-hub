@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, RefreshCw, Clock } from 'lucide-react';
 import AdminLayout from '../../components/layout/AdminLayout';
+import CheckNowButton from '../../components/orders/CheckNowButton';
 import { supabase } from '@/integrations/supabase/client';
 import { format, differenceInHours, differenceInMinutes } from 'date-fns';
 
@@ -188,6 +189,9 @@ export default function AdminOrdersPage() {
                         <Link to={`/admin/orders/${order.id}`} className="text-xs px-2 py-1 border rounded hover:bg-muted transition-colors">
                           View
                         </Link>
+                        {order.items.filter(i => ['submitted', 'processing'].includes(i.fulfillment_status)).map(i => (
+                          <CheckNowButton key={i.id} orderItemId={i.id} />
+                        ))}
                       </td>
                     </tr>
                   ))

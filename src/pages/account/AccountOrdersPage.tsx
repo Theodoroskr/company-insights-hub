@@ -7,6 +7,7 @@ import AccountLayout from '../../components/layout/AccountLayout';
 import EmptyState from '../../components/ui/EmptyState';
 import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../lib/tenant';
+import CheckNowButton from '../../components/orders/CheckNowButton';
 
 interface OrderRow {
   id: string;
@@ -226,6 +227,9 @@ export default function AccountOrdersPage() {
                       >
                         {statusStyle.label}
                       </span>
+                      {item && ['submitted', 'processing'].includes(item.fulfillment_status ?? '') && (
+                        <CheckNowButton orderItemId={item.id} />
+                      )}
                     </td>
                     <td className="px-4 py-3 text-xs max-w-[160px] truncate" style={{ color: 'var(--text-muted)' }}>
                       {order.notes ?? '—'}
