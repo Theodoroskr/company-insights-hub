@@ -87,10 +87,11 @@ export function downloadInvoicePdf(data: InvoiceData) {
     ['Payment method: ', paymentLabel(data.paymentMethod)],
   ];
   meta.forEach(([k, v]) => {
-    doc.setTextColor(...MUTED);
-    doc.text(k, W - M, metaY, { align: 'right' });
     doc.setTextColor(...NAVY);
-    doc.text(v, W - M, metaY - 5.2, { align: 'right' });
+    doc.text(v, W - M, metaY, { align: 'right' });
+    doc.setTextColor(...MUTED);
+    const vw = doc.getTextWidth(v);
+    doc.text(k, W - M - vw - 2, metaY, { align: 'right' });
     metaY += 5.5;
   });
   metaY -= 5.5;
@@ -116,7 +117,7 @@ export function downloadInvoicePdf(data: InvoiceData) {
     b.vat ? `VAT no.: ${b.vat}` : null,
     b.address?.street ?? null,
     [b.address?.postcode, b.address?.city].filter(Boolean).join(' ') || null,
-    [b.address?.state, b.country].filter(Boolean).join(', ') || null,
+    (b.address?.state && !/select a state/i.test(b.address.state) ? b.address.state : null) as string | null,
   ].filter(Boolean) as string[];
   let buyerEnd = y;
   buyerLines.forEach((l) => {
