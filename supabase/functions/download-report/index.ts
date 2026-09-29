@@ -1,5 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { PDFDocument, StandardFonts, rgb } from 'https://esm.sh/pdf-lib@1.17.1';
+import { PDFDocument, StandardFonts, rgb, type PDFPage, type PDFFont } from 'https://esm.sh/pdf-lib@1.17.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -30,23 +30,87 @@ function sanitizeFilename(input: string): string {
   return cleaned || 'report';
 }
 
-/** Appends a final disclaimer page to a stored report PDF and returns the merged bytes. */
-async function appendDisclaimerPage(pdfBytes: Uint8Array, disclaimer: string): Promise<Uint8Array> {
+function drawWordmark(page: PDFPage, font: PDFFont, bold: PDFFont, x: number, y: number, darkSurface = false) {
+  const navy = darkSurface ? rgb(1, 1, 1) : rgb(0.063, 0.133, 0.235);
+  const cyan = rgb(0, 0.663, 0.91);
+  const size = 23;
+  page.drawRectangle({ x, y: y + 14.5, width: 5, height: 5, color: cyan });
+  page.drawRectangle({ x: x + 1, y, width: 3.2, height: 11.5, color: cyan });
+  page.drawText('nfocredit', { x: x + 7, y, size, font, color: navy });
+  const prefixWidth = font.widthOfTextAtSize('nfocredit', size);
+  page.drawText('world', { x: x + 7 + prefixWidth, y, size, font: bold, color: cyan });
+}
+
+/** Adds branded cover/disclaimer pages around the untouched supplier PDF. */
+async function brandReportPdf(
+  pdfBytes: Uint8Array,
+  disclaimer: string,
+  details: { companyName: string; productName: string; registrationNumber: string | null; meta: string },
+): Promise<Uint8Array> {
   const existing = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
   const doc = await PDFDocument.create();
   const font = await doc.embedFont(StandardFonts.Helvetica);
   const bold = await doc.embedFont(StandardFonts.HelveticaBold);
 
-  // Original report content first; the disclaimer page is appended at the end.
+  const cover = doc.addPage([595.28, 841.89]);
+  const coverWidth = cover.getWidth();
+  const coverHeight = cover.getHeight();
+  const navy = rgb(0.063, 0.133, 0.235);
+  const cyan = rgb(0, 0.663, 0.91);
+  cover.drawRectangle({ x: 0, y: coverHeight - 132, width: coverWidth, height: 132, color: navy });
+  drawWordmark(cover, font, bold, 56, coverHeight - 76, true);
+  cover.drawText('Company intelligence, worldwide.', {
+    x: 56, y: coverHeight - 101, size: 10, font, color: rgb(0.82, 0.87, 0.93),
+  });
+  cover.drawText('COMPANY INTELLIGENCE REPORT', {
+    x: 56, y: coverHeight - 214, size: 10, font: bold, color: cyan,
+  });
+
+  const wrapCover = (text: string, size: number, maxWidth: number): string[] => {
+    const lines: string[] = [];
+    let line = '';
+    for (const word of text.split(' ')) {
+      const candidate = line ? `${line} ${word}` : word;
+      if (bold.widthOfTextAtSize(candidate, size) > maxWidth && line) {
+        lines.push(line);
+        line = word;
+      } else line = candidate;
+    }
+    if (line) lines.push(line);
+    return lines;
+  };
+
+  let coverY = coverHeight - 260;
+  for (const line of wrapCover(details.companyName, 28, coverWidth - 112)) {
+    cover.drawText(line, { x: 56, y: coverY, size: 28, font: bold, color: navy });
+    coverY -= 36;
+  }
+  coverY -= 10;
+  cover.drawText(details.productName, { x: 56, y: coverY, size: 15, font, color: rgb(0.25, 0.3, 0.38) });
+  coverY -= 30;
+  if (details.registrationNumber) {
+    cover.drawText(`Registration number: ${details.registrationNumber}`, {
+      x: 56, y: coverY, size: 10, font, color: rgb(0.4, 0.44, 0.5),
+    });
+    coverY -= 18;
+  }
+  if (details.meta) cover.drawText(details.meta, { x: 56, y: coverY, size: 10, font, color: rgb(0.4, 0.44, 0.5) });
+  cover.drawText('Prepared by Infocredit Group Ltd', { x: 56, y: 70, size: 10, font: bold, color: navy });
+  cover.drawText('Cyprus company registration HE4404', {
+    x: 56, y: 53, size: 9, font, color: rgb(0.4, 0.44, 0.5),
+  });
+
   const originalPages = await doc.copyPages(existing, existing.getPageIndices());
   originalPages.forEach((p) => doc.addPage(p));
 
   const page = doc.addPage([595.28, 841.89]);
   const margin = 56;
   const maxWidth = page.getWidth() - margin * 2;
-  let y = page.getHeight() - margin;
+  let y = page.getHeight() - 75;
 
-  page.drawText('Disclaimer', { x: margin, y, size: 14, font: bold, color: rgb(0.1, 0.1, 0.15) });
+  drawWordmark(page, font, bold, margin, y);
+  y -= 52;
+  page.drawText('Disclaimer', { x: margin, y, size: 14, font: bold, color: navy });
   y -= 30;
 
   const wrap = (text: string, size: number): string[] => {
@@ -79,6 +143,42 @@ async function appendDisclaimerPage(pdfBytes: Uint8Array, disclaimer: string): P
   }
 
   return doc.save();
+}
+
+async function buildJsonReportPdf(
+  rawData: unknown,
+  disclaimer: string,
+  details: { companyName: string; productName: string; registrationNumber: string | null; meta: string },
+): Promise<Uint8Array> {
+  const content = await PDFDocument.create();
+  const mono = await content.embedFont(StandardFonts.Courier);
+  const pageSize: [number, number] = [595.28, 841.89];
+  const margin = 48;
+  const lineHeight = 10;
+  const maxChars = 96;
+  const safeJson = JSON.stringify(rawData ?? {}, null, 2)
+    .normalize('NFKD')
+    .replace(/[^\x20-\x7E\n]/g, '?');
+  const lines: string[] = [];
+  for (const sourceLine of safeJson.split('\n')) {
+    if (!sourceLine.length) {
+      lines.push('');
+      continue;
+    }
+    for (let i = 0; i < sourceLine.length; i += maxChars) lines.push(sourceLine.slice(i, i + maxChars));
+  }
+
+  let page = content.addPage(pageSize);
+  let y = page.getHeight() - margin;
+  for (const line of lines) {
+    if (y < margin) {
+      page = content.addPage(pageSize);
+      y = page.getHeight() - margin;
+    }
+    page.drawText(line, { x: margin, y, size: 7, font: mono, color: rgb(0.18, 0.21, 0.27) });
+    y -= lineHeight;
+  }
+  return brandReportPdf(await content.save(), disclaimer, details);
 }
 
 Deno.serve(async (req) => {
@@ -171,7 +271,12 @@ Deno.serve(async (req) => {
           if (pdfRes.ok) {
             const pdfBytes = new Uint8Array(await pdfRes.arrayBuffer());
             const fullText = metaParts.length ? `${disclaimer}\n\n${metaParts.join('  ·  ')}` : disclaimer;
-            const mergedBytes = await appendDisclaimerPage(pdfBytes, fullText);
+            const mergedBytes = await brandReportPdf(pdfBytes, fullText, {
+              companyName: orderItem?.companies?.name || 'Company report',
+              productName: orderItem?.products?.name || 'Company intelligence report',
+              registrationNumber: orderItem?.companies?.reg_no ?? null,
+              meta: metaParts.join('  ·  '),
+            });
             const base = [orderItem?.companies?.name, orderItem?.products?.name]
               .filter(Boolean)
               .map((s) => sanitizeFilename(String(s)))
@@ -185,29 +290,32 @@ Deno.serve(async (req) => {
             });
           }
         } catch (pdfErr) {
-          console.error('Failed to append disclaimer page, falling back to redirect:', pdfErr);
+          console.error('Failed to brand report PDF, falling back to redirect:', pdfErr);
         }
         // Fallback: serve the stored PDF untouched
         return Response.redirect(signedUrl.signedUrl, 302);
       }
     }
 
-    // Otherwise return the raw JSON data
-    const responsePayload = {
-      report_type: report.report_type,
-      generated_at: generatedAt,
-      expires_at: report.download_expires_at,
-      company: orderItem?.companies ?? null,
-      product: orderItem?.products ?? null,
-      disclaimer: metaParts.length ? `${disclaimer}\n\n${metaParts.join(' · ')}` : disclaimer,
-      data: report.api4all_raw_json,
+    // Reports stored as structured data are rendered as branded PDFs too.
+    const fullText = metaParts.length ? `${disclaimer}\n\n${metaParts.join('  ·  ')}` : disclaimer;
+    const details = {
+      companyName: orderItem?.companies?.name || 'Company report',
+      productName: orderItem?.products?.name || 'Company intelligence report',
+      registrationNumber: orderItem?.companies?.reg_no ?? null,
+      meta: metaParts.join('  ·  '),
     };
+    const pdfBytes = await buildJsonReportPdf(report.api4all_raw_json, fullText, details);
+    const base = [orderItem?.companies?.name, orderItem?.products?.name]
+      .filter(Boolean)
+      .map((s) => sanitizeFilename(String(s)))
+      .join('-') || `report-${report.id}`;
 
-    return new Response(JSON.stringify(responsePayload, null, 2), {
+    return new Response(pdfBytes, {
       headers: {
         ...corsHeaders,
-        'Content-Type': 'application/json',
-        'Content-Disposition': `attachment; filename=\"report-${report.id}.json\"`,
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="${base}.pdf"`,
       },
     });
   } catch (err) {
