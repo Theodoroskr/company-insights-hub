@@ -77,7 +77,27 @@ export function downloadInvoicePdf(data: InvoiceData) {
   y = 44;
   doc.setTextColor(...NAVY);
 
-  // Seller / buyer blocks
+  // Meta block (right-aligned under the header)
+  let metaY = 44;
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  const meta: [string, string][] = [
+    ['Invoice number: ', data.orderRef || '—'],
+    ['Invoice date: ', data.date],
+    ['Payment method: ', paymentLabel(data.paymentMethod)],
+  ];
+  meta.forEach(([k, v]) => {
+    doc.setTextColor(...MUTED);
+    doc.text(k, W - M, metaY, { align: 'right' });
+    doc.setTextColor(...NAVY);
+    doc.text(v, W - M, metaY - 5.2, { align: 'right' });
+    metaY += 5.5;
+  });
+  metaY -= 5.5;
+
+  // Seller / buyer blocks (start below the meta block)
+  y = Math.max(metaY + 4, 44);
+  doc.setTextColor(...NAVY);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
   doc.text('FROM', M, y);
@@ -98,29 +118,18 @@ export function downloadInvoicePdf(data: InvoiceData) {
     [b.address?.postcode, b.address?.city].filter(Boolean).join(' ') || null,
     [b.address?.state, b.country].filter(Boolean).join(', ') || null,
   ].filter(Boolean) as string[];
-  buyerLines.forEach((l, i) => doc.text(l, M + 85, y + i * 4.6));
+  let buyerEnd = y;
+  buyerLines.forEach((l) => {
+    (doc.splitTextToSize(l, 52) as string[]).forEach((seg, i) => {
+      doc.text(seg, M + 85, buyerEnd + i * 4.6);
+    });
+    buyerEnd += 4.6;
+  });
   y += 4.6;
   doc.setTextColor(...MUTED);
   doc.setFontSize(9);
   doc.text(SELLER_REG, M, y);
-  y += 14;
-
-  // Meta block (right-aligned above the table)
-  doc.setFontSize(9);
-  doc.setTextColor(40, 48, 62);
-  const meta: [string, string][] = [
-    ['Invoice number:', data.orderRef || '—'],
-    ['Invoice date:', data.date],
-    ['Payment method:', paymentLabel(data.paymentMethod)],
-  ];
-  let my = y - 18;
-  meta.forEach(([k, v]) => {
-    doc.setTextColor(...MUTED);
-    doc.text(k, W - M - 60, my, { align: 'left' });
-    doc.setTextColor(40, 48, 62);
-    doc.text(v, W - M, my, { align: 'right' });
-    my += 5;
-  });
+  y = Math.max(buyerEnd + 6, y + 6);
 
   // Items table
   y = Math.max(y + 4, my + 4);
