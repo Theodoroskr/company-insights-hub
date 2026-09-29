@@ -37,8 +37,23 @@ const SELLER_NAME = 'Infocredit Group Ltd';
 const SELLER_REG = 'Company registration: HE4404 (Cyprus)';
 
 const NAVY: [number, number, number] = [16, 34, 60];
+const CYAN: [number, number, number] = [0, 169, 232];
 const MUTED: [number, number, number] = [100, 110, 125];
 const LINE: [number, number, number] = [222, 226, 232];
+
+function drawWordmark(doc: jsPDF, x: number, baselineY: number) {
+  doc.setFillColor(...CYAN);
+  doc.rect(x, baselineY - 8.4, 1.8, 1.8, 'F');
+  doc.rect(x + 0.35, baselineY - 5.2, 1.25, 5.2, 'F');
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(16);
+  doc.setTextColor(255, 255, 255);
+  doc.text('nfocredit', x + 2.4, baselineY);
+  const prefixWidth = doc.getTextWidth('nfocredit');
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...CYAN);
+  doc.text('world', x + 2.4 + prefixWidth, baselineY);
+}
 
 function fmt(n: number | undefined | null) {
   return `€${(Number(n) || 0).toFixed(2)}`;
@@ -63,12 +78,10 @@ export function downloadInvoicePdf(data: InvoiceData) {
   // Header band
   doc.setFillColor(...NAVY);
   doc.rect(0, 0, W, 30, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(16);
-  doc.text(data.brandName || 'Infocredit Group', M, 14);
+  drawWordmark(doc, M, 14);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
+  doc.setTextColor(255, 255, 255);
   doc.text('Company intelligence, worldwide.', M, 21);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(18);
