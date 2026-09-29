@@ -81,6 +81,8 @@ function pickName(o: Record<string, unknown>): string | undefined {
 function isInactive(o: Record<string, unknown>): boolean {
   if (o.resigned_on || o.resignedOn) return true;
   if (o.ceased_on || o.ceasedOn || o.ceased) return true;
+  // API4ALL shape: Active flag + EndDate
+  if (o.Active === 0 || o.EndDate) return true;
   const status = (o.status ?? o.state) as string | undefined;
   if (typeof status === "string") {
     const s = status.toLowerCase();
@@ -89,10 +91,41 @@ function isInactive(o: Record<string, unknown>): boolean {
   return false;
 }
 
+// API4ALL nested report shape: bundle.Company is an array; Company[0]
+// holds GeneralInfo (company name) and Administrators (directors/officers).
+function api4allName(p: Record<string, unknown>): string | undefined {
+  if (p.IsCompany) {
+    const cn = p.CompanyName as string | undefined;
+    if (cn && cn.trim().length > 1) return cn.trim();
+  }
+  const composite = [p.FirstName, p.MiddleName, p.LastName]
+    .filter((v): v is string => typeof v === "string" && v.trim().length > 0)
+    .join(" ")
+    .trim();
+  if (composite.length > 1) return composite;
+  const cn = p.CompanyName as string | undefined;
+  return cn && cn.trim().length > 1 ? cn.trim() : undefined;
+}
+
 function extractEntities(bundle: Record<string, unknown>): Entity[] {
   const entities: Entity[] = [];
 
-  // Company name (UK CH shape, API4ALL shape, fallback)
+  // --- API4ALL global report shape (Cyprus and other non-UK registries) ---
+  const companyArr = asArray(bundle.Company);
+  if (companyArr.length > 0) {
+    const c = companyArr[0] as Record<string, unknown>;
+    const gen = asArray(c.GeneralInfo)[0] as Record<string, unknown> | undefined;
+    const name = (gen?.Name as string | undefined)?.trim();
+    if (name && name.length > 1) entities.push({ name, role: "company" });
+    for (const a of asArray(c.Administrators)) {
+      const aa = a as Record<string, unknown>;
+      if (isInactive(aa)) continue;
+      const an = api4allName(aa);
+      if (an) entities.push({ name: an, role: "officer" });
+    }
+  }
+
+  // --- UK Companies House / generic shapes ---
   const profile = (bundle.company ?? bundle.profile ?? bundle.companyProfile ?? bundle) as Record<string, unknown>;
   const companyName =
     (profile.company_name as string | undefined) ??
@@ -122,19 +155,7 @@ function extractEntities(bundle: Record<string, unknown>): Entity[] {
     if (name) entities.push({ name, role: "psc" });
   }
 
-  // Shareholders / UBOs (API4ALL shapes)
-  const shareholderSources: unknown[] = [
-    bundle.shareholders, bundle.shareholders_json,
-    bundle.ubos, bundle.beneficial_owners, bundle.beneficialOwners,
-  ];
-  for (const src of shareholderSources) {
-    for (const s of asArray(src)) {
-      const ss = s as Record<string, unknown>;
-      if (isInactive(ss)) continue;
-      const name = pickName(ss);
-      if (name) entities.push({ name, role: "shareholder" });
-    }
-  }
+  // Shareholders / UBOs are intentionally not screened.
 
   // Dedup on name+role (case-insensitive)
   const seen = new Set<string>();
