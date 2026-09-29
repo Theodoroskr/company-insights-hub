@@ -349,6 +349,7 @@ Deno.serve(async (req) => {
       }
     }
 
+    if (rawAll.length === 0) throw new Error("Screening service did not respond for any entity");
     const totalHits = totalSanctions + totalPep + totalAdverse;
     const overall =
       totalSanctions > 0 ? "hit" :
