@@ -158,7 +158,14 @@ export default function AccountInvoicesPage() {
         vat: order.vat_amount,
         total: order.total,
         buyer,
-        items: order.items,
+        items: order.items.map((it) => ({
+          name: it.product_name,
+          speed: it.speed,
+          unitPrice: Number(it.unit_price ?? 0),
+          vat: Number(it.vat_amount ?? 0),
+          screening: !!it.screening_addon,
+          screeningPrice: Number(it.screening_price_eur ?? 0),
+        })),
       });
     } finally {
       setBusyId(null);
