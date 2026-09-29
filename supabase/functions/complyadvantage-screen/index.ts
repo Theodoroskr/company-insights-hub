@@ -272,6 +272,8 @@ Deno.serve(async (req) => {
     }
     const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
     let force = false;
+    // Backend/service-role calls (cron, poller, ops) may force a re-run.
+    if (token && token === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) force = true;
     if (token && token !== Deno.env.get("SUPABASE_ANON_KEY") && token !== Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) {
       const { data: u } = await supabase.auth.getUser(token);
       let staff = false;
