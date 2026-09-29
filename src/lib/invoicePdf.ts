@@ -117,7 +117,10 @@ export function downloadInvoicePdf(data: InvoiceData) {
     b.vat ? `VAT no.: ${b.vat}` : null,
     b.address?.street ?? null,
     [b.address?.postcode, b.address?.city].filter(Boolean).join(' ') || null,
-    (b.address?.state && !/select a state/i.test(b.address.state) ? b.address.state : null) as string | null,
+    [
+      b.address?.state && !/select a state/i.test(b.address.state) ? b.address.state : null,
+      b.country,
+    ].filter(Boolean).join(', ') || null,
   ].filter(Boolean) as string[];
   let buyerEnd = y;
   buyerLines.forEach((l) => {
