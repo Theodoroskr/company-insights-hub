@@ -1,4 +1,5 @@
 import Api4AllReportPanel from '../components/report/Api4AllReportPanel';
+import { isApi4AllBundle, normalizeApi4AllReport } from '../lib/api4all/normalize';
 import { formatDelivery } from '@/lib/delivery';
 import { useReportDates, getAvailability, formatArchiveDate, URGENT_LABEL } from '@/hooks/useReportAvailability';
 import React, { useEffect, useState, useCallback } from 'react';
@@ -800,6 +801,32 @@ export default function CompanyProfilePage() {
   }
 
   const countryInfo = getCountryInfo(company.country_code);
+  // When a delivered API4ALL report is owned, map its data into the fields every section reads.
+  const a4a = isUnlocked && isApi4AllBundle(reportBundle) ? normalizeApi4AllReport(reportBundle) : null;
+  const viewCompany: typeof company = a4a ? {
+    ...company,
+    registered_address: a4a.registeredAddress ?? company.registered_address,
+    legal_form: a4a.legalForm ?? company.legal_form,
+    cached_at: a4a.lastUpdated ?? company.cached_at,
+    directors_json: a4a.officers.map((o) => ({ name: o.name, role: o.roles.join(' / ') })),
+    raw_source_json: {
+      ...((company.raw_source_json as Record<string, unknown>) ?? {}),
+      incorporated_on: a4a.registrationDate,
+      nature_of_business: a4a.activities[0]?.description
+        ? a4a.activities[0].description.charAt(0) + a4a.activities[0].description.slice(1).toLowerCase()
+        : undefined,
+      psc: a4a.shareholders.map((s) => ({ name: s.name, kind: s.isCompany ? 'corporate' : 'individual' })),
+    },
+  } as typeof company : company;
+  const a4aEvents = a4a ? [
+    ...a4a.officers.filter((o) => o.appointed).map((o) => ({ date: o.appointed!, title: `${o.name} appointed`, detail: o.roles.join(' / '), kind: 'officer' as const })),
+    ...a4a.charges.filter((c) => c.registered).map((c) => ({
+      date: c.registered!, title: `${c.kind === 'mortgage' ? 'Mortgage' : 'Charge'} registered`,
+      detail: [c.type !== 'Mortgage' ? c.type : c.number, c.amount !== undefined ? `${c.amount.toLocaleString('en-GB')} ${c.currency ?? ''}` : '', c.beneficiary].filter(Boolean).join(' · '),
+      kind: 'charge' as const,
+    })),
+    ...a4a.dates.filter((x) => !/registration|start/i.test(x.label)).map((x) => ({ date: x.date, title: x.label, kind: 'filing' as const })),
+  ] : undefined;
   const reportProducts = products.filter((p) => p.type !== 'monitoring' && p.type !== 'certificate');
   const certificateProducts = certificatesAvailableFor(company?.country_code, certCountries)
     ? products.filter((p) => p.type === 'certificate')
