@@ -32,8 +32,6 @@ const TRUST_BADGES = [
   { icon: <Globe className="w-5 h-5" />, text: 'Trusted local source' },
 ];
 
-const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-
 function useScrollReveal() {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -94,7 +92,6 @@ export default function HomePage() {
   const trustRef = useScrollReveal();
   const productsRef = useScrollReveal();
   const howItWorksRef = useScrollReveal();
-  const browseRef = useScrollReveal();
 
   return (
     <PageLayout>
@@ -587,47 +584,6 @@ export default function HomePage() {
                   {desc}
                 </p>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════
-          SECTION 5 — BROWSE A–Z
-      ═══════════════════════════════════════════════════ */}
-      <section ref={browseRef} className="py-12 px-4" style={{ backgroundColor: '#fff' }}>
-        <div className="max-w-5xl mx-auto text-center">
-          <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-heading)' }}>
-            Browse {countryName || 'Companies'} A–Z
-          </h2>
-          <p className="text-sm mb-8" style={{ color: 'var(--text-muted)' }}>
-            Explore our complete company database
-          </p>
-
-          <div className="flex flex-wrap justify-center gap-2">
-            {ALPHABET.map((letter) => (
-              <Link
-                key={letter}
-                to={`/companies/${letter.toLowerCase()}`}
-                className="inline-flex items-center justify-center w-10 h-10 text-sm font-semibold rounded border transition-all active:scale-95"
-                style={{
-                  borderColor: 'var(--bg-border)',
-                  color: 'var(--text-body)',
-                  backgroundColor: '#fff',
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.backgroundColor = 'var(--brand-primary)';
-                  e.currentTarget.style.color = '#fff';
-                  e.currentTarget.style.borderColor = 'var(--brand-primary)';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.backgroundColor = '#fff';
-                  e.currentTarget.style.color = 'var(--text-body)';
-                  e.currentTarget.style.borderColor = 'var(--bg-border)';
-                }}
-              >
-                {letter}
-              </Link>
             ))}
           </div>
         </div>
