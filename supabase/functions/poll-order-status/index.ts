@@ -375,6 +375,10 @@ Deno.serve(async (req) => {
       }
     }
 
+    if (targetId && !results.some((r) => r.action === 'fetch_report_triggered' || r.action === 'marked_failed')) {
+      scheduleNext(targetId, attempt);
+    }
+
     return new Response(
       JSON.stringify({ success: true, checked: items.length, results }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

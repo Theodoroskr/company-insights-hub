@@ -316,6 +316,20 @@ Deno.serve(async (req) => {
       })
     );
 
+    // Start fast follow-up checks (first at ~30s); chain stops once the report lands.
+    for (const apiItem of returnedItems) {
+      const p = new Promise((r) => setTimeout(r, 30000)).then(() =>
+        fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/poll-order-status`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ order_item_id: apiItem.reference, attempt: 1 }),
+        }).then((r) => r.body?.cancel()).catch((e) => console.error('fast poll kick failed', e))
+      );
+      // @ts-ignore EdgeRuntime is provided by the Supabase runtime
+      if (typeof EdgeRuntime !== 'undefined') EdgeRuntime.waitUntil(p);
+    }
+
+
     return new Response(
       JSON.stringify({
         success: true,
