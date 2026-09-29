@@ -108,9 +108,13 @@ export default function AccountReportViewPage() {
       const i = data as any;
       if (error || !i) return setState({ loading: false, error: 'Report not found.' });
       if (OFFLINE_ONLY_SLUGS.includes(i.products?.slug)) return setState({ loading: false, error: 'This report is delivered as a document only. Please use Download.', orderId: i.order_id });
+      const screening = i.screening_addon === true || ['enhanced-uk-kyb-report','company-aml-screening','aml-screening-with-directors'].includes(i.products?.slug ?? '');
+      // Standalone screening: show results here (no report document)
+      if (['company-aml-screening','aml-screening-with-directors'].includes(i.products?.slug ?? '')) {
+        return setState({ loading: false, title: i.products?.name, company: i.companies?.name, orderId: i.order_id, orderRef: i.orders?.order_ref ?? null, data: {}, generated: null, screening: true });
+      }
       // The interactive company dossier replaces this simplified document view.
       if (i.companies?.slug) return setRedirect(`/company/${i.companies.slug}`);
-      const screening = i.screening_addon === true || ['enhanced-uk-kyb-report','company-aml-screening','aml-screening-with-directors'].includes(i.products?.slug ?? '');
       const rep = [...(i.generated_reports ?? [])].sort((a: any, b: any) => (b.generated_at ?? '').localeCompare(a.generated_at ?? ''))[0];
       if (!rep?.api4all_raw_json) return setState({ loading: false, error: 'This report is not ready yet.', orderId: i.order_id });
       setState({ loading: false, title: i.products?.name, company: i.companies?.name, orderId: i.order_id, orderRef: i.orders?.order_ref ?? null, data: rep.api4all_raw_json, generated: rep.generated_at, screening });
