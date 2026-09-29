@@ -156,7 +156,7 @@ export default function NotificationBell() {
               </div>
             ) : (
               notifications.map((n) => {
-                const failed = n.kind === 'report_failed';
+                const failed = n.kind === 'report_failed' || n.kind === 'screening_failed' || /: (Hit|Review) —/.test(n.title);
                 return (
                   <button
                     key={n.id}

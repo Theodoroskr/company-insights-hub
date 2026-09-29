@@ -251,6 +251,20 @@ export default function CheckoutPaymentPage() {
         console.warn('UK report fulfillment failed (will retry):', ukErr);
       }
 
+      // Standalone AML screening runs right away (service verifies payment; background check retries)
+      try {
+        const { data: scrItems } = await supabase
+          .from('order_items')
+          .select('id, products:product_id(slug)')
+          .eq('order_id', orderData.id);
+        const ids = (scrItems ?? [])
+          .filter((it) => ['company-aml-screening', 'aml-screening-with-directors'].includes((it.products as { slug?: string } | null)?.slug ?? ''))
+          .map((it) => it.id);
+        ids.forEach((id) => { supabase.functions.invoke('complyadvantage-screen', { body: { order_item_id: id } }); });
+      } catch (scrErr) {
+        console.warn('Screening start failed (will retry):', scrErr);
+      }
+
       // Store success info for confirmation page
       sessionStorage.setItem(
         'checkout_success',
