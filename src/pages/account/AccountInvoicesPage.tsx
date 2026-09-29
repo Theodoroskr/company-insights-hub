@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { FileDown, ChevronUp, ChevronDown } from 'lucide-react';
+import { FileDown, ChevronUp, ChevronDown, Loader2 } from 'lucide-react';
 import AccountLayout from '../../components/layout/AccountLayout';
 import EmptyState from '../../components/ui/EmptyState';
 import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../lib/tenant';
+import { downloadInvoicePdf, type InvoiceData } from '../../lib/invoicePdf';
 
 interface InvoiceRow {
   id: string;
@@ -18,6 +19,17 @@ interface InvoiceRow {
   report_token: string | null;
 }
 
+interface OrderInvoice {
+  id: string;
+  order_ref: string | null;
+  created_at: string | null;
+  subtotal: number;
+  vat_amount: number;
+  total: number;
+  payment_method: string | null;
+  items: { product_name: string; speed: string | null; unit_price: number; vat_amount: number; screening_addon: boolean; screening_price_eur: number }[];
+}
+
 function formatDate(iso: string | null) {
   if (!iso) return '—';
   return new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -26,7 +38,10 @@ function formatDate(iso: string | null) {
 export default function AccountInvoicesPage() {
   const { tenant } = useTenant();
   const [invoices, setInvoices] = useState<InvoiceRow[]>([]);
+  const [orderMap, setOrderMap] = useState<Record<string, OrderInvoice>>({});
+  const [buyer, setBuyer] = useState<InvoiceData['buyer']>({});
   const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
   useEffect(() => {
@@ -34,12 +49,30 @@ export default function AccountInvoicesPage() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) return;
 
+      const [{ data: profileData }] = await Promise.all([
+        supabase.from('profiles').select('full_name, email, vat_no, company_details').eq('id', session.user.id).maybeSingle(),
+      ]);
+      if (profileData) {
+        const cd = ((profileData as any).company_details ?? {}) as {
+          name?: string; reg?: string; vat?: string;
+          billing_address?: { street?: string; city?: string; state?: string; postcode?: string };
+        };
+        setBuyer({
+          name: (profileData as any).full_name,
+          email: (profileData as any).email ?? session.user.email,
+          company: cd.name ?? null,
+          reg: cd.reg ?? null,
+          vat: (profileData as any).vat_no ?? cd.vat ?? null,
+          address: cd.billing_address ?? null,
+        });
+      }
+
       const { data } = await supabase
         .from('orders')
         .select(`
-          id, order_ref, created_at, total,
+          id, order_ref, created_at, subtotal, vat_amount, total, payment_method,
           order_items (
-            id, speed,
+            id, speed, unit_price, vat_amount, screening_addon, screening_price_eur,
             products ( name ),
             generated_reports ( download_token )
           )
@@ -49,8 +82,26 @@ export default function AccountInvoicesPage() {
         .order('created_at', { ascending: true });
 
       const rows: InvoiceRow[] = [];
+      const orders: Record<string, OrderInvoice> = {};
       for (const o of data ?? []) {
         const ord = o as any;
+        orders[ord.id] = {
+          id: ord.id,
+          order_ref: ord.order_ref,
+          created_at: ord.created_at,
+          subtotal: Number(ord.subtotal ?? 0),
+          vat_amount: Number(ord.vat_amount ?? 0),
+          total: Number(ord.total ?? 0),
+          payment_method: ord.payment_method,
+          items: (ord.order_items ?? []).map((item: any) => ({
+            product_name: item.products?.name ?? 'Report',
+            speed: item.speed ?? null,
+            unit_price: Number(item.unit_price ?? 0),
+            vat_amount: Number(item.vat_amount ?? 0),
+            screening_addon: !!item.screening_addon,
+            screening_price_eur: Number(item.screening_price_eur ?? 0),
+          })),
+        };
         for (const item of ord.order_items ?? []) {
           rows.push({
             id: ord.id,
@@ -66,6 +117,7 @@ export default function AccountInvoicesPage() {
         }
       }
       setInvoices(rows);
+      setOrderMap(orders);
       setLoading(false);
     }
     load();
@@ -78,6 +130,40 @@ export default function AccountInvoicesPage() {
       return sortDir === 'asc' ? refA.localeCompare(refB) : refB.localeCompare(refA);
     });
   }, [invoices, sortDir]);
+
+  // One download button per order — shown on the order's first row.
+  const firstRowByOrder = useMemo(() => {
+    const seen = new Set<string>();
+    const map: Record<string, boolean> = {};
+    for (const r of sorted) {
+      if (!seen.has(r.id)) {
+        seen.add(r.id);
+        map[r.item_id] = true;
+      }
+    }
+    return map;
+  }, [sorted]);
+
+  const handleDownload = async (row: InvoiceRow) => {
+    const order = orderMap[row.id];
+    if (!order) return;
+    setBusyId(row.item_id);
+    try {
+      downloadInvoicePdf({
+        brandName: tenant?.brand_name ?? 'Infocredit Group',
+        orderRef: order.order_ref ?? order.id,
+        date: order.created_at ? new Date(order.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—',
+        paymentMethod: order.payment_method,
+        subtotal: order.subtotal,
+        vat: order.vat_amount,
+        total: order.total,
+        buyer,
+        items: order.items,
+      });
+    } finally {
+      setBusyId(null);
+    }
+  };
 
   return (
     <AccountLayout>
@@ -152,14 +238,16 @@ export default function AccountInvoicesPage() {
                     {inv.speed ?? '—'}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    {inv.has_report && (
+                    {firstRowByOrder[inv.item_id] && (
                       <button
                         type="button"
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border rounded transition-all hover:bg-gray-50 active:scale-95"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border rounded transition-all hover:bg-gray-50 active:scale-95 disabled:opacity-60"
                         style={{ borderColor: 'var(--bg-border)', color: 'var(--text-body)' }}
-                        title="Download invoice"
+                        title="Download invoice (PDF)"
+                        disabled={busyId === inv.item_id}
+                        onClick={() => handleDownload(inv)}
                       >
-                        <FileDown className="w-3.5 h-3.5" />
+                        {busyId === inv.item_id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileDown className="w-3.5 h-3.5" />}
                         Download
                       </button>
                     )}
