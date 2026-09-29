@@ -36,6 +36,30 @@ function decodeReport(b64: string): unknown {
 const DONE = new Set(['ready', 'completed', 'delivered']);
 const FAILED = new Set(['failed', 'cancelled', 'canceled', 'rejected']);
 
+// Fast follow-up after submission: wait DELAYS[attempt] seconds before hop attempt+1.
+// ~30s, 1m, 2m, 3.5m, 5m, 6.5m, 8m, 9.5m — then the 15-min cron takes over.
+const DELAYS = [30, 30, 60, 90, 90, 90, 90, 90];
+const MAX_ATTEMPTS = DELAYS.length;
+
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+}
+
+/** Schedule the next targeted check (only for internal chains with budget left). */
+function scheduleNext(orderItemId: string, attempt: number) {
+  if (attempt < 1 || attempt >= MAX_ATTEMPTS) return;
+  const delay = DELAYS[attempt] * 1000;
+  const p = new Promise<void>((resolve) => setTimeout(resolve, delay)).then(() =>
+    fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/poll-order-status`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ order_item_id: orderItemId, attempt: attempt + 1 }),
+    }).then((r) => r.body?.cancel()).catch((e) => console.error('[poll] next hop failed:', e))
+  );
+  // @ts-ignore EdgeRuntime is provided by the Supabase runtime
+  if (typeof EdgeRuntime !== 'undefined') EdgeRuntime.waitUntil(p);
+}
+
 /** Notify the customer: in-app notification always; email best-effort. */
 async function notifyCustomer(
   supabase: any,
