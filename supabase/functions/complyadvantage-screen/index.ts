@@ -193,9 +193,27 @@ async function caSearch(apiKey: string, ent: Entity): Promise<CASearchResponse> 
   return JSON.parse(text) as CASearchResponse;
 }
 
+async function notify(supabase: any, userId: string | undefined, orderItemId: string, orderId: string | null, companyName: string, overall: string | null) {
+  if (!userId) return;
+  try {
+    const failed = overall === null;
+    const kind = failed ? "screening_failed" : "screening_ready";
+    const { data: ex } = await supabase.from("notifications").select("id").eq("order_item_id", orderItemId).eq("kind", kind).maybeSingle();
+    if (ex) return;
+    const label = overall === "hit" ? "Hit" : overall === "review" ? "Review" : "Clear";
+    await supabase.from("notifications").insert({
+      user_id: userId, order_id: orderId, order_item_id: orderItemId, kind,
+      title: failed ? `Screening could not be completed — ${companyName}` : `AML screening complete: ${label} — ${companyName}`,
+      body: failed ? "Our team has been alerted and will re-run it." : "View the full sanctions, PEP and enforcement results.",
+      link: `/account/reports/${orderItemId}`,
+    });
+  } catch (e) { console.error("notify error", e); }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
+  let ctx: { supabase?: any; itemId?: string; userId?: string; orderId?: string | null; name?: string; standalone?: boolean } = {};
   try {
     const { order_item_id } = await req.json();
     if (!order_item_id) throw new Error("order_item_id is required");
@@ -211,7 +229,7 @@ Deno.serve(async (req) => {
     // Entitlement: only run for items where screening was paid for
     const { data: ent } = await supabase
       .from("order_items")
-      .select("screening_addon, company_id, products:product_id(slug), orders!inner(status, user_id)")
+      .select("screening_addon, company_id, products:product_id(slug), order_id, orders!inner(status, user_id)")
       .eq("id", order_item_id)
       .maybeSingle();
     const entRow = ent as unknown as {
@@ -219,6 +237,7 @@ Deno.serve(async (req) => {
       company_id?: string | null;
       products?: { slug?: string } | null;
       orders?: { status?: string; user_id?: string } | null;
+      order_id?: string | null;
     } | null;
     const slug = entRow?.products?.slug ?? "";
     const standalone = STANDALONE_SLUGS.includes(slug);
@@ -231,9 +250,15 @@ Deno.serve(async (req) => {
       });
     }
     const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+    let force = false;
     if (token && token !== Deno.env.get("SUPABASE_ANON_KEY") && token !== Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) {
       const { data: u } = await supabase.auth.getUser(token);
-      if (u?.user && entRow?.orders?.user_id && u.user.id !== entRow.orders.user_id) {
+      let staff = false;
+      if (u?.user) {
+        const { data: ok } = await supabase.rpc("has_permission", { _user_id: u.user.id, _section: "fulfillment", _need_edit: true });
+        staff = ok === true; force = staff;
+      }
+      if (!staff && u?.user && entRow?.orders?.user_id && u.user.id !== entRow.orders.user_id) {
         return new Response(JSON.stringify({ success: false, error: "Forbidden" }), {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -246,11 +271,14 @@ Deno.serve(async (req) => {
       .select("id, overall_status")
       .eq("order_item_id", order_item_id)
       .maybeSingle();
-    if (existing && existing.overall_status !== "error" && existing.overall_status !== "pending") {
+    if (!force && existing && existing.overall_status !== "error" && existing.overall_status !== "pending") {
       return new Response(JSON.stringify({ success: true, alreadyScreened: true, id: existing.id }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    ctx = { supabase, itemId: order_item_id, userId: entRow?.orders?.user_id, orderId: entRow?.order_id ?? null, standalone };
+    if (standalone) await supabase.from("order_items").update({ fulfillment_status: "processing" }).eq("id", order_item_id);
 
     // Load report bundle for this order_item (standalone screening has none)
     const { data: report } = await supabase
@@ -272,6 +300,7 @@ Deno.serve(async (req) => {
         .eq("id", companyId)
         .maybeSingle();
       companyName = c?.name ?? undefined;
+      ctx.name = companyName;
       if (!report && c) {
         const raw = (c.raw_source_json ?? {}) as Record<string, unknown>;
         bundle = { ...raw, name: c.name, directors_json: c.directors_json ?? undefined };
@@ -363,6 +392,7 @@ Deno.serve(async (req) => {
     if (standalone) {
       await supabase.from("order_items").update({ fulfillment_status: "completed" }).eq("id", order_item_id);
     }
+    await notify(supabase, ctx.userId, order_item_id, ctx.orderId ?? null, companyName ?? "your company", overall);
 
     return new Response(
       JSON.stringify({
@@ -380,6 +410,13 @@ Deno.serve(async (req) => {
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     console.error("complyadvantage-screen error:", message);
+    if (ctx.supabase && ctx.itemId) {
+      const sb = ctx.supabase;
+      await sb.from("screening_results").delete().eq("order_item_id", ctx.itemId).in("overall_status", ["error", "pending"]).then(() => {}, () => {});
+      await sb.from("screening_results").insert({ order_item_id: ctx.itemId, overall_status: "error", total_hits: 0, sanctions_hits: 0, pep_hits: 0, adverse_media_hits: 0, entities_screened: 0, error: message, screened_at: new Date().toISOString() }).then(() => {}, () => {});
+      if (ctx.standalone) await sb.from("order_items").update({ fulfillment_status: "failed" }).eq("id", ctx.itemId);
+      await notify(sb, ctx.userId, ctx.itemId, ctx.orderId ?? null, ctx.name ?? "your company", null);
+    }
     return new Response(JSON.stringify({ success: false, error: message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
