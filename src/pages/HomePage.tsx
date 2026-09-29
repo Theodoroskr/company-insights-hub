@@ -94,7 +94,6 @@ export default function HomePage() {
   const trustRef = useScrollReveal();
   const productsRef = useScrollReveal();
   const howItWorksRef = useScrollReveal();
-  const browseRef = useScrollReveal();
 
   return (
     <PageLayout>
