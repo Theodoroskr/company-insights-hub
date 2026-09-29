@@ -1,5 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { PDFDocument, StandardFonts, rgb } from 'https://esm.sh/pdf-lib@1.17.1';
+import { PDFDocument, StandardFonts, rgb, type PDFPage, type PDFFont } from 'https://esm.sh/pdf-lib@1.17.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -30,7 +30,7 @@ function sanitizeFilename(input: string): string {
   return cleaned || 'report';
 }
 
-function drawWordmark(page: any, font: any, bold: any, x: number, y: number, darkSurface = false) {
+function drawWordmark(page: PDFPage, font: PDFFont, bold: PDFFont, x: number, y: number, darkSurface = false) {
   const navy = darkSurface ? rgb(1, 1, 1) : rgb(0.063, 0.133, 0.235);
   const cyan = rgb(0, 0.663, 0.91);
   const size = 23;
