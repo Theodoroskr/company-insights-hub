@@ -11,7 +11,6 @@ import PageLayout from '../components/layout/PageLayout';
 import StatusBadge from '../components/ui/StatusBadge';
 import GatedContent from '../components/ui/GatedContent';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
-import RiskTrafficLight from '../components/ui/RiskTrafficLight';
 import CountryFlag from '../components/ui/CountryFlag';
 import CoverageTierBadge from '../components/ui/CoverageTierBadge';
 import { ProductIcon } from '../components/ui/ProductIcon';
@@ -1046,14 +1045,16 @@ export default function CompanyProfilePage() {
             )}
 
 
-            {/* B — Risk Indicator */}
+            {/* B — Compliance screening status */}
             <SectionCard>
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 <div>
                   <p className="text-sm font-semibold mb-2" style={{ color: 'var(--text-subheading)' }}>
-                    Risk Indicator
+                    Screening status
                   </p>
-                  <RiskTrafficLight band="medium" showLabel />
+                  <span className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" style={{ backgroundColor: 'var(--bg-subtle)', color: 'var(--text-muted)' }}>
+                    Not screened
+                  </span>
                 </div>
                 <div className="flex-1 sm:border-l sm:pl-4 mt-3 sm:mt-0" style={{ borderColor: 'var(--bg-border)' }}>
 <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
@@ -1491,9 +1492,14 @@ export default function CompanyProfilePage() {
                   orderItemId={unlockedOrderItemId}
                   isEnhanced={hasEnhancedKyb}
                   onUpgrade={() => {
-                    setKybModalProductOverride(enhancedKybProduct ?? null);
+                    setKybModalProductOverride(directorsAmlProduct ?? companyAmlProduct ?? enhancedKybProduct ?? null);
                     setKybModalOpen(true);
                   }}
+                  upgradeLabel={directorsAmlProduct
+                    ? `Add company + directors screening — ${formatEur(priceProduct(directorsAmlProduct, 0).net, 0)}`
+                    : companyAmlProduct
+                      ? `Add company screening — ${formatEur(priceProduct(companyAmlProduct, 0).net, 0)}`
+                      : 'Add AML & Compliance screening'}
                 />
               ) : (
                 <SectionCard>

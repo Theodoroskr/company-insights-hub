@@ -6,6 +6,7 @@ interface Props {
   orderItemId: string;
   isEnhanced: boolean;
   onUpgrade?: () => void;
+  upgradeLabel?: string;
 }
 
 type Status = 'pending' | 'clear' | 'review' | 'hit' | 'error';
@@ -53,7 +54,7 @@ const HIT_TYPE_LABEL: Record<string, string> = {
   'fitness-probity': 'Fitness & Probity',
 };
 
-export default function UKComplianceScreeningPanel({ orderItemId, isEnhanced, onUpgrade }: Props) {
+export default function UKComplianceScreeningPanel({ orderItemId, isEnhanced, onUpgrade, upgradeLabel = 'Add company + directors screening' }: Props) {
   const [result, setResult] = useState<ScreeningResult | null>(null);
   const [hits, setHits] = useState<Hit[]>([]);
   const [loading, setLoading] = useState(true);
@@ -155,7 +156,7 @@ export default function UKComplianceScreeningPanel({ orderItemId, isEnhanced, on
           className="w-full py-2 px-4 rounded-md font-medium text-sm text-white transition-opacity hover:opacity-90"
           style={{ backgroundColor: 'var(--brand-primary)' }}
         >
-          Upgrade to AML &amp; Compliance — €59
+          {upgradeLabel}
         </button>
       </div>
     );
