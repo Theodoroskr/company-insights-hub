@@ -14,6 +14,8 @@ interface Props {
   company: Company;
   isUnlocked: boolean;
   onUnlockClick?: () => void;
+  /** Dated events from a purchased report (appointments, charges, filings). */
+  extraEvents?: { date: string; title: string; detail?: string; kind: 'officer' | 'charge' | 'filing' }[];
 }
 
 interface TimelineEntry {
@@ -44,7 +46,7 @@ function maskText(s: string): string {
   return s.replace(/[a-z0-9]/gi, '•');
 }
 
-export default function CompanyChangeTimeline({ company, isUnlocked, onUnlockClick }: Props) {
+export default function CompanyChangeTimeline({ company, isUnlocked, onUnlockClick, extraEvents }: Props) {
   const [realEvents, setRealEvents] = useState<TimelineEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -105,8 +107,16 @@ export default function CompanyChangeTimeline({ company, isUnlocked, onUnlockCli
       synthetic: true,
     });
   }
+  for (const e of extraEvents ?? []) {
+    if (Number.isNaN(new Date(e.date).getTime())) continue;
+    synthetic.push({
+      date: e.date, title: e.title, detail: e.detail,
+      severity: e.kind === 'charge' ? 'medium' : 'info',
+      icon: e.kind === 'officer' ? <Users className="w-3.5 h-3.5" /> : <FileText className="w-3.5 h-3.5" />,
+    });
+  }
   const directorCount = Array.isArray(company.directors_json) ? company.directors_json.length : 0;
-  if (directorCount > 0) {
+  if (directorCount > 0 && !extraEvents?.length) {
     synthetic.push({
       date: company.cached_at ?? new Date().toISOString(),
       title: `${directorCount} officer${directorCount > 1 ? 's' : ''} on file`,

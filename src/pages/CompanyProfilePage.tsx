@@ -980,7 +980,7 @@ export default function CompanyProfilePage() {
 
             {/* INTEL-1 — Dense KPI strip (6 tiles) */}
             <IntelligenceKpiStrip
-              company={company}
+              company={viewCompany}
               country={countryInfo}
               isUnlocked={isUnlocked}
             />
@@ -1017,14 +1017,15 @@ export default function CompanyProfilePage() {
             <>
             {/* INTEL-2 — Director relationship graph */}
             <DirectorRelationshipGraph
-              company={company}
+              company={viewCompany}
               isUnlocked={isUnlocked}
               onUnlockClick={() => (kybProduct ? setKybModalOpen(true) : openStructureModal())}
             />
 
             {/* INTEL-3 — Change & activity timeline */}
             <CompanyChangeTimeline
-              company={company}
+              company={viewCompany}
+              extraEvents={a4aEvents}
               isUnlocked={isUnlocked}
               onUnlockClick={() => (kybProduct ? setKybModalOpen(true) : openStructureModal())}
             />
@@ -1039,7 +1040,7 @@ export default function CompanyProfilePage() {
               <UKCompanyFactsPanel bundle={reportBundle} />
             )}
             {/* Delivered API4ALL structure report (Cyprus / global) */}
-            {isUnlocked && reportBundle && Array.isArray((reportBundle as any).Company) && (
+            {a4a && reportBundle && (
               <Api4AllReportPanel bundle={reportBundle} />
             )}
 
@@ -1092,6 +1093,7 @@ export default function CompanyProfilePage() {
             </SectionCard>
 
             {/* C — Registered Address */}
+            {!a4a && (<>
             <SectionCard>
               <SectionTitle>Registered Address</SectionTitle>
               <GatedContent
@@ -1186,6 +1188,7 @@ export default function CompanyProfilePage() {
                 );
               })()}
             </SectionCard>
+            </>)}
 
             {/* E — Shareholders (teaser only; real ownership shown via PSC for UK) */}
             {!isUnlocked && (
