@@ -1,11 +1,8 @@
 import React from 'react';
+import { normalizeApi4AllReport } from '../../lib/api4all/normalize';
 
-type R = Record<string, any>;
-const arr = (v: unknown): R[] => (Array.isArray(v) ? (v as R[]) : []);
-const personName = (p: R) =>
-  p.IsCompany ? p.CompanyName : [p.FirstName, p.MiddleName, p.LastName].filter(Boolean).join(' ') || p.CompanyName || '—';
-const addr = (p: R) => arr(p.Address).filter((a) => a.Active !== 0).map((a) => [a.Address, a.City, a.PostalCode, a.Country].filter(Boolean).join(', '))[0];
 const d = (s?: string) => (s ? new Date(s).toLocaleDateString('en-GB') : '');
+const n = (s?: string | number) => (s !== undefined && s !== '' ? Number(s).toLocaleString('en-GB') : '');
 
 function Card({ title, count, children }: { title: string; count?: number; children: React.ReactNode }) {
   return (
@@ -27,71 +24,76 @@ function Row({ main, sub }: { main: React.ReactNode; sub: (string | undefined | 
   );
 }
 
+const Muted = ({ children }: { children: React.ReactNode }) => <span className="text-xs font-normal" style={{ color: 'var(--text-muted)' }}>{children}</span>;
+
 /** Renders a delivered API4ALL structure report (Cyprus / global) on the company page. */
-export default function Api4AllReportPanel({ bundle }: { bundle: R }) {
-  const c: R = arr(bundle.Company)[0];
-  if (!c) return null;
-  const admins = arr(c.Administrators).filter((a) => a.Active !== 0);
-  const holders = arr(c.Shareholders).filter((s) => s.Active !== 0);
-  const cap = arr(c.Capitals)[0];
-  const acts = arr(arr(c.Activities)[0]?.ActivityCode);
-  const charges = arr(c.MortgagesCharges);
-  const gen = arr(c.GeneralInfo)[0] ?? {};
+export default function Api4AllReportPanel({ bundle }: { bundle: Record<string, any> }) {
+  const r = normalizeApi4AllReport(bundle);
+  if (!r) return null;
+
+  const details: [string, string | undefined][] = [
+    ['Status', r.status],
+    ['Legal form', r.legalForm],
+    ...r.dates.map((x) => [x.label, d(x.date)] as [string, string]),
+    ['Website', r.website],
+    ['Email / phone', [r.emails, r.phones].filter(Boolean).join(' · ')],
+    ...r.identifiers.map((i) => [i.label, i.value] as [string, string]),
+    ...r.addresses.map((a) => [a.label, a.value] as [string, string]),
+  ];
 
   return (
     <div className="space-y-4">
       <Card title="Company details (from your report)">
         <dl className="grid sm:grid-cols-2 gap-3 text-sm">
-          {[
-            ['Status', arr(gen.Status)[0]?.Description],
-            ['Legal form', arr(gen.LegalType)[0]?.Description],
-            ['Website', gen.Website],
-            ['Email / phone', [arr(c.MoreInfo)[0]?.Emails, arr(c.MoreInfo)[0]?.Phones].filter(Boolean).join(' · ')],
-            ...arr(c.Identifiers).map((i) => [i.Description, i.Number]),
-            ...arr(gen.Address).map((a) => [a.Type, [a.Address, a.City, a.PostalCode, a.Country].filter(Boolean).join(', ')]),
-          ].filter(([, v]) => v).map(([k, v], i) => (
+          {details.filter(([, v]) => v).map(([k, v], i) => (
             <div key={i}><dt className="text-xs uppercase" style={{ color: 'var(--text-muted)' }}>{k}</dt><dd className="break-words" style={{ color: 'var(--text-body)' }}>{v}</dd></div>
           ))}
         </dl>
       </Card>
 
-      {admins.length > 0 && (
-        <Card title="Officers" count={admins.length}>
-          {admins.map((a, i) => (
-            <Row key={i} main={<>{personName(a)} <span className="text-xs font-normal" style={{ color: 'var(--text-muted)' }}>· {a.Position}</span></>}
-              sub={[a.StartDate && `Appointed ${d(a.StartDate)}`, a.Nationality && `Nationality: ${a.Nationality}`, addr(a) && `Address: ${addr(a)}`]} />
+      {r.officers.length > 0 && (
+        <Card title="Directors & Secretaries" count={r.officers.length}>
+          {r.officers.map((o, i) => (
+            <Row key={i} main={<>{o.name} <Muted>· {o.roles.join(' / ')}</Muted></>}
+              sub={[o.appointed && `Appointed ${d(o.appointed)}`, o.nationality && `Nationality: ${o.nationality}`, o.address && `Address: ${o.address}`]} />
           ))}
         </Card>
       )}
 
-      {holders.length > 0 && (
-        <Card title="Shareholders" count={holders.length}>
-          {holders.map((s, i) => (
-            <Row key={i} main={<>{personName(s)} {s.SharesPercentage && <span className="text-xs font-normal" style={{ color: 'var(--text-muted)' }}>· {s.SharesPercentage}%</span>}</>}
-              sub={[s.IssuedShares && `${Number(s.IssuedShares).toLocaleString('en-GB')} shares`, s.Nationality && `Nationality: ${s.Nationality}`, addr(s) && `Address: ${addr(s)}`]} />
+      {r.shareholders.length > 0 && (
+        <Card title="Shareholders" count={r.shareholders.length}>
+          {r.shareholders.map((s, i) => (
+            <Row key={i} main={<>{s.name} {s.pct && <Muted>· {s.pct}%</Muted>}</>}
+              sub={[s.shares && `${n(s.shares)} shares`, s.isCompany ? 'Corporate shareholder' : s.nationality && `Nationality: ${s.nationality}`, s.address && `Address: ${s.address}`]} />
           ))}
         </Card>
       )}
 
-      {cap && (
+      {r.capital && (
         <Card title="Share capital">
           <p className="text-sm" style={{ color: 'var(--text-body)' }}>
-            Authorised {Number(cap.AuthorisedCapital || 0).toLocaleString('en-GB')} · Issued {Number(cap.IssuedShares || 0).toLocaleString('en-GB')} · Paid up {Number(cap.PaidUpCapital || 0).toLocaleString('en-GB')} {cap.Currency}
+            Authorised {n(r.capital.authorised || 0)} · Issued {n(r.capital.issued || 0)} · Paid up {n(r.capital.paidUp || 0)} {r.capital.currency}
           </p>
+          {r.capital.classes.length > 0 && (
+            <ul className="mt-2 text-xs space-y-0.5" style={{ color: 'var(--text-muted)' }}>
+              {r.capital.classes.map((c, i) => <li key={i}>{c.type}: {n(c.issued)} shares{c.value ? ` of ${c.value}` : ''}</li>)}
+            </ul>
+          )}
         </Card>
       )}
 
-      {acts.length > 0 && (
-        <Card title="Activities" count={acts.length}>
-          {acts.map((a, i) => <Row key={i} main={a.Description} sub={[`${a.Type} ${a.Code}`]} />)}
+      {r.activities.length > 0 && (
+        <Card title="Activities" count={r.activities.length}>
+          {r.activities.map((a, i) => <Row key={i} main={a.description} sub={[`${a.type} ${a.code}`]} />)}
         </Card>
       )}
 
-      {charges.length > 0 && (
-        <Card title="Mortgages & charges" count={charges.length}>
-          {charges.map((m, i) => (
-            <Row key={i} main={m.Description || m.Type || m.CreditorName || `Charge ${i + 1}`}
-              sub={Object.entries(m).filter(([k, v]) => typeof v === 'string' && v && !['Description', 'Type'].includes(k)).slice(0, 4).map(([k, v]) => `${k}: ${v}`)} />
+      {r.charges.length > 0 && (
+        <Card title="Mortgages & charges" count={r.charges.length}>
+          {r.charges.map((m, i) => (
+            <Row key={i}
+              main={<>{m.kind === 'mortgage' ? `Mortgage${m.number ? ` ${m.number}` : ''}` : m.type} {m.amount !== undefined && <Muted>· {n(m.amount)} {m.currency}</Muted>}</>}
+              sub={[m.beneficiary && `In favour of ${m.beneficiary}`, m.registered && `Registered ${d(m.registered)}${m.prepared ? ` (prepared ${d(m.prepared)})` : ''}`, m.ended ? `Satisfied ${d(m.ended)}` : 'Outstanding']} />
           ))}
         </Card>
       )}
