@@ -13,6 +13,7 @@ interface OrderRow {
   status: string | null;
   total: number;
   company_name: string | null;
+  is_credit: boolean;
 }
 
 interface SavedRow {
@@ -87,6 +88,7 @@ export default function AccountDashboard() {
         status: o.status,
         total: o.total,
         company_name: o.order_items?.[0]?.companies?.name ?? null,
+        is_credit: !(o.order_items?.length),
       }));
       setOrders(rows);
 
@@ -194,7 +196,7 @@ export default function AccountDashboard() {
                 ? null
                 : orders.slice(0, 3).map((o) => {
                     const st = statusClass(o.status);
-                    const initial = (o.company_name ?? 'R').trim().charAt(0).toUpperCase();
+                    const initial = (o.is_credit ? '€' : (o.company_name ?? 'R')).trim().charAt(0).toUpperCase();
                     return (
                       <Link
                         key={o.id}
@@ -207,7 +209,7 @@ export default function AccountDashboard() {
                           </div>
                           <div className="min-w-0">
                             <p className="text-sm font-semibold truncate transition-colors group-hover:text-[var(--brand-accent)]" style={{ color: 'var(--text-heading)' }}>
-                              {o.company_name ?? 'Report order'}
+                              {o.is_credit ? 'Credit bundle' : (o.company_name ?? 'Report order')}
                             </p>
                             <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
                               {o.order_ref ?? '—'} · {formatDate(o.created_at)}
