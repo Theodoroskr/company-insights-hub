@@ -827,6 +827,7 @@ export default function CompanyProfilePage() {
     })),
     ...a4a.dates.filter((x) => !/registration|start/i.test(x.label)).map((x) => ({ date: x.date, title: x.label, kind: 'filing' as const })),
   ] : undefined;
+  const a4aFilingDates = a4a?.dates.filter((x) => !/registration|start/i.test(x.label)) ?? [];
   const reportProducts = products.filter((p) => p.type !== 'monitoring' && p.type !== 'certificate');
   const certificateProducts = certificatesAvailableFor(company?.country_code, certCountries)
     ? products.filter((p) => p.type === 'certificate')
@@ -1307,14 +1308,31 @@ export default function CompanyProfilePage() {
               </SectionCard>
             )}
 
-            {/* F — Filings & Documents (UK gets real CH data, others get placeholder) */}
+            {/* F — Filings & Documents */}
             {company.country_code?.toUpperCase() === 'GB' && company.reg_no ? (
               <UKCompanySections
                 companyNumber={company.reg_no}
                 isUnlocked={isUnlocked}
                 onOrderReport={openStructureModal}
               />
-            ) : (
+            ) : a4a ? (
+              a4aFilingDates.length > 0 ? (
+                <SectionCard>
+                  <SectionTitle>Filings &amp; Documents</SectionTitle>
+                  <div className="divide-y" style={{ borderColor: 'var(--bg-border)' }}>
+                    {a4aFilingDates.map((filing, i) => (
+                      <div key={`${filing.label}-${filing.date}-${i}`} className="flex items-center justify-between gap-4 py-2 text-sm">
+                        <span style={{ color: 'var(--text-body)' }}>{filing.label}</span>
+                        <span className="shrink-0" style={{ color: 'var(--text-muted)' }}>{formatDate(filing.date)}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs mt-3" style={{ color: 'var(--text-muted)' }}>
+                    From your purchased report
+                  </p>
+                </SectionCard>
+              ) : null
+            ) : !isUnlocked ? (
               <SectionCard>
                 <SectionTitle>Filings & Documents</SectionTitle>
                 <p className="text-sm mb-3" style={{ color: 'var(--text-body)' }}>
@@ -1351,7 +1369,7 @@ export default function CompanyProfilePage() {
                   </table>
                 </GatedContent>
               </SectionCard>
-            )}
+            ) : null}
 
             {/* G — Affiliated Companies */}
             <SectionCard>
