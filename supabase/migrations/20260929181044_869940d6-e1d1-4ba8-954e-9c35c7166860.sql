@@ -1,0 +1,1 @@
+UPDATE public.products SET name = 'Cyprus Credit Report' WHERE slug = 'cyprus-kyb-report';
