@@ -132,7 +132,7 @@ export function downloadInvoicePdf(data: InvoiceData) {
   y = Math.max(buyerEnd + 6, y + 6);
 
   // Items table
-  y = Math.max(y + 4, my + 4);
+  y = Math.max(y + 4, metaY + 4);
   const cols = { desc: M, qty: M + 110, net: M + 125, vat: M + 152, amount: W - M };
   doc.setDrawColor(...LINE);
   doc.setFillColor(...NAVY);
