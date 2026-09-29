@@ -323,6 +323,19 @@ export default function AdminOrderDetailPage() {
                     >
                       {FULFILLMENT_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
+                    {/screening/i.test((item as any).products?.name ?? (item as any).product_name ?? '') || true ? (
+                      <button
+                        onClick={async () => {
+                          const { data, error } = await supabase.functions.invoke('complyadvantage-screen', { body: { order_item_id: item.id } });
+                          alert(error || !data?.success ? `Screening failed: ${data?.error ?? error?.message}` : `Screening ${data.overall_status ?? 'done'} (${data.total_hits ?? 0} hits)`);
+                          fetchOrder();
+                        }}
+                        className="text-xs px-2.5 py-1 border rounded hover:bg-muted transition-colors"
+                        title="Runs sanctions/PEP screening if it was purchased for this item"
+                      >
+                        Re-run screening
+                      </button>
+                    ) : null}
                     <button
                       onClick={() => updateItemStatus(item.id, 'completed')}
                       className="text-xs px-2.5 py-1 bg-green-100 text-green-800 rounded hover:bg-green-200 transition-colors"
