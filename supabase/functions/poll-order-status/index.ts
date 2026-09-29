@@ -104,6 +104,28 @@ Deno.serve(async (req) => {
   );
 
   try {
+    // Safety net: paid standalone AML screening with no result after 5 minutes (one retry per run, errors excluded)
+    try {
+      const cutoff = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+      const { data: scr } = await supabase
+        .from('order_items')
+        .select('id, fulfillment_status, products:product_id!inner(slug), orders:order_id!inner(status), screening_results(id)')
+        .in('products.slug', ['company-aml-screening', 'aml-screening-with-directors'])
+        .in('orders.status', ['paid', 'processing'])
+        .in('fulfillment_status', ['pending', 'processing'])
+        .lt('created_at', cutoff)
+        .limit(20);
+      const todo = (scr ?? []).filter((r: any) => !(r.screening_results ?? []).length);
+      for (const r of todo) {
+        await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/complyadvantage-screen`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ order_item_id: r.id }),
+        }).catch((e) => console.error('screening sweep', e));
+      }
+      if (todo.length) console.log(`poll-order-status: started ${todo.length} pending screenings`);
+    } catch (e) { console.error('screening sweep error', e); }
+
     // Get all order items that need polling
     const { data: items, error } = await supabase
       .from('order_items')
