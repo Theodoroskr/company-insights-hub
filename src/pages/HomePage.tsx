@@ -32,8 +32,6 @@ const TRUST_BADGES = [
   { icon: <Globe className="w-5 h-5" />, text: 'Trusted local source' },
 ];
 
-const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-
 function useScrollReveal() {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
