@@ -103,9 +103,39 @@ Deno.serve(async (req) => {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   );
 
+  // Optional targeted mode: { order_item_id, attempt? }
+  let targetId: string | null = null;
+  let attempt = 0;
+  try {
+    const body = req.method === 'POST' ? await req.json() : {};
+    if (typeof body?.order_item_id === 'string' && /^[0-9a-f-]{36}$/i.test(body.order_item_id)) targetId = body.order_item_id;
+    if (Number.isInteger(body?.attempt)) attempt = Math.max(0, Math.min(body.attempt, MAX_ATTEMPTS));
+  } catch { /* no body = scheduled scan */ }
+
+  if (targetId) {
+    const token = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '');
+    const isService = token === Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    if (!isService) {
+      attempt = 0; // only internal calls may chain
+      const { data: u } = await supabase.auth.getUser(token);
+      const uid = u?.user?.id;
+      if (!uid) return json({ error: 'Unauthorized' }, 401);
+      const { data: row } = await supabase.from('order_items').select('orders:order_id(user_id)').eq('id', targetId).maybeSingle();
+      const { data: staff } = await supabase.rpc('is_staff', { _user_id: uid });
+      if ((row as any)?.orders?.user_id !== uid && !staff) return json({ error: 'Forbidden' }, 403);
+    }
+    // Single-flight: skip if this item was checked in the last 20s
+    const { data: task } = await supabase.from('fulfillment_tasks').select('last_attempt_at')
+      .eq('order_item_id', targetId).eq('type', 'poll_status').order('created_at', { ascending: false }).limit(1).maybeSingle();
+    if (task?.last_attempt_at && Date.now() - new Date(task.last_attempt_at).getTime() < 20000) {
+      scheduleNext(targetId, attempt);
+      return json({ success: true, skipped: 'recently_checked' });
+    }
+  }
+
   try {
     // Safety net: paid standalone AML screening with no result after 5 minutes (one retry per run, errors excluded)
-    try {
+    if (!targetId) try {
       const cutoff = new Date(Date.now() - 5 * 60 * 1000).toISOString();
       const { data: scr } = await supabase
         .from('order_items')
@@ -127,11 +157,13 @@ Deno.serve(async (req) => {
     } catch (e) { console.error('screening sweep error', e); }
 
     // Get all order items that need polling
-    const { data: items, error } = await supabase
+    let q = supabase
       .from('order_items')
       .select('id, api4all_order_id, api4all_item_code, order_id, company_id, fulfillment_status, products:product_id(type, name), orders:order_id(user_id, order_ref), companies:company_id(name)')
       .in('fulfillment_status', ['submitted', 'processing'])
       .not('api4all_order_id', 'is', null);
+    if (targetId) q = q.eq('id', targetId);
+    const { data: items, error } = await q;
 
     if (error) throw error;
 
