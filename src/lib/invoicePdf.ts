@@ -40,8 +40,8 @@ const NAVY: [number, number, number] = [16, 34, 60];
 const MUTED: [number, number, number] = [100, 110, 125];
 const LINE: [number, number, number] = [222, 226, 232];
 
-function fmt(n: number) {
-  return `€${n.toFixed(2)}`;
+function fmt(n: number | undefined | null) {
+  return `€${(Number(n) || 0).toFixed(2)}`;
 }
 
 function paymentLabel(method?: string | null) {
