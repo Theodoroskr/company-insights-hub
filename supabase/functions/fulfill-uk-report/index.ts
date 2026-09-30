@@ -6,6 +6,7 @@
 // No API4ALL involved.
 // ============================================================
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { authorizeOrder } from "../_shared/order-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -54,7 +55,7 @@ Deno.serve(async (req) => {
     const { data: item, error: itemErr } = await supabase
       .from("order_items")
       .select(`
-        id, fulfillment_status,
+        id, fulfillment_status, order_id,
         products:product_id ( id, slug, type ),
         companies:company_id ( id, country_code, reg_no, name )
       `)
@@ -62,6 +63,12 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (itemErr || !item) throw new Error("order_item not found");
+    const auth = await authorizeOrder(req, supabase, (item as { order_id?: string }).order_id, { requirePaid: true });
+    if (!auth.ok) {
+      return new Response(JSON.stringify({ success: false, error: auth.error }), {
+        status: auth.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const product = item.products as unknown as { slug?: string; type?: string } | null;
     const company = item.companies as unknown as {

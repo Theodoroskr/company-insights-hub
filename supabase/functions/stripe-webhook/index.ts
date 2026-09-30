@@ -121,7 +121,7 @@ Deno.serve(async (req) => {
               const r = await fetch(fulfillUrl, {
                 method: 'POST',
                 headers: {
-                  'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
+                  'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
                   'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ order_item_id: id }),
@@ -159,7 +159,7 @@ Deno.serve(async (req) => {
       const createRes = await fetch(createOrderUrl, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ order_id: order.id }),
