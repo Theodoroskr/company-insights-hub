@@ -48,13 +48,22 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    const ACTIONS = ["search", "profile", "officers", "filings", "filing-history", "charges", "psc", "full", "bundle"];
+    if (companyNumber !== undefined && !/^[A-Za-z0-9]{6,10}$/.test(String(companyNumber))) {
+      throw new Error("Invalid company number");
+    }
+    if (query !== undefined && String(query).length > 200) throw new Error("Query too long");
+    const perPage = Math.min(Math.max(Number(itemsPerPage) || 20, 1), 100);
+    const start = Math.min(Math.max(Number(startIndex) || 0, 0), 10000);
+    void ACTIONS;
+
     let data: unknown;
 
     switch (action) {
       case "search": {
         if (!query) throw new Error("query is required");
         data = await chFetch(
-          `/search/companies?q=${encodeURIComponent(query)}&items_per_page=${itemsPerPage}&start_index=${startIndex}`,
+          `/search/companies?q=${encodeURIComponent(query)}&items_per_page=${perPage}&start_index=${start}`,
         );
         // Log search
         await supabase.from("search_logs").insert({

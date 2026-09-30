@@ -193,6 +193,9 @@ Deno.serve(async (req) => {
       force = url.searchParams.get('fresh') === 'true';
     }
 
+    if (!/^[0-9a-f-]{36}$/i.test(tenantId)) tenantId = '';
+    q = String(q).slice(0, 200);
+
     if (!q || q.length < 2) {
       return new Response(JSON.stringify({ results: [], count: 0, source: 'cache' }), {
         headers: { ...CORS, 'Content-Type': 'application/json' },
