@@ -1,6 +1,7 @@
 // Companies House UK proxy
 // Docs: https://developer-specs.company-information.service.gov.uk/
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { createClient } from "npm:@supabase/supabase-js@2";
+import { getCallerUser, isServiceCall } from "../_shared/order-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,15 +12,17 @@ const corsHeaders = {
 
 const CH_BASE = "https://api.company-information.service.gov.uk";
 const CACHE_TTL_HOURS = 24;
+// Public callers may only look up companies already listed on the site.
+const PUBLIC_ACTIONS = new Set(["officers", "filing-history", "charges", "psc"]);
+const FILING_CATEGORIES = new Set(["accounts", "confirmation-statement", "officers", "incorporation", "address", "capital", "mortgage", "annual-return"]);
+const RESPONSE_TTL_MS = 60 * 60 * 1000;
+const responseCache = new Map<string, { at: number; data: unknown }>();
 
 function authHeader() {
   const raw = Deno.env.get("COMPANIES_HOUSE_UK_API_KEY");
   if (!raw) throw new Error("COMPANIES_HOUSE_UK_API_KEY not configured");
   const key = raw.trim();
   // Log non-sensitive metadata to help diagnose 401s
-  console.log(
-    `[CH UK] key length=${key.length} starts="${key.slice(0, 4)}..." ends="...${key.slice(-2)}"`,
-  );
   // Companies House uses HTTP Basic with the API key as the username and an empty password.
   return "Basic " + btoa(`${key}:`);
 }
@@ -31,7 +34,7 @@ async function chFetch(path: string) {
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     console.error(`[CH UK] ${res.status} on ${path}: ${text.slice(0, 200)}`);
-    throw new Error(`Companies House API ${res.status}: ${text.slice(0, 200)}`);
+    throw new Error(`Companies House API ${res.status}`);
   }
   return res.json();
 }
@@ -52,8 +55,45 @@ Deno.serve(async (req) => {
       throw new Error("Invalid company number");
     }
     if (query !== undefined && String(query).length > 200) throw new Error("Query too long");
+    if (category !== undefined && !FILING_CATEGORIES.has(String(category))) throw new Error("Invalid category");
     const perPage = Math.min(Math.max(Number(itemsPerPage) || 20, 1), 100);
     const start = Math.min(Math.max(Number(startIndex) || 0, 0), 10000);
+
+    // Access: open-ended search and live profile fetches are backend/staff only.
+    // Everyone else may only read records for UK companies already on the site.
+    let privileged = isServiceCall(req);
+    if (!privileged) {
+      const uid = await getCallerUser(req, supabase);
+      if (uid) {
+        const { data: staff } = await supabase.rpc("is_staff", { _user_id: uid });
+        privileged = staff === true;
+      }
+    }
+    if (!privileged) {
+      if (!PUBLIC_ACTIONS.has(String(action))) {
+        return new Response(JSON.stringify({ success: false, error: "Not allowed" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403,
+        });
+      }
+      const num = String(companyNumber ?? "").toUpperCase();
+      const { data: known } = await supabase
+        .from("companies").select("id").eq("country_code", "GB")
+        .or(`reg_no.eq.${num},icg_code.eq.GB:${num}`).limit(1).maybeSingle();
+      if (!known) {
+        return new Response(JSON.stringify({ success: false, error: "Company not found" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 404,
+        });
+      }
+    }
+
+    // Short-lived cache so repeat page views don't hit the registry again.
+    const cacheKey = `${action}|${String(companyNumber ?? "").toUpperCase()}|${perPage}|${start}|${category ?? ""}`;
+    const hit = action !== "search" && action !== "profile" ? responseCache.get(cacheKey) : undefined;
+    if (hit && Date.now() - hit.at < RESPONSE_TTL_MS) {
+      return new Response(JSON.stringify({ success: true, data: hit.data }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200,
+      });
+    }
 
     let data: unknown;
 
@@ -74,13 +114,13 @@ Deno.serve(async (req) => {
 
       case "profile": {
         if (!companyNumber) throw new Error("companyNumber is required");
-        const cacheKey = `GB:${companyNumber}`;
+        const icgKey = `GB:${companyNumber}`;
         // Try cache
         const { data: cached } = await supabase
           .from("companies")
           .select("*")
           .eq("country_code", "GB")
-          .eq("icg_code", cacheKey)
+          .eq("icg_code", icgKey)
           .maybeSingle();
 
         const fresh =
@@ -99,7 +139,7 @@ Deno.serve(async (req) => {
         );
 
         const upsert = {
-          icg_code: cacheKey,
+          icg_code: icgKey,
           country_code: "GB",
           name: profile.company_name,
           reg_no: profile.company_number,
@@ -136,7 +176,7 @@ Deno.serve(async (req) => {
       case "filing-history": {
         if (!companyNumber) throw new Error("companyNumber is required");
         let path =
-          `/company/${companyNumber}/filing-history?items_per_page=${itemsPerPage}&start_index=${startIndex}`;
+          `/company/${companyNumber}/filing-history?items_per_page=${perPage}&start_index=${start}`;
         if (category) path += `&category=${encodeURIComponent(category)}`;
         data = await chFetch(path);
         break;
@@ -160,6 +200,10 @@ Deno.serve(async (req) => {
         throw new Error(`Unknown action: ${action}`);
     }
 
+    if (action !== "search" && action !== "profile") {
+      if (responseCache.size > 500) responseCache.clear();
+      responseCache.set(cacheKey, { at: Date.now(), data });
+    }
     return new Response(JSON.stringify({ success: true, data }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
