@@ -1296,6 +1296,7 @@ export type Database = {
         Args: { new_password: string; user_email: string }
         Returns: undefined
       }
+      check_cron_secret: { Args: { _s: string }; Returns: boolean }
       generate_monthly_invoices: {
         Args: { _period_start: string }
         Returns: number
