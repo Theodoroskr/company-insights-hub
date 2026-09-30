@@ -136,6 +136,19 @@ Deno.serve(async (req) => {
     if (Number.isInteger(body?.attempt)) attempt = Math.max(0, Math.min(body.attempt, MAX_ATTEMPTS));
   } catch { /* no body = scheduled scan */ }
 
+  if (!targetId) {
+    // Full scan is for the scheduler/backend or staff only
+    const token = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '');
+    const cronSecret = req.headers.get('x-cron-secret') ?? '';
+    const { data: cronOk } = cronSecret ? await supabase.rpc('check_cron_secret', { _s: cronSecret }) : { data: false };
+    if (token !== Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') && cronOk !== true) {
+      const { data: u } = token ? await supabase.auth.getUser(token) : { data: null };
+      const uid = u?.user?.id;
+      const { data: staff } = uid ? await supabase.rpc('is_staff', { _user_id: uid }) : { data: false };
+      if (!staff) return json({ error: 'Unauthorized' }, 401);
+    }
+  }
+
   if (targetId) {
     const token = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '');
     const isService = token === Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');

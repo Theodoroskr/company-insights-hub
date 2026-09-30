@@ -9,6 +9,7 @@
 // Persists results into screening_results + screening_entity_hits.
 // ============================================================
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { getCallerUser, isServiceCall, isStaffFor } from "../_shared/order-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -270,18 +271,19 @@ Deno.serve(async (req) => {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+    // Caller must be backend/service role, fulfilment staff, or the order owner (signed in).
     let force = false;
-    // Backend/service-role calls (cron, poller, ops) may force a re-run.
-    if (token && token === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) force = true;
-    if (token && token !== Deno.env.get("SUPABASE_ANON_KEY") && token !== Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) {
-      const { data: u } = await supabase.auth.getUser(token);
-      let staff = false;
-      if (u?.user) {
-        const { data: ok } = await supabase.rpc("has_permission", { _user_id: u.user.id, _section: "fulfillment", _need_edit: true });
-        staff = ok === true; force = staff;
+    if (isServiceCall(req)) force = true;
+    else {
+      const uid = await getCallerUser(req, supabase);
+      if (!uid) {
+        return new Response(JSON.stringify({ success: false, error: "Sign in required" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
-      if (!staff && u?.user && entRow?.orders?.user_id && u.user.id !== entRow.orders.user_id) {
+      const staff = await isStaffFor(supabase, uid, "fulfillment");
+      force = staff;
+      if (!staff && uid !== entRow?.orders?.user_id) {
         return new Response(JSON.stringify({ success: false, error: "Forbidden" }), {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });

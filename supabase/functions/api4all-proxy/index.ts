@@ -83,8 +83,21 @@ serve(async (req) => {
       });
     }
 
+    // Public browser callers may only run read-only lookups (report
+    // availability dates, search). Everything else is backend-only.
+    const norm = path.startsWith('/') ? path : '/' + path;
+    const bearerTok = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '');
+    const isService = bearerTok && bearerTok === Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const PUBLIC_READ = /^\/(reports\/dates\/[A-Za-z0-9%._-]{1,64}|search\/[a-z]{2}\/(name|vat_no|reg_no)\/[^/?#]{1,200})$/;
+    if (!isService && (String(method).toUpperCase() !== 'GET' || body || !PUBLIC_READ.test(norm) || norm.includes('..'))) {
+      return new Response(JSON.stringify({ error: 'Request not allowed' }), {
+        status: 403,
+        headers: { ...CORS, 'Content-Type': 'application/json' },
+      });
+    }
+
     const token = await getToken();
-    const url   = `${API_BASE}${path.startsWith('/') ? path : '/' + path}`;
+    const url   = `${API_BASE}${norm}`;
 
     const upstream = await fetch(url, {
       method,
@@ -108,7 +121,8 @@ serve(async (req) => {
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
-    return new Response(JSON.stringify({ error: message }), {
+    console.error('api4all-proxy error:', message);
+    return new Response(JSON.stringify({ error: 'Upstream request failed' }), {
       status: 500,
       headers: { ...CORS, 'Content-Type': 'application/json' },
     });

@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { authorizeOrder } from '../_shared/order-auth.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -101,6 +102,14 @@ Deno.serve(async (req) => {
     if (orderErr || !order) {
       return new Response(JSON.stringify({ error: 'Order not found' }), {
         status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const auth = await authorizeOrder(req, supabase, order.id, { requirePaid: true });
+    if (!auth.ok) {
+      return new Response(JSON.stringify({ error: auth.error }), {
+        status: auth.status,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }

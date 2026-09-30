@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -26,6 +26,24 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_URL') || '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '',
     );
+
+    // Only a signed-in super admin may reset passwords
+    const token = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '');
+    const { data: u } = token ? await supabase.auth.getUser(token) : { data: null };
+    const callerId = u?.user?.id;
+    const { data: isSuper } = callerId
+      ? await supabase.rpc('has_role', { _user_id: callerId, _role: 'super_admin' })
+      : { data: false };
+    if (!isSuper) {
+      return new Response(JSON.stringify({ error: 'Forbidden' }), {
+        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    if (typeof password !== 'string' || password.length < 10 || typeof email !== 'string' || email.length > 254) {
+      return new Response(JSON.stringify({ error: 'Password must be at least 10 characters' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     // Find user by email
     const { data: user, error: userError } = await supabase
@@ -61,7 +79,7 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     return new Response(
-      JSON.stringify({ error: 'Internal server error', details: error instanceof Error ? error.message : String(error) }),
+      JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

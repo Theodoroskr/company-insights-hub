@@ -144,6 +144,7 @@ async function searchCompaniesHouseUK(
       cached_at: new Date().toISOString(),
     };
 
+    await keepExistingTenant(sb, row);
     const { data: upRow } = await sb
       .from('companies')
       .upsert(row, { onConflict: 'icg_code' })
@@ -157,6 +158,18 @@ async function searchCompaniesHouseUK(
 }
 
 // ── Main handler ─────────────────────────────────────────────
+// Strip PostgREST filter syntax characters so search text can't alter the query.
+function safeFilter(v: string): string {
+  return String(v).replace(/[,()"'\\%*:]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 100);
+}
+
+// Never re-assign an existing company to a caller-chosen tenant.
+// deno-lint-ignore no-explicit-any
+async function keepExistingTenant(sb: any, row: Record<string, unknown>) {
+  const { data } = await sb.from('companies').select('id').eq('icg_code', row.icg_code as string).maybeSingle();
+  if (data) delete row.tenant_id;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: CORS });
@@ -180,6 +193,9 @@ Deno.serve(async (req) => {
       force = url.searchParams.get('fresh') === 'true';
     }
 
+    if (!/^[0-9a-f-]{36}$/i.test(tenantId)) tenantId = '';
+    q = String(q).slice(0, 200);
+
     if (!q || q.length < 2) {
       return new Response(JSON.stringify({ results: [], count: 0, source: 'cache' }), {
         headers: { ...CORS, 'Content-Type': 'application/json' },
@@ -194,7 +210,7 @@ Deno.serve(async (req) => {
         .from('companies')
         .select('id, icg_code, name, reg_no, vat_no, status, country_code, slug, cached_at, legal_form')
         .gt('cached_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-        .or(`name.ilike.%${q}%,reg_no.ilike.%${q}%`)
+        .or(`name.ilike.%${safeFilter(q)}%,reg_no.ilike.%${safeFilter(q)}%`)
         .limit(10);
 
       if (tenantId) cacheQuery = cacheQuery.eq('tenant_id', tenantId);
@@ -253,7 +269,7 @@ Deno.serve(async (req) => {
       const { data: stale } = await sb
         .from('companies')
         .select('id, icg_code, name, reg_no, vat_no, status, country_code, slug, cached_at, legal_form')
-        .or(`name.ilike.%${q}%,reg_no.ilike.%${q}%`)
+        .or(`name.ilike.%${safeFilter(q)}%,reg_no.ilike.%${safeFilter(q)}%`)
         .limit(10);
 
       return new Response(
@@ -327,6 +343,7 @@ Deno.serve(async (req) => {
         cached_at: new Date().toISOString(),
       };
 
+      await keepExistingTenant(sb, row);
       const { data: upsertedRow } = await sb
         .from('companies')
         .upsert(row, { onConflict: 'icg_code' })
