@@ -1297,6 +1297,17 @@ export type Database = {
         Returns: undefined
       }
       check_cron_secret: { Args: { _s: string }; Returns: boolean }
+      create_investigation_company: {
+        Args: { _country: string; _name: string; _reg_no: string }
+        Returns: {
+          country_code: string
+          icg_code: string
+          id: string
+          name: string
+          reg_no: string
+          slug: string
+        }[]
+      }
       generate_monthly_invoices: {
         Args: { _period_start: string }
         Returns: number
