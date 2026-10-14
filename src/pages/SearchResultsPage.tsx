@@ -7,6 +7,7 @@ import SaveCompanyButton from '../components/company/SaveCompanyButton';
 import StatusBadge from '../components/ui/StatusBadge';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import EmptyState from '../components/ui/EmptyState';
+import InvestigationRequest from '../components/search/InvestigationRequest';
 import { useTenant } from '../lib/tenant.tsx';
 import { useCountries } from '../lib/countries';
 import { supabase } from '@/integrations/supabase/client';
@@ -368,7 +369,9 @@ export default function SearchResultsPage() {
 
             {/* Empty state */}
             {!isLoading && filtered.length === 0 && (
-              <EmptyState message="No Companies yet" />
+              q.length >= 2 && results.length === 0
+                ? <InvestigationRequest query={q} country={countryParam || tenant?.country_code || ''} />
+                : <EmptyState message="No Companies yet" />
             )}
 
             {/* Results list */}
