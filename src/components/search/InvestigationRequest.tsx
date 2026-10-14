@@ -35,7 +35,7 @@ export default function InvestigationRequest({ query, country }: { query: string
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSignedIn(!!data.session));
     supabase.from('products').select('*').in('slug', OPTIONS.map((o) => o.slug)).eq('is_active', true)
-      .then(({ data }) => setProducts((data ?? []) as Product[]));
+      .then(({ data }) => setProducts((data ?? []) as unknown as Product[]));
   }, []);
 
   const returnTo = `${window.location.pathname}${window.location.search}`;
