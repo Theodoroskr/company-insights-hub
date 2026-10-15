@@ -902,8 +902,10 @@ export default function CompanyProfilePage() {
         />
         <link
           rel="canonical"
-          href={`https://${tenant?.domain ?? ''}/company/${company.slug ?? slug}`}
+          href={tenant?.domain ? `https://${tenant.domain}/company/${company.slug ?? slug}` : `/company/${company.slug ?? slug}`}
         />
+        <meta property="og:title" content={`${company.name} — Company Profile — ${tenant?.brand_name ?? 'Infocredit World'}`} />
+        <meta property="og:description" content={`Registration details, directors and official reports for ${company.name}${company.status ? ` (${company.status})` : ''}.`} />
         <script type="application/ld+json">{JSON.stringify(orgSchema)}</script>
         <script type="application/ld+json">{JSON.stringify(breadcrumbSchema)}</script>
       </Helmet>
