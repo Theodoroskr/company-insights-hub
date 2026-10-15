@@ -191,6 +191,8 @@ export default function ProductLandingPage() {
     <PageLayout>
       <Helmet>
         <title>{productName} | {hero.metaTitleSuffix}</title>
+        <meta property="og:title" content={`${productName} — Company Report — ${hero.metaTitleSuffix}`} />
+        <meta property="og:description" content={`Order the ${productName} online and receive it digitally.`} />
       </Helmet>
 
       {/* ── HERO ─────────────────────────────────────────────── */}

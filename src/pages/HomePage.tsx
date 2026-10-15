@@ -96,7 +96,7 @@ export default function HomePage() {
   return (
     <PageLayout>
       <Helmet>
-        <title>{tenant?.meta_title ?? 'Companies House'}</title>
+        <title>{tenant?.meta_title ?? 'Infocredit World — Company Reports, KYB & Certificates'}</title>
         {tenant?.meta_description && (
           <meta name="description" content={tenant.meta_description} />
         )}
