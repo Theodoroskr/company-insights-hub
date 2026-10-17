@@ -260,3 +260,30 @@ const statusColor: Record<string, string> = {
   completed: 'bg-green-100 text-green-800',
   failed: 'bg-red-100 text-red-800',
 };
+
+function AdminSetPassword({ email }: { email: string }) {
+  const [pw, setPw] = useState('');
+  const [busy, setBusy] = useState(false);
+  const save = async () => {
+    if (pw.length < 10) { toast({ title: 'Password must be at least 10 characters', variant: 'destructive' }); return; }
+    setBusy(true);
+    const { data, error } = await supabase.functions.invoke('admin-set-password', { body: { email, password: pw } });
+    setBusy(false);
+    if (error || data?.error) { toast({ title: 'Could not change password', description: data?.error ?? error?.message, variant: 'destructive' }); return; }
+    setPw('');
+    toast({ title: 'Password changed', description: `New password set for ${email}.` });
+  };
+  return (
+    <div>
+      <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">Change password</h3>
+      <div className="flex gap-2">
+        <input type="password" value={pw} onChange={e => setPw(e.target.value)} placeholder="New password (min 10 chars)"
+          className="flex-1 border rounded px-2 py-1.5 text-sm bg-background focus:outline-none" autoComplete="new-password" />
+        <button onClick={save} disabled={busy || !pw}
+          className="px-3 py-1.5 rounded text-sm font-medium bg-primary text-primary-foreground disabled:opacity-50">
+          {busy ? 'Saving…' : 'Set'}
+        </button>
+      </div>
+    </div>
+  );
+}
