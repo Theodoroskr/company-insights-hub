@@ -122,7 +122,9 @@ export default function CheckoutPaymentPage() {
       const total = subtotal + vatAmount;
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const orderId = crypto.randomUUID();
       const insertPayload: any = {
+        id: orderId,
         tenant_id: tenant?.id ?? null,
         user_id: session?.user?.id ?? null,
         order_ref: orderRef,
@@ -137,20 +139,21 @@ export default function CheckoutPaymentPage() {
         guest_details: session ? null : details,
       };
 
-      const { data: orderData, error: orderErr } = await supabase
-        .from('orders')
-        .insert(insertPayload)
-        .select()
-        .single();
-
-      if (orderErr || !orderData) throw new Error('Failed to create order');
+      // No read-back: guests may create but not read orders, so ids are generated here
+      const { error: orderErr } = await supabase.from('orders').insert(insertPayload);
+      if (orderErr) throw new Error(`Could not create your order: ${orderErr.message}`);
+      const orderData = { id: orderId };
+      const createdItems: { id: string; slug?: string }[] = [];
 
       // Create order items (with screening flag + price snapshot)
       const orderItemResults = await Promise.all(
-        items.map((item) =>
-          supabase
+        items.map((item) => {
+          const itemId = crypto.randomUUID();
+          createdItems.push({ id: itemId, slug: item.product.slug });
+          return supabase
             .from('order_items')
             .insert({
+              id: itemId,
               order_id: orderData.id,
               product_id: item.product.id,
               company_id: item.company.id,
@@ -162,10 +165,8 @@ export default function CheckoutPaymentPage() {
               fulfillment_status: 'pending',
               screening_addon: item.screeningAddon,
               screening_price_eur: item.screeningAddon ? SCREENING_ADDON_PRICE_EUR : 0,
-            })
-            .select('id')
-            .single()
-        )
+            });
+        })
       );
 
       // Certificate lines: one order item per certificate, priced via the shared pricing module
@@ -181,6 +182,7 @@ export default function CheckoutPaymentPage() {
           for (const c of o.certificates) {
             const net = Math.round((c.price + pricing.certificateServiceFee + (c.apostille ? pricing.apostille : 0) + extrasPerCert) * 100) / 100;
             const res = await supabase.from('order_items').insert({
+              id: crypto.randomUUID(),
               order_id: orderData.id,
               product_id: idBySlug.get(c.slug) ?? null,
               company_id: null,
@@ -191,7 +193,7 @@ export default function CheckoutPaymentPage() {
               fulfillment_status: 'pending',
               screening_addon: false,
               screening_price_eur: 0,
-            }).select('id').single();
+            });
             orderItemResults.push(res as any);
           }
         }
@@ -231,14 +233,7 @@ export default function CheckoutPaymentPage() {
 
       // Instant fulfillment for UK Company Report items (no Stripe/API4All needed)
       try {
-        const { data: ukItems } = await supabase
-          .from('order_items')
-          .select('id, products:product_id(slug)')
-          .eq('order_id', orderData.id);
-
-        const ukReportItemIds = (ukItems ?? [])
-          .filter((it) => (it.products as { slug?: string } | null)?.slug === 'uk-company-report')
-          .map((it) => it.id);
+        const ukReportItemIds = createdItems.filter((it) => it.slug === 'uk-company-report').map((it) => it.id);
 
         await Promise.all(
           ukReportItemIds.map((id) =>
@@ -253,12 +248,8 @@ export default function CheckoutPaymentPage() {
 
       // Standalone AML screening runs right away (service verifies payment; background check retries)
       try {
-        const { data: scrItems } = await supabase
-          .from('order_items')
-          .select('id, products:product_id(slug)')
-          .eq('order_id', orderData.id);
-        const ids = (scrItems ?? [])
-          .filter((it) => ['company-aml-screening', 'aml-screening-with-directors'].includes((it.products as { slug?: string } | null)?.slug ?? ''))
+        const ids = createdItems
+          .filter((it) => ['company-aml-screening', 'aml-screening-with-directors'].includes(it.slug ?? ''))
           .map((it) => it.id);
         ids.forEach((id) => { supabase.functions.invoke('complyadvantage-screen', { body: { order_item_id: id } }); });
       } catch (scrErr) {
@@ -282,7 +273,7 @@ export default function CheckoutPaymentPage() {
       clearCart();
       navigate('/checkout/success');
     } catch (err) {
-      setCardError(method === 'card' ? 'Payment failed. Please try again or contact support.' : (err instanceof Error ? err.message : 'Payment failed.'));
+      setCardError(err instanceof Error && err.message ? err.message : 'Payment failed. Please try again or contact support.');
     } finally {
       setIsPlacing(false);
     }
