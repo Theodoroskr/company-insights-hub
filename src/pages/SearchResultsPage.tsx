@@ -56,6 +56,7 @@ export default function SearchResultsPage() {
   const [countrySearch, setCountrySearch] = useState('');
   const [multipleCountries, setMultipleCountries] = useState(false);
   const [countryPrompt, setCountryPrompt] = useState(false);
+  const [countryView, setCountryView] = useState<string>('all');
   const searchGeneration = useRef(0);
   const isGlobal = tenant?.slug === 'icw';
   const selectedCountries = resolveSearchCountries(countryParam, isGlobal ? null : tenant?.country_code);
@@ -144,8 +145,13 @@ export default function SearchResultsPage() {
     if (legalTypeFilter !== 'all') {
       f = f.filter((c) => c.legal_form === legalTypeFilter);
     }
+    if (countryView !== 'all') f = f.filter((c) => c.country_code?.toLowerCase() === countryView);
     setFiltered(f);
-  }, [results, legalTypeFilter]);
+  }, [results, legalTypeFilter, countryView]);
+
+  useEffect(() => {
+    if (countryView !== 'all' && !selectedCountries.includes(countryView)) setCountryView('all');
+  }, [countryKey]);
 
   const handleSidebarSearch = () => {
     const val = sidebarQuery.trim();
@@ -248,6 +254,16 @@ export default function SearchResultsPage() {
                     {multipleCountries && (
                       <div className="mt-3">
                         <p className="mb-2 text-xs text-muted-foreground" aria-live="polite">{selectedCountries.length}/{MAX_SEARCH_COUNTRIES} selected</p>
+                        {selectedCountries.length > 0 && (
+                          <div className="mb-2 flex flex-wrap gap-1.5">
+                            {selectedCountries.map((code) => (
+                              <span key={code} className="inline-flex max-w-full items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-xs text-foreground">
+                                <span className="truncate">{getCountryName(code)}</span>
+                                <button type="button" aria-label={`Remove ${code.toUpperCase()}`} onClick={() => updateCountries(selectedCountries.filter((c) => c !== code))} className="text-muted-foreground hover:text-foreground">×</button>
+                              </span>
+                            ))}
+                          </div>
+                        )}
                         <input aria-label="Filter countries" placeholder="Search countries…" value={countrySearch} onChange={(event) => setCountrySearch(event.target.value)} className="mb-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground" />
                         <div className="max-h-60 overflow-y-auto space-y-2">
                           {selectableCountries.filter((country) => country.name.toLowerCase().includes(countrySearch.toLowerCase())).map((country) => {
@@ -353,18 +369,27 @@ export default function SearchResultsPage() {
                     {isLoading ? 'Searching' : 'Searched'} {selectedCountries.length} {selectedCountries.length === 1 ? 'country' : 'countries'}
                   </p>
                   <div className="flex flex-wrap gap-1.5">
+                    {selectedCountries.length > 1 && (
+                      <button type="button" onClick={() => setCountryView('all')} aria-pressed={countryView === 'all'} className={`text-xs px-2 py-0.5 rounded-full border ${countryView === 'all' ? 'border-primary text-primary' : 'border-border text-foreground'}`}>
+                        All · {results.length}
+                      </button>
+                    )}
                     {selectedCountries.map((cc) => {
                       const st = registryStatus[cc];
                       const count = results.filter((c) => c.country_code?.toUpperCase() === cc.toUpperCase()).length;
                       return (
-                        <span
+                        <button
+                          type="button"
                           key={cc}
-                          className="text-xs px-2 py-0.5 rounded-full border"
-                          style={{ borderColor: 'var(--bg-border)', color: 'var(--text-body)', opacity: st === 'loading' ? 0.6 : 1 }}
+                          disabled={selectedCountries.length < 2}
+                          aria-pressed={countryView === cc}
+                          onClick={() => setCountryView(countryView === cc ? 'all' : cc)}
+                          className={`text-xs px-2 py-0.5 rounded-full border ${countryView === cc ? 'border-primary text-primary' : 'border-border text-foreground'}`}
+                          style={{ opacity: st === 'loading' ? 0.6 : 1 }}
                         >
                           {getCountryName(cc)}{' '}
                           {st === 'loading' ? '…' : st === 'error' ? '· unavailable' : `· ${count}`}
-                        </span>
+                        </button>
                       );
                     })}
                   </div>
