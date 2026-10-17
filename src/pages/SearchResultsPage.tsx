@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { Search, ExternalLink, FileText, Award } from 'lucide-react';
@@ -13,6 +13,9 @@ import { useCountries } from '../lib/countries';
 import { supabase } from '@/integrations/supabase/client';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { MAX_SEARCH_COUNTRIES, resolveSearchCountries, toggleSearchCountry } from '@/lib/searchCountries';
 import type { Company } from '../types/database';
 import { useCertificateCountries, certificatesAvailableFor } from '@/lib/certificateAvailability';
 import {
@@ -31,9 +34,6 @@ const LEGAL_TYPE_OPTIONS = [
   'Overseas Company',
 ];
 
-// Registries searched in "multi-registry" mode. Labelled honestly in the UI.
-const CORE_REGISTRIES = ['gb', 'cy', 'gr', 'mt', 'ro', 'ae'];
-
 export default function SearchResultsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -47,14 +47,21 @@ export default function SearchResultsPage() {
   const [results, setResults] = useState<Company[]>([]);
   const [filtered, setFiltered] = useState<Company[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(false);
   const [dataSource, setDataSource] = useState<'api4all' | 'cache' | null>(null);
   const [firstCachedAt, setFirstCachedAt] = useState<string | null>(null);
 
   // Sidebar state
   const [sidebarQuery, setSidebarQuery] = useState(q);
   const [legalTypeFilter, setLegalTypeFilter] = useState<string>('all');
-  const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
+  const [countrySearch, setCountrySearch] = useState('');
+  const [multipleCountries, setMultipleCountries] = useState(false);
+  const [countryPrompt, setCountryPrompt] = useState(false);
+  const searchGeneration = useRef(0);
+  const isGlobal = tenant?.slug === 'icw';
+  const selectedCountries = resolveSearchCountries(countryParam, isGlobal ? null : tenant?.country_code);
+  const countryKey = selectedCountries.join(',');
+  const sortedCountries = [...countries].sort((a, b) => a.name.localeCompare(b.name));
+  const selectableCountries = sortedCountries.filter((c) => /^[a-z]{2}$/i.test(c.code));
 
   // Keep sidebarQuery in sync with URL param
   useEffect(() => {
@@ -66,83 +73,70 @@ export default function SearchResultsPage() {
     return c ? `${c.flag_emoji ?? ''} ${c.name}` : code;
   };
 
-  // Multi-registry mode: Global tenant with no specific country, or explicit ?country=all
-  const isMulti = countryParam === 'all' || (!countryParam && tenant?.slug === 'icw');
   const [registryStatus, setRegistryStatus] = useState<Record<string, 'loading' | 'done' | 'error'>>({});
 
-  const fetchResults = useCallback(
-    async (append = false) => {
-      if (!q || q.length < 2 || !tenant) return;
-      setIsLoading(true);
-
-      if (isMulti) {
-        // Progressive: fire each registry in parallel, show results as each one returns.
-        setRegistryStatus(Object.fromEntries(CORE_REGISTRIES.map((c) => [c, 'loading'])));
-        let anyLive = false;
-        await Promise.all(
-          CORE_REGISTRIES.map(async (cc) => {
-            try {
-              const { data, error } = await supabase.functions.invoke('search-companies', {
-                body: { q, country: cc, tenant_id: tenant.id },
-              });
-              if (error) throw error;
-              const companies: Company[] = data?.results ?? [];
-              if (data?.source === 'api4all') anyLive = true;
-              setResults((prev) => {
-                const seen = new Set(prev.map((c) => c.id));
-                return [...prev, ...companies.filter((c) => !seen.has(c.id))];
-              });
-              setRegistryStatus((s) => ({ ...s, [cc]: 'done' }));
-            } catch {
-              setRegistryStatus((s) => ({ ...s, [cc]: 'error' }));
-            }
-          })
-        );
-        setDataSource(anyLive ? 'api4all' : 'cache');
-        setHasMore(false);
-        setIsLoading(false);
-        return;
-      }
-
+  useEffect(() => {
+    const generation = ++searchGeneration.current;
+    setResults([]);
+    setDataSource(null);
+    setFirstCachedAt(null);
+    setLegalTypeFilter('all');
+    setRegistryStatus({});
+    if (!tenant || q.trim().length < 2 || !countryKey) {
+      setIsLoading(false);
+      return;
+    }
+    const codes = countryKey.split(',');
+    setIsLoading(true);
+    setRegistryStatus(Object.fromEntries(codes.map((cc) => [cc, 'loading'])));
+    let anyLive = false;
+    Promise.all(codes.map(async (cc) => {
       try {
         const { data, error } = await supabase.functions.invoke('search-companies', {
-          body: {
-            q,
-            country: countryParam || tenant.country_code || 'cy',
-            tenant_id: tenant.id,
-          },
+          body: { q, country: cc, tenant_id: tenant.id },
         });
-
-        if (!error && data?.results) {
-          const companies: Company[] = data.results;
-          const newResults = append ? [...results, ...companies] : companies;
-          setResults(newResults);
-          setHasMore(companies.length === 50);
-          setDataSource(data.source ?? null);
-          setFirstCachedAt(companies[0]?.cached_at ?? null);
-        }
-      } finally {
-        setIsLoading(false);
+        if (generation !== searchGeneration.current) return;
+        if (error || data?.error || data?.warning) throw new Error(data?.error || data?.warning || error?.message);
+        // Never display an upstream/cache fallback from a different country.
+        const companies: Company[] = (data?.results ?? []).filter((company: Company) => company.country_code?.toLowerCase() === cc);
+        if (data?.source === 'api4all') anyLive = true;
+        setResults((previous) => {
+          const merged = [...previous, ...companies];
+          const seen = new Set<string>();
+          return merged.filter((company) => {
+            if (seen.has(company.id)) return false;
+            seen.add(company.id);
+            return true;
+          }).sort((a, b) => {
+            const query = q.toLowerCase();
+            const score = (name: string) => name.toLowerCase() === query ? 0 : name.toLowerCase().startsWith(query) ? 1 : 2;
+            return score(a.name) - score(b.name) || a.name.localeCompare(b.name);
+          });
+        });
+        setFirstCachedAt((previous) => previous ?? companies[0]?.cached_at ?? null);
+        setRegistryStatus((previous) => ({ ...previous, [cc]: 'done' }));
+      } catch {
+        if (generation === searchGeneration.current) setRegistryStatus((previous) => ({ ...previous, [cc]: 'error' }));
       }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [q, countryParam, tenant?.id, isMulti]
-  );
+    })).finally(() => {
+      if (generation !== searchGeneration.current) return;
+      setDataSource(anyLive ? 'api4all' : 'cache');
+      setIsLoading(false);
+    });
+    return () => { searchGeneration.current++; };
+  }, [q, countryKey, tenant?.id]);
 
   useEffect(() => {
-    setResults([]);
-    setHasMore(false);
-    setLegalTypeFilter('all');
-    setSelectedCountries([]);
-    setDataSource(null);
-    setRegistryStatus({});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q, countryParam, tenant?.id]);
+    if (selectedCountries.length > 1) setMultipleCountries(true);
+  }, [countryKey]);
 
-  useEffect(() => {
-    if (tenant) fetchResults(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q, countryParam, tenant?.id]);
+  const updateCountries = (codes: string[]) => {
+    const params = new URLSearchParams(searchParams);
+    if (codes.length) params.set('country', codes.join(','));
+    else params.delete('country');
+    setSearchParams(params);
+    setCountryPrompt(false);
+  };
 
   // Apply filters
   useEffect(() => {
@@ -150,17 +144,18 @@ export default function SearchResultsPage() {
     if (legalTypeFilter !== 'all') {
       f = f.filter((c) => c.legal_form === legalTypeFilter);
     }
-    if (tenant?.slug === 'icw' && selectedCountries.length > 0) {
-      f = f.filter((c) => selectedCountries.includes(c.country_code));
-    }
     setFiltered(f);
-  }, [results, legalTypeFilter, selectedCountries, tenant?.slug]);
+  }, [results, legalTypeFilter]);
 
   const handleSidebarSearch = () => {
     const val = sidebarQuery.trim();
+    if (isGlobal && selectedCountries.length === 0) {
+      setCountryPrompt(true);
+      return;
+    }
     if (val) {
       const params: Record<string, string> = { q: val };
-      if (countryParam) params.country = countryParam;
+      if (countryKey) params.country = countryKey;
       setSearchParams(params);
     }
   };
@@ -168,11 +163,13 @@ export default function SearchResultsPage() {
   const handleReset = () => {
     setSidebarQuery('');
     setLegalTypeFilter('all');
-    setSelectedCountries([]);
+    setCountrySearch('');
+    setMultipleCountries(false);
+    setCountryPrompt(false);
     setSearchParams({});
   };
 
-  const countriesInResults = Array.from(new Set(results.map((c) => c.country_code)));
+  const failedCountries = selectedCountries.filter((code) => registryStatus[code] === 'error');
 
   return (
     <PageLayout>
@@ -207,20 +204,71 @@ export default function SearchResultsPage() {
                   value={sidebarQuery}
                   onChange={(e) => setSidebarQuery(e.target.value)}
                   placeholder="Enter a Company name"
-                  className="flex-1 border rounded-md px-3 py-2 text-sm outline-none focus:border-brand-accent transition-colors"
+                  className="flex-1 min-w-0 border rounded-md px-3 py-2 text-sm outline-none focus:border-brand-accent transition-colors"
                   style={{ borderColor: 'var(--bg-border)', color: 'var(--text-body)' }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') handleSidebarSearch();
                   }}
                 />
-                <button
+                <Button variant="ghost"
                   onClick={handleSidebarSearch}
                   className="w-9 h-9 rounded-md flex items-center justify-center shrink-0 transition-opacity hover:opacity-80 active:scale-95"
                   style={{ backgroundColor: 'var(--text-heading)' }}
                   aria-label="Search"
                 >
                   <Search className="w-4 h-4 text-white" />
-                </button>
+                </Button>
+              </div>
+
+              <div className="mt-5">
+                {isGlobal ? (
+                  <>
+                    <Label htmlFor="search-country" className="text-sm font-medium">Country</Label>
+                    {!multipleCountries && selectedCountries.length <= 1 && (
+                      <select
+                        id="search-country"
+                        aria-label="Search country"
+                        value={selectedCountries[0] ?? ''}
+                        onChange={(event) => updateCountries(event.target.value ? [event.target.value] : [])}
+                        className="mt-2 w-full rounded-md border border-input bg-background p-2 text-sm text-foreground"
+                      >
+                        <option value="">Select country</option>
+                        {selectableCountries.map((country) => (
+                          <option key={country.code} value={country.code.toLowerCase()}>{country.flag_emoji} {country.name}</option>
+                        ))}
+                      </select>
+                    )}
+                    <div className="mt-3 flex items-center gap-2">
+                      <Checkbox id="multi-country" checked={multipleCountries} onCheckedChange={(checked) => {
+                        setMultipleCountries(checked === true);
+                        if (checked !== true && selectedCountries.length > 1) updateCountries(selectedCountries.slice(0, 1));
+                      }} />
+                      <Label htmlFor="multi-country" className="text-sm cursor-pointer">Search multiple countries</Label>
+                    </div>
+                    {multipleCountries && (
+                      <div className="mt-3">
+                        <p className="mb-2 text-xs text-muted-foreground" aria-live="polite">{selectedCountries.length}/{MAX_SEARCH_COUNTRIES} selected</p>
+                        <input aria-label="Filter countries" placeholder="Search countries…" value={countrySearch} onChange={(event) => setCountrySearch(event.target.value)} className="mb-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground" />
+                        <div className="max-h-60 overflow-y-auto space-y-2">
+                          {selectableCountries.filter((country) => country.name.toLowerCase().includes(countrySearch.toLowerCase())).map((country) => {
+                            const code = country.code.toLowerCase();
+                            const checked = selectedCountries.includes(code);
+                            return (
+                              <div key={code} className="flex items-center gap-2">
+                                <Checkbox id={`country-${code}`} checked={checked} disabled={!checked && selectedCountries.length >= MAX_SEARCH_COUNTRIES} onCheckedChange={() => updateCountries(toggleSearchCountry(selectedCountries, code))} />
+                                <Label htmlFor={`country-${code}`} className="text-sm font-normal cursor-pointer">{country.flag_emoji} {country.name}</Label>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {selectedCountries.length === MAX_SEARCH_COUNTRIES && <p className="mt-2 text-xs text-muted-foreground" role="status">Maximum 5 countries. Remove one to choose another.</p>}
+                      </div>
+                    )}
+                    {(countryPrompt || selectedCountries.length === 0) && <p role="status" className="mt-2 text-sm text-muted-foreground">Please select a country.</p>}
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">{getCountryName(tenant?.country_code ?? '')}</p>
+                )}
               </div>
 
               {/* Section: Filters */}
@@ -255,34 +303,6 @@ export default function SearchResultsPage() {
                 </RadioGroup>
               </div>
 
-              {/* Country filter — ICW only */}
-              {tenant?.slug === 'icw' && countriesInResults.length > 1 && (
-                <div className="mt-5">
-                  <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>
-                    Country
-                  </p>
-                  {countriesInResults.map((code) => (
-                    <label key={code} className="flex items-center gap-2 mb-1 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={selectedCountries.length === 0 || selectedCountries.includes(code)}
-                        onChange={() =>
-                          setSelectedCountries((prev) =>
-                            prev.includes(code)
-                              ? prev.filter((c) => c !== code)
-                              : [...prev, code]
-                          )
-                        }
-                        className="accent-blue-600"
-                      />
-                      <span className="text-sm" style={{ color: 'var(--text-body)' }}>
-                        {getCountryName(code)}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              )}
-
               {/* International CTA */}
               <div
                 className="mt-6 rounded-lg p-4"
@@ -303,13 +323,13 @@ export default function SearchResultsPage() {
               </div>
 
               {/* Reset */}
-              <button
+              <Button variant="ghost"
                 onClick={handleReset}
                 className="block w-full text-center text-sm mt-6 transition-opacity hover:opacity-70"
                 style={{ color: 'var(--brand-accent)' }}
               >
                 RESET
-              </button>
+              </Button>
             </div>
           </aside>
 
@@ -327,13 +347,13 @@ export default function SearchResultsPage() {
                     : `⏱ Cached data · ${firstCachedAt ? new Date(firstCachedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : ''}`}
                 </p>
               )}
-              {isMulti && Object.keys(registryStatus).length > 0 && (
+              {Object.keys(registryStatus).length > 0 && (
                 <div className="mt-2">
                   <p className="text-xs mb-1.5" style={{ color: 'var(--text-muted)' }}>
-                    Searching {CORE_REGISTRIES.length} official registries — results appear as each one responds:
+                    {isLoading ? 'Searching' : 'Searched'} {selectedCountries.length} {selectedCountries.length === 1 ? 'country' : 'countries'}
                   </p>
                   <div className="flex flex-wrap gap-1.5">
-                    {CORE_REGISTRIES.map((cc) => {
+                    {selectedCountries.map((cc) => {
                       const st = registryStatus[cc];
                       const count = results.filter((c) => c.country_code?.toUpperCase() === cc.toUpperCase()).length;
                       return (
@@ -369,9 +389,13 @@ export default function SearchResultsPage() {
 
             {/* Empty state */}
             {!isLoading && filtered.length === 0 && (
-              q.length >= 2 && results.length === 0
-                ? <InvestigationRequest query={q} country={countryParam || tenant?.country_code || ''} />
-                : <EmptyState message="No Companies yet" />
+              selectedCountries.length === 0
+                ? <p className="text-sm text-muted-foreground">Please select a country.</p>
+                : failedCountries.length > 0
+                  ? <p role="alert" className="text-sm text-muted-foreground">Search unavailable for {failedCountries.map(getCountryName).join(', ')}. Please try again.</p>
+                  : q.length >= 2 && results.length === 0
+                    ? <div className="space-y-6">{selectedCountries.map((code) => <InvestigationRequest key={code} query={q} country={code} />)}</div>
+                    : <EmptyState message="No Companies yet" />
             )}
 
             {/* Results list */}
@@ -477,7 +501,7 @@ export default function SearchResultsPage() {
                               </span>
                             )}
                             {entityType && (
-                              <button
+                              <Button variant="ghost"
                                 className="px-4 py-2 rounded text-sm font-medium text-white transition-all active:scale-95"
                                 style={{
                                   backgroundColor: 'var(--brand-accent)',
@@ -494,9 +518,9 @@ export default function SearchResultsPage() {
                                 }}
                               >
                                 Order Certificates
-                              </button>
+                              </Button>
                             )}
-                            <button
+                            <Button variant="ghost"
                               className="px-4 py-2 rounded text-sm font-medium border transition-all group-hover:bg-opacity-10"
                               style={{
                                 borderColor: 'var(--brand-accent)',
@@ -509,13 +533,13 @@ export default function SearchResultsPage() {
                               }}
                             >
                               View Profile →
-                            </button>
+                            </Button>
                           </div>
 
                           {/* Mobile buttons */}
                           <div className="flex sm:hidden items-center gap-2 mt-3">
                             {entityType && (
-                              <button
+                              <Button variant="ghost"
                                 className="flex-1 px-3 py-2 rounded text-xs font-medium text-white transition-all active:scale-95"
                                 style={{
                                   backgroundColor: 'var(--brand-accent)',
@@ -532,9 +556,9 @@ export default function SearchResultsPage() {
                                 }}
                               >
                                 Order Certificates
-                              </button>
+                              </Button>
                             )}
-                            <button
+                            <Button variant="ghost"
                               className="flex-1 px-3 py-2 rounded text-xs font-medium border transition-all"
                               style={{
                                 borderColor: 'var(--brand-accent)',
@@ -547,29 +571,12 @@ export default function SearchResultsPage() {
                               }}
                             >
                               View Profile
-                            </button>
+                            </Button>
                           </div>
                         </div>
                       </div>
                     );
                   })}
-              </div>
-            )}
-
-            {/* Load more */}
-            {hasMore && !isLoading && (
-              <div className="mt-6 text-center">
-                <button
-                  className="px-6 py-2.5 rounded text-sm font-medium border transition-all active:scale-95"
-                  style={{
-                    borderColor: 'var(--brand-accent)',
-                    color: 'var(--brand-accent)',
-                    borderRadius: '6px',
-                  }}
-                  onClick={() => fetchResults(true)}
-                >
-                  Load more results
-                </button>
               </div>
             )}
 

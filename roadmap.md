@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Require country selection on Global; alphabetical picker; results search across up to five chosen countries; verify country-site locks
+
 - [x] Add admin Order Status page with payment, per-report status, and delivery progress; verify with live orders
 
 - [x] Fix AML screening to read directors (Administrators) from Cyprus/global API4ALL report shape — company + directors only, no shareholders/UBOs

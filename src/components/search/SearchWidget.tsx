@@ -6,6 +6,8 @@ import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../lib/tenant';
 import { useCountries } from '../../lib/countries';
 import StatusBadge from '../ui/StatusBadge';
+import { Button } from '@/components/ui/button';
+import { resolveSearchCountries } from '@/lib/searchCountries';
 import type { Company, Country } from '../../types/database';
 
 // ── Highlight matching characters inside a label ──
@@ -75,7 +77,7 @@ export default function SearchWidget({
 }: SearchWidgetProps) {
   const navigate = useNavigate();
   const { tenant } = useTenant();
-  const { countries, featuredCountries } = useCountries();
+  const { countries } = useCountries();
 
   const [query, setQuery] = useState(defaultQuery);
   const [selectedCountry, setSelectedCountry] = useState(defaultCountry);
@@ -99,7 +101,9 @@ export default function SearchWidget({
 
   // Live search via edge function
   useEffect(() => {
-    if (debouncedQuery.length < 3) {
+    let cancelled = false;
+    if (debouncedQuery.length < 3 || (isGlobal && !selectedCountry)) {
+      setIsSearching(false);
       setResults([]);
       setShowResults(false);
       return;
@@ -109,13 +113,7 @@ export default function SearchWidget({
       if (!tenant) return;
       setIsSearching(true);
       try {
-        const primaryCountry = selectedCountry || tenant.country_code || 'cy';
-        // On the global tenant with no country chosen, search all core registries
-        // in parallel (a "GLOBAL" code isn't a real registry).
-        const countriesToSearch =
-          isGlobal && !selectedCountry
-            ? ['gb', 'cy', 'gr', 'mt', 'ro', 'ae']
-            : [primaryCountry];
+        const countriesToSearch = resolveSearchCountries(selectedCountry, isGlobal ? null : tenant.country_code);
 
         const calls: Array<Promise<{ data: any; error: any }>> = countriesToSearch.map((cc) =>
           supabase.functions.invoke('search-companies', {
@@ -150,15 +148,17 @@ export default function SearchWidget({
           return true;
         });
 
+        if (cancelled) return;
         setResults(unique.slice(0, 8));
         setShowResults(true);
         setHighlightIndex(-1);
       } finally {
-        setIsSearching(false);
+        if (!cancelled) setIsSearching(false);
       }
     }
 
     runSearch();
+    return () => { cancelled = true; };
   }, [debouncedQuery, selectedCountry, tenant, isGlobal]);
 
   // Close dropdown on outside click
@@ -175,15 +175,21 @@ export default function SearchWidget({
 
   const handleSearch = useCallback(() => {
     if (!query.trim()) return;
+    if (isGlobal && !selectedCountry) {
+      setShowAllCountries(true);
+      return;
+    }
+    const country = resolveSearchCountries(selectedCountry, isGlobal ? null : tenant?.country_code)[0];
+    if (!country) return;
     setShowResults(false);
     if (onSearch) {
-      onSearch(query, selectedCountry);
+      onSearch(query, country);
     } else {
       const params = new URLSearchParams({ q: query });
-      if (selectedCountry) params.set('country', selectedCountry);
+      params.set('country', country);
       navigate(`/company/search?${params.toString()}`);
     }
-  }, [query, selectedCountry, onSearch, navigate]);
+  }, [query, selectedCountry, onSearch, navigate, isGlobal, tenant?.country_code]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!showResults || results.length === 0) {
@@ -216,7 +222,7 @@ export default function SearchWidget({
 
   const filteredAllCountries = countries.filter((c) =>
     c.name.toLowerCase().includes(countrySearch.toLowerCase())
-  );
+  ).sort((a, b) => a.name.localeCompare(b.name));
 
   // Resolve the country currently shown in the picker button.
   // - Single-tenant (e.g. Cyprus): always the tenant's home country, locked.
@@ -239,12 +245,12 @@ export default function SearchWidget({
       >
         {/* ── Country selector panel ── */}
         <div className="relative flex-shrink-0">
-          <button
+          <Button variant="ghost"
             type="button"
             disabled={!isGlobal}
             onClick={() => isGlobal && setShowAllCountries((v) => !v)}
             className={`flex items-center gap-2 px-4 border-r font-medium text-sm whitespace-nowrap select-none transition-colors ${
-              isHero ? 'h-14 min-w-[180px]' : 'h-11 min-w-[150px]'
+              isHero ? 'h-14 w-[140px] sm:w-[180px]' : 'h-11 w-[130px] sm:w-[150px]'
             } ${isGlobal ? 'cursor-pointer hover:bg-gray-50' : 'cursor-default'}`}
             style={{
               borderColor: 'var(--bg-border)',
@@ -252,6 +258,7 @@ export default function SearchWidget({
               backgroundColor: 'var(--bg-subtle)',
               borderRadius: '8px 0 0 8px',
             }}
+            aria-label={isGlobal ? "Select country" : "Search country"}
             aria-haspopup={isGlobal ? 'listbox' : undefined}
             aria-expanded={isGlobal ? showAllCountries : undefined}
           >
@@ -269,7 +276,7 @@ export default function SearchWidget({
                 style={{ color: 'var(--text-muted)' }}
               />
             )}
-          </button>
+          </Button>
 
           {/* All countries dropdown (global tenant only) */}
           {isGlobal && showAllCountries && (
@@ -292,61 +299,8 @@ export default function SearchWidget({
                 />
               </div>
               <div className="max-h-64 overflow-y-auto py-1">
-                {countrySearch === '' && featuredCountries.length > 0 && (
-                  <>
-                    <p
-                      className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider"
-                      style={{ color: 'var(--text-muted)' }}
-                    >
-                      Popular
-                    </p>
-                    {featuredCountries.map((c: Country) => (
-                      <button
-                        key={`featured-${c.code}`}
-                        type="button"
-                        onClick={() => {
-                          setSelectedCountry(c.code);
-                          setShowAllCountries(false);
-                          setCountrySearch('');
-                        }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50 transition-colors"
-                        style={{
-                          color: 'var(--text-body)',
-                          fontWeight: selectedCountry === c.code ? 600 : 400,
-                        }}
-                      >
-                        <span>{c.flag_emoji}</span>
-                        <span className="flex-1 text-left">{c.name}</span>
-                      </button>
-                    ))}
-                    <div
-                      className="my-1 border-t"
-                      style={{ borderColor: 'var(--bg-border)' }}
-                    />
-                    <p
-                      className="px-3 pt-1 pb-1 text-[10px] font-semibold uppercase tracking-wider"
-                      style={{ color: 'var(--text-muted)' }}
-                    >
-                      All countries
-                    </p>
-                  </>
-                )}
-                {countrySearch === '' && selectedCountry && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedCountry('');
-                      setShowAllCountries(false);
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50 transition-colors italic"
-                    style={{ color: 'var(--text-muted)' }}
-                  >
-                    <span>🌍</span>
-                    <span className="flex-1 text-left">Any country</span>
-                  </button>
-                )}
                 {filteredAllCountries.map((c: Country) => (
-                  <button
+                  <Button variant="ghost"
                     key={c.code}
                     type="button"
                     onClick={() => {
@@ -362,7 +316,7 @@ export default function SearchWidget({
                   >
                     <span>{c.flag_emoji}</span>
                     <span className="flex-1 text-left">{c.name}</span>
-                  </button>
+                  </Button>
                 ))}
                 {filteredAllCountries.length === 0 && (
                   <p className="px-3 py-4 text-sm text-center" style={{ color: 'var(--text-muted)' }}>
@@ -375,7 +329,7 @@ export default function SearchWidget({
         </div>
 
         {/* ── Search input ── */}
-        <div className="relative flex-1">
+        <div className="relative flex-1 min-w-0">
           <input
             ref={inputRef}
             type="text"
@@ -405,7 +359,7 @@ export default function SearchWidget({
 
           {/* Clear button */}
           {query && !isSearching && (
-            <button
+            <Button variant="ghost"
               type="button"
               onClick={() => {
                 setQuery('');
@@ -417,7 +371,7 @@ export default function SearchWidget({
               aria-label="Clear search"
             >
               <X className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
-            </button>
+            </Button>
           )}
 
           {/* Live results dropdown */}
@@ -452,7 +406,7 @@ export default function SearchWidget({
                   const snippet = pickSnippet(company);
                   const isActive = idx === highlightIndex;
                   return (
-                    <button
+                    <Button variant="ghost"
                       key={company.id}
                       type="button"
                       onClick={() => handleResultClick(company)}
@@ -526,12 +480,12 @@ export default function SearchWidget({
                           </p>
                         )}
                       </div>
-                    </button>
+                    </Button>
                   );
                 })}
               </div>
 
-              <button
+              <Button variant="ghost"
                 type="button"
                 onClick={handleSearch}
                 className="w-full px-4 py-3 text-sm font-semibold text-center transition-colors flex items-center justify-center gap-1.5 border-t"
@@ -543,7 +497,7 @@ export default function SearchWidget({
               >
                 See all results for "{query}"
                 <CornerDownLeft className="w-3.5 h-3.5" />
-              </button>
+              </Button>
             </div>
           )}
 
@@ -568,7 +522,7 @@ export default function SearchWidget({
         </div>
 
         {/* ── Search button ── */}
-        <button
+        <Button variant="ghost"
           type="button"
           onClick={handleSearch}
           className={`flex items-center justify-center flex-shrink-0 font-semibold transition-all active:scale-95 ${isHero ? 'w-14' : 'w-11'}`}
@@ -585,7 +539,7 @@ export default function SearchWidget({
           aria-label="Search"
         >
           <Search className="w-5 h-5 text-white" />
-        </button>
+        </Button>
       </div>
 
       {/* Hint for global tenant when no country picked */}
@@ -594,7 +548,7 @@ export default function SearchWidget({
           className={`text-xs mt-2 ${isHero ? 'text-center' : 'text-left'}`}
           style={{ color: 'var(--text-muted)' }}
         >
-          💡 Tip: pick a country for faster, more accurate results.
+          Please select a country.
         </p>
       )}
     </div>

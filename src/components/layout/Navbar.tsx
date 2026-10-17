@@ -11,6 +11,8 @@ import CurrencySwitcher from './CurrencySwitcher';
 import CountrySwitcher, { CountrySwitcherList } from './CountrySwitcher';
 import BrandMark from './BrandMark';
 import NotificationBell from './NotificationBell';
+import { useCountries } from '@/lib/countries';
+import { Button } from '@/components/ui/button';
 import type { Product, Company } from '../../types/database';
 
 // ── Debounce hook ─────────────────────────────────────────────
@@ -26,6 +28,11 @@ function useDebounce<T>(value: T, delay: number): T {
 // ── Navbar Search ─────────────────────────────────────────────
 function NavbarSearch({ tenantId }: { tenantId: string }) {
   const navigate = useNavigate();
+  const { tenant } = useTenant();
+  const { countries } = useCountries();
+  const isGlobal = tenant?.slug === 'icw';
+  const [chosenCountry, setChosenCountry] = useState('');
+  const country = isGlobal ? chosenCountry : tenant?.country_code?.toLowerCase() ?? '';
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Company[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -47,7 +54,8 @@ function NavbarSearch({ tenantId }: { tenantId: string }) {
 
   // Search on debounced query
   useEffect(() => {
-    if (debouncedQuery.length < 2) {
+    if (debouncedQuery.length < 2 || !country) {
+      setIsSearching(false);
       setResults([]);
       setShowResults(false);
       return;
@@ -58,11 +66,11 @@ function NavbarSearch({ tenantId }: { tenantId: string }) {
 
     supabase.functions
       .invoke('search-companies', {
-        body: { q: debouncedQuery, tenant_id: tenantId },
+        body: { q: debouncedQuery, country, tenant_id: tenantId },
       })
       .then(({ data }) => {
         if (cancelled) return;
-        const res = (data?.results ?? []) as Company[];
+        const res = ((data?.results ?? []) as Company[]).filter((company) => company.country_code?.toLowerCase() === country);
         setResults(res.slice(0, 6));
         setShowResults(true);
         setIsSearching(false);
@@ -72,7 +80,7 @@ function NavbarSearch({ tenantId }: { tenantId: string }) {
       });
 
     return () => { cancelled = true; };
-  }, [debouncedQuery, tenantId]);
+  }, [debouncedQuery, tenantId, country]);
 
   const handleSelect = (company: Company) => {
     setShowResults(false);
@@ -82,9 +90,13 @@ function NavbarSearch({ tenantId }: { tenantId: string }) {
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && query.length >= 2) {
+      if (!country) {
+        containerRef.current?.querySelector('select')?.focus();
+        return;
+      }
       setShowResults(false);
       setQuery('');
-      navigate(`/company/search?q=${encodeURIComponent(query)}`);
+      navigate(`/company/search?q=${encodeURIComponent(query)}&country=${country}`);
     }
     if (e.key === 'Escape') {
       setShowResults(false);
@@ -102,6 +114,12 @@ function NavbarSearch({ tenantId }: { tenantId: string }) {
           width: '220px',
         }}
       >
+        {isGlobal && (
+          <select aria-label="Header search country" value={chosenCountry} onChange={(event) => setChosenCountry(event.target.value)} className="w-24 shrink-0 bg-transparent text-xs text-foreground outline-none">
+            <option value="">Country</option>
+            {[...countries].filter((item) => /^[a-z]{2}$/i.test(item.code)).sort((a, b) => a.name.localeCompare(b.name)).map((item) => <option key={item.code} value={item.code.toLowerCase()}>{item.name}</option>)}
+          </select>
+        )}
         {isSearching ? (
           <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: 'var(--text-muted)' }} />
         ) : (
@@ -115,21 +133,22 @@ function NavbarSearch({ tenantId }: { tenantId: string }) {
           onFocus={() => results.length > 0 && setShowResults(true)}
           onKeyDown={handleKeyDown}
           placeholder="Search companies..."
-          className="bg-transparent border-none outline-none text-sm flex-1"
+          className="bg-transparent border-none outline-none text-sm flex-1 min-w-0"
           style={{ color: 'var(--text-body)' }}
         />
         {query && (
-          <button
+          <Button variant="ghost"
             type="button"
             onClick={() => { setQuery(''); setResults([]); setShowResults(false); }}
             className="p-0.5"
             style={{ color: 'var(--text-muted)' }}
           >
             <X className="w-3 h-3" />
-          </button>
+          </Button>
         )}
       </div>
 
+      {isGlobal && query.length >= 2 && !country && <p role="status" className="absolute top-full mt-1 rounded border border-input bg-background px-3 py-2 text-xs text-muted-foreground">Please select a country.</p>}
       {/* Dropdown results */}
       {showResults && results.length > 0 && (
         <div
@@ -137,7 +156,7 @@ function NavbarSearch({ tenantId }: { tenantId: string }) {
           style={{ borderColor: 'var(--bg-border)', minWidth: '280px' }}
         >
           {results.map((r) => (
-            <button
+            <Button variant="ghost"
               key={r.id}
               type="button"
               onClick={() => handleSelect(r)}
@@ -168,20 +187,20 @@ function NavbarSearch({ tenantId }: { tenantId: string }) {
                   {r.status}
                 </span>
               )}
-            </button>
+            </Button>
           ))}
-          <button
+          <Button variant="ghost"
             type="button"
             onClick={() => {
               setShowResults(false);
               setQuery('');
-              navigate(`/company/search?q=${encodeURIComponent(query)}`);
+              navigate(`/company/search?q=${encodeURIComponent(query)}&country=${country}`);
             }}
             className="w-full px-3 py-2 text-xs font-medium text-center border-t"
             style={{ color: 'var(--brand-accent)', borderColor: 'var(--bg-border)' }}
           >
             View all results →
-          </button>
+          </Button>
         </div>
       )}
     </div>
