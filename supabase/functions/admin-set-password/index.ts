@@ -28,12 +28,19 @@ Deno.serve(async (req) => {
     );
 
     // Only a signed-in super admin may reset passwords
-    const token = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '');
-    const { data: u } = token ? await supabase.auth.getUser(token) : { data: null };
-    const callerId = u?.user?.id;
-    const { data: isSuper } = callerId
-      ? await supabase.rpc('has_role', { _user_id: callerId, _role: 'super_admin' })
-      : { data: false };
+    const authHeader = req.headers.get('Authorization') ?? '';
+    const token = authHeader.replace(/^Bearer\s+/i, '');
+    const userClient = createClient(Deno.env.get('SUPABASE_URL') || '', Deno.env.get('SUPABASE_ANON_KEY') || '', {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: claims, error: claimsErr } = token ? await userClient.auth.getClaims(token) : { data: null, error: null };
+    const callerId = claims?.claims?.sub as string | undefined;
+    if (claimsErr) console.error('admin-set-password auth error', claimsErr.message);
+    const { data: roleRows } = callerId
+      ? await supabase.from('user_roles').select('role').eq('user_id', callerId).eq('role', 'super_admin')
+      : { data: [] };
+    const isSuper = (roleRows ?? []).length > 0;
+    if (!isSuper) console.error('admin-set-password forbidden', { callerId: callerId ?? null });
     if (!isSuper) {
       return new Response(JSON.stringify({ error: 'Forbidden' }), {
         status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
