@@ -210,6 +210,10 @@ export default function AdminCustomersPage() {
                 </dl>
               </div>
 
+              {currentUserRole === 'super_admin' && selected.email && (
+                <AdminSetPassword key={`pw-${selected.id}`} email={selected.email} />
+              )}
+
               {/* Credit */}
               <div>
                 <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">Prepaid credit</h3>
