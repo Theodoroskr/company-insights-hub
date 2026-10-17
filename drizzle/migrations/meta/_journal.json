@@ -15,6 +15,13 @@
       "when": 1792226354660,
       "tag": "0001_fix_self_super_admin_trigger_update",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792232862254,
+      "tag": "0002_staff_view_order_report_status",
+      "breakpoints": true
     }
   ]
 }
