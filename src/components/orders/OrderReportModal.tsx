@@ -11,6 +11,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/lib/tenant.tsx';
 import { isProductVisibleForTenant } from '@/lib/tenantConfig';
+import { regionalCatalogue, applyRegionalPricing } from '@/lib/regionalPricing';
 import { useCart, isScreeningEligible, isScreeningIncluded, SCREENING_ADDON_PRICE_EUR, type CartItem } from '@/contexts/CartContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { ShieldCheck } from 'lucide-react';
@@ -38,9 +39,13 @@ export default function OrderReportModal({
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(
     preselectedCompany ?? null
   );
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(
+  const [rawSelectedProduct, setSelectedProduct] = useState<Product | null>(
     preselectedProduct ?? null
   );
+  // Regional price + delivery terms for the subject company's country.
+  const selectedProduct = rawSelectedProduct
+    ? applyRegionalPricing(rawSelectedProduct, selectedCompany?.country_code)
+    : null;
   // Multi-select for certificates
   const [selectedCertIds, setSelectedCertIds] = useState<Set<string>>(new Set());
   const [comment, setComment] = useState('');
@@ -58,8 +63,9 @@ export default function OrderReportModal({
 
   // Scope the catalogue to the selected company's jurisdiction so e.g.
   // UK-only reports never appear for a Cyprus company.
-  const visibleProducts = products.filter((p) =>
-    isProductVisibleForTenant(p, selectedCompany?.country_code),
+  const visibleProducts = regionalCatalogue(
+    products.filter((p) => isProductVisibleForTenant(p, selectedCompany?.country_code)),
+    selectedCompany?.country_code,
   );
   const reportDates = useReportDates(selectedCompany?.icg_code, selectedCompany?.country_code);
   const availability = selectedProduct && !isCertificateMode ? getAvailability(selectedProduct, reportDates) : null;

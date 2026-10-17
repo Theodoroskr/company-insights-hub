@@ -4,6 +4,7 @@ import { formatDelivery } from '@/lib/delivery';
 import { useReportDates, getAvailability, formatArchiveDate, URGENT_LABEL } from '@/hooks/useReportAvailability';
 import React, { useEffect, useState, useCallback } from 'react';
 import { priceProduct, formatEur } from '../lib/pricing';
+import { regionalCatalogue } from '../lib/regionalPricing';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { Check, ShoppingCart, Lock, ShieldCheck, Printer } from 'lucide-react';
@@ -501,12 +502,15 @@ export default function CompanyProfilePage() {
         // Scope the catalogue to the company's jurisdiction so e.g. UK-only
         // reports never appear on a Cyprus company profile.
         setProducts(
-          (productsRes.data as unknown as Product[])
-            .map((p) => ({
-              ...p,
-              available_speeds: Array.isArray(p.available_speeds) ? p.available_speeds : [],
-            }))
-            .filter((p) => isProductVisibleForTenant(p, comp.country_code))
+          regionalCatalogue(
+            (productsRes.data as unknown as Product[])
+              .map((p) => ({
+                ...p,
+                available_speeds: Array.isArray(p.available_speeds) ? p.available_speeds : [],
+              }))
+              .filter((p) => isProductVisibleForTenant(p, comp.country_code)),
+            comp.country_code,
+          )
         );
       }
 
