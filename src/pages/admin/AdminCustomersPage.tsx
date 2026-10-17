@@ -74,12 +74,21 @@ export default function AdminCustomersPage() {
 
   const updateRole = async (newRole: string) => {
     if (!selected) return;
+    const { data: me } = await supabase.auth.getSession();
+    if (me.session?.user?.id === selected.id) {
+      toast({ title: "You can't change your own role", description: 'Ask another super admin to do it.', variant: 'destructive' });
+      return;
+    }
     setUpdatingRole(true);
-    // roles live in the protected user_roles table; profiles.role is kept as a display mirror
-    await supabase.from('user_roles').delete().eq('user_id', selected.id);
+    // roles live in the protected user_roles table; profiles.role is kept as a display mirror.
+    // Add the new role first, then remove the others, so a failure never leaves the user without access.
     let error: { message: string } | null = null;
     if (newRole !== 'user') {
-      const res = await supabase.from('user_roles').insert({ user_id: selected.id, role: newRole as any });
+      const res = await supabase.from('user_roles').upsert({ user_id: selected.id, role: newRole as any }, { onConflict: 'user_id,role', ignoreDuplicates: true });
+      error = res.error;
+    }
+    if (!error) {
+      const res = await supabase.from('user_roles').delete().eq('user_id', selected.id).neq('role', newRole as any);
       error = res.error;
     }
     if (!error) {
