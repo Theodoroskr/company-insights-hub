@@ -94,7 +94,7 @@ export default function AdminOrderStatusPage() {
 
   return <AdminLayout>
     <Helmet><title>Order Status — Infocredit World Admin</title><meta name="robots" content="noindex" /></Helmet>
-    <div className="mx-auto max-w-screen-2xl space-y-6 p-4 md:p-6">
+    <div className="mx-auto max-w-screen-2xl space-y-6 p-4 pb-28 md:p-6 md:pb-28">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Order Status</h1>
         <div className="flex flex-wrap items-center gap-3">
