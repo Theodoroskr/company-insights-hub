@@ -111,7 +111,7 @@ function NavbarSearch({ tenantId }: { tenantId: string }) {
         style={{
           backgroundColor: 'var(--bg-subtle)',
           border: '1px solid var(--bg-border)',
-          width: isGlobal ? '290px' : '220px',
+          width: '220px',
         }}
       >
         {isGlobal && (
