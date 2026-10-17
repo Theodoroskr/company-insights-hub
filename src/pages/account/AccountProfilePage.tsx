@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
-import { X, Wallet } from 'lucide-react';
+import { X, Wallet, KeyRound } from 'lucide-react';
 import AccountLayout from '../../components/layout/AccountLayout';
 import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../lib/tenant';
@@ -37,6 +37,12 @@ export default function AccountProfilePage() {
   const [companyVat, setCompanyVat] = useState('');
   const [companyCountry, setCompanyCountry] = useState('');
   const [savingCompany, setSavingCompany] = useState(false);
+
+  // Change password section
+  const [showPassword, setShowPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [savingPassword, setSavingPassword] = useState(false);
 
   useEffect(() => {
     async function load() {
