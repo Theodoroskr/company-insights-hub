@@ -39,9 +39,13 @@ export default function OrderReportModal({
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(
     preselectedCompany ?? null
   );
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(
+  const [rawSelectedProduct, setSelectedProduct] = useState<Product | null>(
     preselectedProduct ?? null
   );
+  // Regional price + delivery terms for the subject company's country.
+  const selectedProduct = rawSelectedProduct
+    ? applyRegionalPricing(rawSelectedProduct, selectedCompany?.country_code)
+    : null;
   // Multi-select for certificates
   const [selectedCertIds, setSelectedCertIds] = useState<Set<string>>(new Set());
   const [comment, setComment] = useState('');

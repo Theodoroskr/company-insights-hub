@@ -6,6 +6,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCart } from '@/contexts/CartContext';
 import { useCountries } from '@/lib/countries';
 import type { Product } from '@/types/database';
+import { applyRegionalPricing, isRegionallyAvailable } from '@/lib/regionalPricing';
+import { formatDelivery } from '@/lib/delivery';
 
 const OPTIONS = [
   { slug: 'global-structure-report', label: 'Company Structure investigation', desc: 'Registry details, officers and shareholders' },
@@ -44,7 +46,8 @@ export default function InvestigationRequest({ query, country }: { query: string
     setError('');
     const parsed = schema.safeParse({ name, regNo, country: cc });
     if (!parsed.success) { setError(parsed.error.issues[0].message); return; }
-    const product = products.find((p) => p.slug === slug);
+    const raw = products.find((p) => p.slug === slug);
+    const product = raw && isRegionallyAvailable(raw, parsed.data.country) ? applyRegionalPricing(raw, parsed.data.country) : undefined;
     if (!product) { setError('This investigation is not available right now.'); return; }
     setBusy(true);
     try {
