@@ -23,6 +23,7 @@ import { useMyAccess } from '@/lib/permissions';
 const NAV_ITEMS: { label: string; icon: any; to: string; section: string }[] = [
   { label: 'Dashboard',     icon: LayoutDashboard, to: '/admin',                 section: 'dashboard' },
   { label: 'Orders',        icon: ClipboardList,    to: '/admin/orders',         section: 'orders' },
+  { label: 'Order Status',  icon: Activity,         to: '/admin/order-status',   section: 'orders' },
   { label: 'Fulfillment',   icon: Settings2,        to: '/admin/fulfillment',    section: 'fulfillment' },
   { label: 'Products',      icon: Package,          to: '/admin/products',       section: 'products' },
   { label: 'Customers',     icon: Users,            to: '/admin/customers',      section: 'customers' },

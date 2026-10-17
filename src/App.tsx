@@ -52,6 +52,7 @@ import AdminBillingPage from "./pages/admin/AdminBillingPage";
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminOrdersPage from "./pages/admin/AdminOrdersPage";
+import AdminOrderStatusPage from "./pages/admin/AdminOrderStatusPage";
 import AdminOrderDetailPage from "./pages/admin/AdminOrderDetailPage";
 import AdminFulfillmentPage from "./pages/admin/AdminFulfillmentPage";
 import AdminProductsPage from "./pages/admin/AdminProductsPage";
@@ -137,6 +138,7 @@ const App = () => (
               {/* ── Admin only ── */}
               <Route path="/admin" element={<AdminRoute section="dashboard"><AdminDashboard /></AdminRoute>} />
               <Route path="/admin/orders" element={<AdminRoute section="orders"><AdminOrdersPage /></AdminRoute>} />
+              <Route path="/admin/order-status" element={<AdminRoute section="orders"><AdminOrderStatusPage /></AdminRoute>} />
               <Route path="/admin/orders/:id" element={<AdminRoute section="orders"><AdminOrderDetailPage /></AdminRoute>} />
               <Route path="/admin/fulfillment" element={<AdminRoute section="fulfillment"><AdminFulfillmentPage /></AdminRoute>} />
               <Route path="/admin/products" element={<AdminRoute section="products"><AdminProductsPage /></AdminRoute>} />
