@@ -127,9 +127,22 @@ serve(async (req) => {
     const sb = getSupabase();
 
     // ── 1. Look up in DB ──────────────────────────────────
-    let dbQuery = sb.from('companies').select('*').eq('slug', slug);
-    if (tenantId) dbQuery = dbQuery.eq('tenant_id', tenantId);
-    const { data: company } = await dbQuery.maybeSingle();
+    // Prefer the visitor's site; fall back to any active country site (search spans tenants).
+    let company: Record<string, any> | null = null;
+    if (tenantId) {
+      const { data } = await sb.from('companies').select('*').eq('slug', slug).eq('tenant_id', tenantId).limit(1).maybeSingle();
+      company = data;
+    }
+    if (!company) {
+      const { data: rows } = await sb.from('companies').select('*, tenants(is_active)').eq('slug', slug).limit(5);
+      const visible = (rows ?? []).filter((r: any) => !r.tenant_id || r.tenants?.is_active === true);
+      company = visible[0] ?? null;
+      if (company) delete company.tenants;
+    }
+    if (!company && /^[0-9a-f-]{36}$/i.test(slug)) {
+      const { data } = await sb.from('companies').select('*').eq('id', slug).maybeSingle();
+      company = data;
+    }
 
     if (!company) {
       return new Response(JSON.stringify({ company: null, error: 'not_found' }), {
