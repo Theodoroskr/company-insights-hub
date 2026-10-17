@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
-import { X, Wallet } from 'lucide-react';
+import { X, Wallet, KeyRound } from 'lucide-react';
 import AccountLayout from '../../components/layout/AccountLayout';
 import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../lib/tenant';
@@ -37,6 +37,12 @@ export default function AccountProfilePage() {
   const [companyVat, setCompanyVat] = useState('');
   const [companyCountry, setCompanyCountry] = useState('');
   const [savingCompany, setSavingCompany] = useState(false);
+
+  // Change password section
+  const [showPassword, setShowPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [savingPassword, setSavingPassword] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -107,6 +113,29 @@ export default function AccountProfilePage() {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
       toast({ title: 'Company details saved' });
+    }
+  }
+
+  async function handleChangePassword(e: React.FormEvent) {
+    e.preventDefault();
+    if (newPassword.length < 8) {
+      toast({ title: 'Password too short', description: 'Use at least 8 characters.', variant: 'destructive' });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast({ title: 'Passwords do not match', description: 'Check the two password fields.', variant: 'destructive' });
+      return;
+    }
+    setSavingPassword(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setSavingPassword(false);
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      setNewPassword('');
+      setConfirmPassword('');
+      setShowPassword(false);
+      toast({ title: 'Password updated', description: 'Use your new password next time you sign in.' });
     }
   }
 
@@ -391,6 +420,81 @@ export default function AccountProfilePage() {
                 style={{ backgroundColor: 'var(--brand-primary)' }}
               >
                 {savingCompany ? 'Saving…' : 'Save Company Details'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      {/* ── Change Password ── */}
+      <div
+        className="bg-white border rounded-lg p-6 mt-4"
+        style={{ borderColor: 'var(--bg-border)' }}
+      >
+        <button
+          type="button"
+          onClick={() => setShowPassword((v) => !v)}
+          className="flex items-center gap-3 w-full text-left cursor-pointer"
+        >
+          <div
+            className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+            style={{ backgroundColor: 'hsl(var(--accent)/0.1)', color: 'var(--brand-accent)' }}
+          >
+            <KeyRound className="w-4 h-4" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold" style={{ color: 'var(--text-heading)' }}>
+              Change Password
+            </p>
+            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+              Update the password you use to sign in
+            </p>
+          </div>
+        </button>
+
+        <div
+          className="overflow-hidden transition-all duration-300"
+          style={{ maxHeight: showPassword ? '400px' : '0', opacity: showPassword ? 1 : 0 }}
+        >
+          <form onSubmit={handleChangePassword} className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-body)' }}>
+                New Password <span style={{ color: 'var(--status-dissolved)' }}>*</span>
+              </label>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                minLength={8}
+                required
+                placeholder="At least 8 characters"
+                className="w-full h-10 px-3 rounded-md border text-sm focus:outline-none focus:ring-2"
+                style={{ borderColor: 'var(--bg-border)', color: 'var(--text-body)' }}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-body)' }}>
+                Confirm New Password <span style={{ color: 'var(--status-dissolved)' }}>*</span>
+              </label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                minLength={8}
+                required
+                placeholder="Repeat the new password"
+                className="w-full h-10 px-3 rounded-md border text-sm focus:outline-none focus:ring-2"
+                style={{ borderColor: 'var(--bg-border)', color: 'var(--text-body)' }}
+              />
+            </div>
+            <div className="md:col-span-2 flex justify-end mt-2">
+              <button
+                type="submit"
+                disabled={savingPassword}
+                className="px-6 py-2 text-sm font-semibold text-white rounded transition-all active:scale-95 disabled:opacity-60"
+                style={{ backgroundColor: 'var(--brand-primary)' }}
+              >
+                {savingPassword ? 'Updating…' : 'Update Password'}
               </button>
             </div>
           </form>
