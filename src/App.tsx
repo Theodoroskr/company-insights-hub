@@ -65,6 +65,7 @@ import AdminSettingsPage from "./pages/admin/AdminSettingsPage";
 import AdminTenantsPage from "./pages/admin/AdminTenantsPage";
 import AdminRolesPage from "./pages/admin/AdminRolesPage";
 import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
+import RecoveryRedirect from "./components/auth/RecoveryRedirect";
 
 // Dev-only tenant switcher (visible on localhost / lovable.app preview)
 import TenantSwitcher from "./components/dev/TenantSwitcher";
@@ -81,6 +82,7 @@ const App = () => (
           <Sonner />
           <TenantSwitcher />
           <BrowserRouter>
+            <RecoveryRedirect />
             <Routes>
               {/* ── Public ── */}
               <Route path="/" element={<HomePage />} />
