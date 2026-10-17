@@ -3,7 +3,7 @@
 Technical rules for this project.
 
 - SECURITY DEFINER functions that are internal-only (`admin_set_user_password`, `handle_new_user`) must stay revoked from `PUBLIC`, `anon`, and `authenticated` EXECUTE; only `service_role`/owner may call them. `get_my_role` stays callable by all roles on purpose — RLS policies evaluate it as the querying role, so revoking it would break policy evaluation.
-- pg_net cannot be relocated out of `public` (platform extension, not relocatable) — its linter warning is expected and ignorable.
+- pg_net is non-relocatable in `public`; ignore its linter warning.
 - All prices (listings, product pages, cart, checkout, confirmations) must be computed via `src/lib/pricing.ts` (`getCountryPricing`, `priceProduct`, `priceCertificateOrder`) — one source prevents fee/VAT drift between pages.
 - AI features call Lovable AI Gateway from Edge Functions via `supabase/functions/_shared/responses.ts` (streamed Responses API, model `openai/gpt-6-astra`, system prompt passed as `instructions`) — one helper keeps gateway headers/options consistent.
 - Staff access levels live in `public.user_roles` (enum `app_role`) with per-section rights in `public.role_permissions`, checked via `has_role`/`is_staff`/`has_permission` — never trust `profiles.role`, which is only a display mirror and is user-writable in principle.
@@ -19,4 +19,5 @@ Technical rules for this project.
 - Investigation requests for companies not in the directory create a placeholder row via SECURITY DEFINER `create_investigation_company` (signed-in only, icg_code prefixed `INV:`) — companies stay client-read-only; these items are fulfilled manually by staff.
 - A trigger on `user_roles` (`prevent_self_super_admin_removal`) blocks signed-in users from deleting or changing their own `super_admin` row — prevents admins locking themselves out via the Customers role dropdown.
 - Global report pricing/SLA uses subject-company country via `src/lib/regionalPricing.ts` across catalogues — keeps regional terms consistent.
-- Admin Order Status shares `orders` access; derive delivery from stored reports and screening, not parent status — paid is not delivered.
+- Admin Order Status shares `orders` access; delivery comes from reports/screening, not payment.
+- Search scope uses `src/lib/searchCountries.ts` and URL country codes; country tenants override scope to avoid silent fallback searches.
