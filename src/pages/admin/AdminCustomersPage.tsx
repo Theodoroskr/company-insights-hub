@@ -45,8 +45,8 @@ export default function AdminCustomersPage() {
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
       if (data.session?.user?.id) {
-        const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.session.user.id).maybeSingle();
-        setCurrentUserRole(profile?.role ?? 'admin');
+        const { data: roles } = await supabase.from('user_roles').select('role').eq('user_id', data.session.user.id);
+        setCurrentUserRole((roles ?? []).some((r: any) => r.role === 'super_admin') ? 'super_admin' : 'admin');
       }
     });
   }, []);
