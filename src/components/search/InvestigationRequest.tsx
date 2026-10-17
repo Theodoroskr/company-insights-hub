@@ -96,15 +96,16 @@ export default function InvestigationRequest({ query, country }: { query: string
 
       <div className="space-y-2 mb-5">
         {OPTIONS.map((o) => {
-          const p = products.find((x) => x.slug === o.slug);
-          if (!p) return null;
+          const rawP = products.find((x) => x.slug === o.slug);
+          if (!rawP || (cc && !isRegionallyAvailable(rawP, cc))) return null;
+          const p = applyRegionalPricing(rawP, cc || null);
           return (
             <label key={o.slug} className="flex items-center gap-3 border rounded-lg p-3 cursor-pointer"
               style={{ borderColor: slug === o.slug ? 'var(--brand-accent)' : 'var(--bg-border)' }}>
               <input type="radio" checked={slug === o.slug} onChange={() => setSlug(o.slug)} />
               <span className="flex-1 text-sm">
                 <span className="font-medium" style={{ color: 'var(--text-heading)' }}>{o.label}</span>
-                <span className="block text-xs" style={{ color: 'var(--text-muted)' }}>{o.desc}</span>
+                <span className="block text-xs" style={{ color: 'var(--text-muted)' }}>{o.desc}{cc ? ` · Delivery: ${formatDelivery(p.delivery_sla_hours, p.is_instant)}` : ''}</span>
               </span>
               <span className="text-sm font-semibold" style={{ color: 'var(--text-heading)' }}>€{Number(p.base_price).toFixed(2)}</span>
             </label>
