@@ -210,14 +210,14 @@ export default function SearchResultsPage() {
                     if (e.key === 'Enter') handleSidebarSearch();
                   }}
                 />
-                <button
+                <Button variant="ghost"
                   onClick={handleSidebarSearch}
                   className="w-9 h-9 rounded-md flex items-center justify-center shrink-0 transition-opacity hover:opacity-80 active:scale-95"
                   style={{ backgroundColor: 'var(--text-heading)' }}
                   aria-label="Search"
                 >
                   <Search className="w-4 h-4 text-white" />
-                </button>
+                </Button>
               </div>
 
               <div className="mt-5">
@@ -323,13 +323,13 @@ export default function SearchResultsPage() {
               </div>
 
               {/* Reset */}
-              <button
+              <Button variant="ghost"
                 onClick={handleReset}
                 className="block w-full text-center text-sm mt-6 transition-opacity hover:opacity-70"
                 style={{ color: 'var(--brand-accent)' }}
               >
                 RESET
-              </button>
+              </Button>
             </div>
           </aside>
 
@@ -501,7 +501,7 @@ export default function SearchResultsPage() {
                               </span>
                             )}
                             {entityType && (
-                              <button
+                              <Button variant="ghost"
                                 className="px-4 py-2 rounded text-sm font-medium text-white transition-all active:scale-95"
                                 style={{
                                   backgroundColor: 'var(--brand-accent)',
@@ -518,9 +518,9 @@ export default function SearchResultsPage() {
                                 }}
                               >
                                 Order Certificates
-                              </button>
+                              </Button>
                             )}
-                            <button
+                            <Button variant="ghost"
                               className="px-4 py-2 rounded text-sm font-medium border transition-all group-hover:bg-opacity-10"
                               style={{
                                 borderColor: 'var(--brand-accent)',
@@ -533,13 +533,13 @@ export default function SearchResultsPage() {
                               }}
                             >
                               View Profile →
-                            </button>
+                            </Button>
                           </div>
 
                           {/* Mobile buttons */}
                           <div className="flex sm:hidden items-center gap-2 mt-3">
                             {entityType && (
-                              <button
+                              <Button variant="ghost"
                                 className="flex-1 px-3 py-2 rounded text-xs font-medium text-white transition-all active:scale-95"
                                 style={{
                                   backgroundColor: 'var(--brand-accent)',
@@ -556,9 +556,9 @@ export default function SearchResultsPage() {
                                 }}
                               >
                                 Order Certificates
-                              </button>
+                              </Button>
                             )}
-                            <button
+                            <Button variant="ghost"
                               className="flex-1 px-3 py-2 rounded text-xs font-medium border transition-all"
                               style={{
                                 borderColor: 'var(--brand-accent)',
@@ -571,7 +571,7 @@ export default function SearchResultsPage() {
                               }}
                             >
                               View Profile
-                            </button>
+                            </Button>
                           </div>
                         </div>
                       </div>

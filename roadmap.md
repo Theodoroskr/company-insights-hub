@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Require country selection on Global; alphabetical picker; results search across up to five chosen countries; verify country-site locks
+- [x] Require country selection on Global; alphabetical picker; results search across up to five chosen countries; verify country-site locks
 
 - [x] Add admin Order Status page with payment, per-report status, and delivery progress; verify with live orders
 
