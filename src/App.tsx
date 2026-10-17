@@ -64,6 +64,7 @@ import AdminAuditLogsPage from "./pages/admin/AdminAuditLogsPage";
 import AdminSettingsPage from "./pages/admin/AdminSettingsPage";
 import AdminTenantsPage from "./pages/admin/AdminTenantsPage";
 import AdminRolesPage from "./pages/admin/AdminRolesPage";
+import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 
 // Dev-only tenant switcher (visible on localhost / lovable.app preview)
 import TenantSwitcher from "./components/dev/TenantSwitcher";
@@ -112,6 +113,7 @@ const App = () => (
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
 
               {/* ── Protected: Account ── */}
               <Route path="/account" element={<ProtectedRoute><AccountDashboard /></ProtectedRoute>} />
