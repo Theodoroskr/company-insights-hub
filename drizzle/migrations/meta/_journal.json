@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1792226338878,
+      "tag": "0000_block_self_super_admin_removal",
+      "breakpoints": true
+    }
+  ]
+}
