@@ -116,6 +116,29 @@ export default function AccountProfilePage() {
     }
   }
 
+  async function handleChangePassword(e: React.FormEvent) {
+    e.preventDefault();
+    if (newPassword.length < 8) {
+      toast({ title: 'Password too short', description: 'Use at least 8 characters.', variant: 'destructive' });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast({ title: 'Passwords do not match', description: 'Check the two password fields.', variant: 'destructive' });
+      return;
+    }
+    setSavingPassword(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setSavingPassword(false);
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      setNewPassword('');
+      setConfirmPassword('');
+      setShowPassword(false);
+      toast({ title: 'Password updated', description: 'Use your new password next time you sign in.' });
+    }
+  }
+
   if (loading) {
     return (
       <AccountLayout>
