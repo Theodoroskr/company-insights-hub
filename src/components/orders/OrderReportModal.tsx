@@ -11,6 +11,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/lib/tenant.tsx';
 import { isProductVisibleForTenant } from '@/lib/tenantConfig';
+import { regionalCatalogue, applyRegionalPricing } from '@/lib/regionalPricing';
 import { useCart, isScreeningEligible, isScreeningIncluded, SCREENING_ADDON_PRICE_EUR, type CartItem } from '@/contexts/CartContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { ShieldCheck } from 'lucide-react';
@@ -58,8 +59,9 @@ export default function OrderReportModal({
 
   // Scope the catalogue to the selected company's jurisdiction so e.g.
   // UK-only reports never appear for a Cyprus company.
-  const visibleProducts = products.filter((p) =>
-    isProductVisibleForTenant(p, selectedCompany?.country_code),
+  const visibleProducts = regionalCatalogue(
+    products.filter((p) => isProductVisibleForTenant(p, selectedCompany?.country_code)),
+    selectedCompany?.country_code,
   );
   const reportDates = useReportDates(selectedCompany?.icg_code, selectedCompany?.country_code);
   const availability = selectedProduct && !isCertificateMode ? getAvailability(selectedProduct, reportDates) : null;
