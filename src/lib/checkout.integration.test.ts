@@ -12,7 +12,7 @@ suite('atomic checkout ownership and persistence', () => {
     auth: { persistSession: false, autoRefreshToken: false, storageKey: crypto.randomUUID() },
     global: auth ? { headers: { Authorization: `Bearer ${auth}` } } : undefined,
   });
-  const order = () => ({ id: crypto.randomUUID(), order_ref: 'RLS-CHECKOUT-TEST', status: 'pending', subtotal: 110, total: 110, guest_email: 'checkout-test@example.invalid' });
+  const order = () => ({ id: crypto.randomUUID(), order_ref: `RLS-CHECKOUT-TEST-${crypto.randomUUID()}`, status: 'pending', subtotal: 110, total: 110, guest_email: 'checkout-test@example.invalid' });
   const items = () => [{ unit_price: 65, screening_addon: true, screening_price_eur: 45 }, { unit_price: 45 }];
 
   it('creates guest report lines without exposing the guest parent order', async () => {
@@ -44,6 +44,7 @@ suite('atomic checkout ownership and persistence', () => {
     const payload = order();
     const result = await signedIn.rpc('create_checkout_order', { _order: payload, _items: [...items(), { unit_price: 10, product_id: crypto.randomUUID() }] });
     expect(result.error).not.toBeNull();
+    expect(result.error?.code).toBe('23503');
     const read = await signedIn.from('orders').select('id').eq('id', payload.id);
     expect(read.data).toEqual([]);
   }, 30000);
