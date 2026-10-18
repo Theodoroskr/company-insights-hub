@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Fix guest order-item RLS failure with atomic checkout creation; verify guest and signed-in ownership
+- [x] Fix guest order-item RLS failure with atomic checkout creation; verify guest and signed-in ownership
 
 - [x] Require country selection on Global; alphabetical picker; results search across up to five chosen countries; verify country-site locks
 
