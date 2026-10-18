@@ -22,6 +22,13 @@
       "when": 1792232862254,
       "tag": "0002_staff_view_order_report_status",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792315878917,
+      "tag": "0003_atomic_checkout_order_and_items",
+      "breakpoints": true
     }
   ]
 }

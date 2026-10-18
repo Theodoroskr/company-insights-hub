@@ -1297,6 +1297,10 @@ export type Database = {
         Returns: undefined
       }
       check_cron_secret: { Args: { _s: string }; Returns: boolean }
+      create_checkout_order: {
+        Args: { _items: Json; _order: Json }
+        Returns: string
+      }
       create_investigation_company: {
         Args: { _country: string; _name: string; _reg_no: string }
         Returns: {
