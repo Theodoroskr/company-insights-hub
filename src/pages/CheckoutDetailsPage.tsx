@@ -126,6 +126,13 @@ export default function CheckoutDetailsPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const needsAccount = bundleOrders.length > 0;
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [loginBusy, setLoginBusy] = useState(false);
+  const showLogin = !session && (tab === 'account' || needsAccount);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) {
@@ -133,7 +140,43 @@ export default function CheckoutDetailsPage() {
         setTab('account');
       }
     });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+      setSession((s as typeof session) ?? null);
+      if (s) setTab('account');
+      else setProfile(null);
+    });
+    return () => sub.subscription.unsubscribe();
   }, []);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError('');
+    setLoginBusy(true);
+    const { error } = await supabase.auth.signInWithPassword({ email: loginEmail.trim(), password: loginPassword });
+    setLoginBusy(false);
+    if (error) {
+      const m = error.message.toLowerCase();
+      setLoginError(
+        m.includes('confirm') ? 'Please confirm your email first — check your inbox for the link.'
+        : m.includes('invalid') ? 'Email or password is incorrect.'
+        : error.message,
+      );
+    } else {
+      setLoginPassword('');
+    }
+  };
+
+  const handleGoogle = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/checkout/details` },
+    });
+  };
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    setTab('guest');
+  };
 
   useEffect(() => {
     if (!session?.user?.id) return;
@@ -264,27 +307,70 @@ export default function CheckoutDetailsPage() {
               Your Details
             </h2>
 
-            {/* Tab switcher */}
-            <div
-              className="flex border rounded-lg overflow-hidden mb-6 text-sm font-medium"
-              style={{ borderColor: 'var(--bg-border)' }}
-            >
-              {(['guest', 'account'] as const).map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => setTab(t)}
-                  className="flex-1 py-2.5 transition-colors"
-                  style={{
-                    backgroundColor: tab === t ? 'var(--brand-accent)' : '#fff',
-                    color: tab === t ? '#fff' : 'var(--text-body)',
-                  }}
-                >
-                  {t === 'guest' ? 'Guest Checkout' : 'I have an account'}
+            {session ? (
+              <div className="flex flex-wrap items-center justify-between gap-2 border rounded-lg px-4 py-3 mb-6 text-sm" style={{ borderColor: 'var(--bg-border)', backgroundColor: 'var(--bg-subtle)' }}>
+                <span style={{ color: 'var(--text-body)' }}>
+                  Signed in as <strong>{session.user.email}</strong>
+                </span>
+                <button type="button" onClick={handleSignOut} className="underline" style={{ color: 'var(--brand-accent)' }}>
+                  Not you? Sign out
                 </button>
-              ))}
-            </div>
+              </div>
+            ) : (
+              <div
+                className="flex border rounded-lg overflow-hidden mb-6 text-sm font-medium"
+                style={{ borderColor: 'var(--bg-border)' }}
+              >
+                {(['guest', 'account'] as const).map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setTab(t)}
+                    className="flex-1 py-2.5 transition-colors"
+                    style={{
+                      backgroundColor: tab === t ? 'var(--brand-accent)' : '#fff',
+                      color: tab === t ? '#fff' : 'var(--text-body)',
+                    }}
+                  >
+                    {t === 'guest' ? 'Guest Checkout' : 'I have an account'}
+                  </button>
+                ))}
+              </div>
+            )}
 
+            {showLogin && (
+              <form onSubmit={handleLogin} className="border rounded-lg p-5 mb-6 space-y-3" style={{ borderColor: 'var(--bg-border)' }}>
+                {needsAccount && (
+                  <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                    Credit bundles are added to your account, so please sign in to continue.
+                  </p>
+                )}
+                <div>
+                  <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-body)' }}>Email</label>
+                  <input type="email" autoComplete="email" required className={inputCls('loginEmail')} style={inputStyle('loginEmail')} value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} />
+                </div>
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-xs font-medium" style={{ color: 'var(--text-body)' }}>Password</label>
+                    <Link to="/forgot-password" className="text-xs" style={{ color: 'var(--brand-accent)' }}>Forgot password?</Link>
+                  </div>
+                  <input type="password" autoComplete="current-password" required className={inputCls('loginPassword')} style={inputStyle('loginPassword')} value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} />
+                </div>
+                {loginError && <p className="text-xs text-red-500">{loginError}</p>}
+                <button type="submit" disabled={loginBusy} className="w-full py-2.5 rounded text-sm font-semibold text-white disabled:opacity-50" style={{ backgroundColor: 'var(--brand-accent)', borderRadius: '6px' }}>
+                  {loginBusy ? 'Signing in…' : 'Sign in'}
+                </button>
+                <button type="button" onClick={handleGoogle} className="w-full py-2.5 rounded text-sm font-medium border" style={{ borderColor: 'var(--bg-border)', color: 'var(--text-body)', borderRadius: '6px' }}>
+                  Continue with Google
+                </button>
+                <p className="text-sm text-center" style={{ color: 'var(--text-muted)' }}>
+                  No account?{' '}
+                  <Link to="/register?returnTo=%2Fcheckout%2Fdetails" style={{ color: 'var(--brand-accent)' }}>Create one</Link>
+                </p>
+              </form>
+            )}
+
+            <div className={showLogin ? 'hidden' : ''}>
             {/* Personal Information */}
             <section className="mb-6">
               <h3 className="text-sm font-semibold uppercase tracking-wide mb-3" style={{ color: 'var(--text-muted)' }}>
@@ -588,6 +674,7 @@ export default function CheckoutDetailsPage() {
             >
               Continue to Payment →
             </button>
+            </div>
           </div>
 
           {/* ── Right: summary ── */}

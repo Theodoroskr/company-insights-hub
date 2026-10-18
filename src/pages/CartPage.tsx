@@ -6,6 +6,7 @@ import PageLayout from '../components/layout/PageLayout';
 import { useCart, type CertificateOrder, SCREENING_ADDON_PRICE_EUR } from '../contexts/CartContext';
 import { useTenant } from '../lib/tenant';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { supabase } from '@/integrations/supabase/client';
 import type { ProductSpeed } from '../types/database';
 import {
   APOSTILLE_PRICE,
@@ -124,6 +125,10 @@ export default function CartPage() {
   } = useCart();
   const { format, currency } = useCurrency();
   const navigate = useNavigate();
+  const [signedIn, setSignedIn] = React.useState(true);
+  React.useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setSignedIn(!!data.session));
+  }, []);
 
   const handleCheckout = () => {
     navigate('/checkout/details');
@@ -387,6 +392,12 @@ export default function CartPage() {
                 >
                   Checkout →
                 </button>
+                {!signedIn && (
+                  <p className="text-xs text-center mt-3" style={{ color: 'var(--text-muted)' }}>
+                    Have an account?{' '}
+                    <Link to="/login?returnTo=%2Fcart" style={{ color: 'var(--brand-accent)' }}>Sign in</Link>
+                  </p>
+                )}
 
                 <div className="mt-5 pt-4 border-t" style={{ borderColor: 'var(--bg-border)' }}>
                   <p className="text-xs mb-2 text-center" style={{ color: 'var(--text-muted)' }}>
