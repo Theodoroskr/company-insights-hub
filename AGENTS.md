@@ -2,7 +2,7 @@
 
 Technical rules for this project.
 
-- SECURITY DEFINER functions that are internal-only (`admin_set_user_password`, `handle_new_user`) must stay revoked from `PUBLIC`, `anon`, and `authenticated` EXECUTE; only `service_role`/owner may call them. `get_my_role` stays callable by all roles on purpose — RLS policies evaluate it as the querying role, so revoking it would break policy evaluation.
+- Internal SECURITY DEFINER functions (`admin_set_user_password`, `handle_new_user`) revoke EXECUTE from PUBLIC/anon/authenticated; only service_role/owner may call. Keep `get_my_role` callable by all roles for RLS evaluation.
 - pg_net is non-relocatable in `public`; ignore its linter warning.
 - All prices (listings, product pages, cart, checkout, confirmations) must be computed via `src/lib/pricing.ts` (`getCountryPricing`, `priceProduct`, `priceCertificateOrder`) — one source prevents fee/VAT drift between pages.
 - AI features call Lovable AI Gateway from Edge Functions via `supabase/functions/_shared/responses.ts` (streamed Responses API, model `openai/gpt-6-astra`, system prompt passed as `instructions`) — one helper keeps gateway headers/options consistent.
@@ -20,4 +20,5 @@ Technical rules for this project.
 - A trigger on `user_roles` (`prevent_self_super_admin_removal`) blocks signed-in users from deleting or changing their own `super_admin` row — prevents admins locking themselves out via the Customers role dropdown.
 - Global report pricing/SLA uses subject-company country via `src/lib/regionalPricing.ts` across catalogues — keeps regional terms consistent.
 - Admin Order Status shares `orders` access; delivery comes from reports/screening, not payment.
+- Checkout persists orders and all lines atomically via `create_checkout_order`; derive ownership only from `auth.uid()` so guests need no parent-order SELECT.
 - Search scope uses `src/lib/searchCountries.ts` and URL country codes; country tenants override scope to avoid silent fallback searches.

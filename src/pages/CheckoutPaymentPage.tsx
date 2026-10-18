@@ -126,7 +126,6 @@ export default function CheckoutPaymentPage() {
       const insertPayload: any = {
         id: orderId,
         tenant_id: tenant?.id ?? null,
-        user_id: session?.user?.id ?? null,
         order_ref: orderRef,
         status: method === 'card' ? 'paid' : 'pending',
         subtotal,
@@ -139,20 +138,15 @@ export default function CheckoutPaymentPage() {
         guest_details: session ? null : details,
       };
 
-      // No read-back: guests may create but not read orders, so ids are generated here
-      const { error: orderErr } = await supabase.from('orders').insert(insertPayload);
-      if (orderErr) throw new Error(`Could not create your order: ${orderErr.message}`);
       const orderData = { id: orderId };
       const createdItems: { id: string; slug?: string }[] = [];
 
-      // Create order items (with screening flag + price snapshot)
-      const orderItemResults = await Promise.all(
+      // Collect every line before saving the order and items atomically.
+      const orderItems: Record<string, any>[] = (
         items.map((item) => {
           const itemId = crypto.randomUUID();
           createdItems.push({ id: itemId, slug: item.product.slug });
-          return supabase
-            .from('order_items')
-            .insert({
+          return {
               id: itemId,
               order_id: orderData.id,
               product_id: item.product.id,
@@ -165,7 +159,7 @@ export default function CheckoutPaymentPage() {
               fulfillment_status: 'pending',
               screening_addon: item.screeningAddon,
               screening_price_eur: item.screeningAddon ? SCREENING_ADDON_PRICE_EUR : 0,
-            });
+            };
         })
       );
 
@@ -181,7 +175,7 @@ export default function CheckoutPaymentPage() {
           const extrasPerCert = (t.urgent + t.courier) / n;
           for (const c of o.certificates) {
             const net = Math.round((c.price + pricing.certificateServiceFee + (c.apostille ? pricing.apostille : 0) + extrasPerCert) * 100) / 100;
-            const res = await supabase.from('order_items').insert({
+            orderItems.push({
               id: crypto.randomUUID(),
               order_id: orderData.id,
               product_id: idBySlug.get(c.slug) ?? null,
@@ -194,15 +188,16 @@ export default function CheckoutPaymentPage() {
               screening_addon: false,
               screening_price_eur: 0,
             });
-            orderItemResults.push(res as any);
           }
         }
       }
 
-      const orderItemError = orderItemResults.find((result) => result.error);
-      if (orderItemError?.error) {
-        throw new Error(orderItemError.error.message || 'Failed to create order items');
-      }
+      // Ownership is derived on the server; guests never need to read the parent order.
+      const { error: orderErr } = await supabase.rpc('create_checkout_order', {
+        _order: insertPayload,
+        _items: orderItems,
+      });
+      if (orderErr) throw new Error(`Could not create your order: ${orderErr.message}`);
 
       // Grant credit for purchased bundles (server-side, adds to wallet)
       for (const b of bundleOrders) {
