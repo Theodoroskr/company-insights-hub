@@ -124,6 +124,10 @@ export default function CartPage() {
   } = useCart();
   const { format, currency } = useCurrency();
   const navigate = useNavigate();
+  const [signedIn, setSignedIn] = React.useState(true);
+  React.useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setSignedIn(!!data.session));
+  }, []);
 
   const handleCheckout = () => {
     navigate('/checkout/details');
