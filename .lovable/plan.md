@@ -1,24 +1,20 @@
-# AML Screening: cover all directors, not just the company
+# Let existing customers sign in at checkout
 
-## What's happening today
+## Problem
+On the checkout details step, the "I have an account" tab only changes colour — it shows the same guest form and never lets the customer sign in.
 
-The AML & Compliance screening add-on (+€45) is designed to screen the **company plus every director, shareholder and beneficial owner named in the report** — and that works for UK reports (e.g. 5 entities screened).
+## What changes
+- **Not signed in + "I have an account"**: show a short sign-in panel instead of the guest form:
+  - Email + password fields and a "Sign in" button (signs in right there, no page change).
+  - "Forgot password?" link and "Continue with Google" button.
+  - "No account? Create one" link.
+  - Basket is kept throughout.
+- **After sign-in**: stay on checkout, switch to the account view, and autofill name, email, phone and saved billing details (existing autofill logic).
+- **Already signed in**: hide the Guest/Account tabs and show "Signed in as name@email · Not you? Sign out".
+- Cart page: add a small "Have an account? Sign in" link for guests that returns them to the basket.
+- Credit bundles keep requiring sign-in; the sign-in panel is shown automatically when the basket contains a bundle.
 
-But for the Cyprus order (LAIKO - COSMOS TRADING LIMITED, ICG-2026-9861), only **1 entity — the company itself — was screened**. The report contains 6 directors, 2 shareholders and beneficial owners, but the screening code reads only the report's top-level structure (the UK shape) and never looks inside the Cyprus/global report shape where those people live. So the add-on effectively screened the subject only.
-
-## Fix
-
-1. **Teach the screening code the Cyprus/global report shape.** When the report is in the nested `Company[...]` format, extract people from:
-   - `Administrators` (directors/officers) — full name, skipping resigned/inactive entries
-   - `Shareholders` — full name
-   - `UltimateBeneficialOwner` — full name
-   Company name comes from the same structure. Same activity/inactive rules as the UK path.
-
-2. **Re-run the screening** for the LAIKO - COSMOS TRADING LIMITED order item so the directors and shareholders are actually checked and the result in the account updates (it will replace the current company-only result).
-
-3. **Verify** by running the screening for that order and confirming more than one entity is screened and results/hits are stored correctly.
-
-## Notes
-
-- The standalone €30 "Company only" AML screening product keeps screening the company only — that's by design.
-- UK report screenings are unaffected.
+## Technical details
+- `src/pages/CheckoutDetailsPage.tsx`: render an inline login form when `tab === 'account' && !session` using `supabase.auth.signInWithPassword`; Google via existing OAuth with redirect to `/checkout/details`; existing `onAuthStateChange`/profile load handles autofill. Show friendly error text for wrong password / unconfirmed email.
+- Links to `/register?returnTo=/checkout/details` and `/login?returnTo=/cart` (LoginPage/RegisterPage already honour `returnTo`).
+- Verify with Playwright: guest → sign in at checkout → fields autofill → continue to payment with basket intact.
