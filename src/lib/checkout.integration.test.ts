@@ -9,7 +9,7 @@ const suite = token && url && key ? describe : describe.skip;
 
 suite('atomic checkout ownership and persistence', () => {
   const client = (auth?: string) => createClient(url ?? '', key ?? '', {
-    auth: { persistSession: false, autoRefreshToken: false },
+    auth: { persistSession: false, autoRefreshToken: false, storageKey: crypto.randomUUID() },
     global: auth ? { headers: { Authorization: `Bearer ${auth}` } } : undefined,
   });
   const order = () => ({ id: crypto.randomUUID(), order_ref: 'RLS-CHECKOUT-TEST', status: 'pending', subtotal: 110, total: 110, guest_email: 'checkout-test@example.invalid' });
@@ -24,7 +24,7 @@ suite('atomic checkout ownership and persistence', () => {
     const read = await guest.from('orders').select('id').eq('id', payload.id);
     expect(read.error).toBeNull();
     expect(read.data).toEqual([]);
-  });
+  }, 30000);
 
   it('ignores a supplied alternative owner and assigns both lines to the signed-in user', async () => {
     const signedIn = client(token);
@@ -37,7 +37,7 @@ suite('atomic checkout ownership and persistence', () => {
     expect(read.error).toBeNull();
     expect(read.data?.user_id).toBe(user.user?.id);
     expect(read.data?.order_items).toHaveLength(2);
-  });
+  }, 30000);
 
   it('rolls back the parent and every line when a line cannot be saved', async () => {
     const signedIn = client(token);
@@ -46,7 +46,7 @@ suite('atomic checkout ownership and persistence', () => {
     expect(result.error).not.toBeNull();
     const read = await signedIn.from('orders').select('id').eq('id', payload.id);
     expect(read.data).toEqual([]);
-  });
+  }, 30000);
 
   it('rejects invalid bearer credentials rather than treating them as a guest', async () => {
     const result = await client('invalid-session').rpc('create_checkout_order', { _order: order(), _items: items() });
